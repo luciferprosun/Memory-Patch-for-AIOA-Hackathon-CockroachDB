@@ -1,0 +1,14 @@
+.venv/
+.env
+.env.*
+!.env.example
+.aws/
+.cockroach/
+.ccloud/
+*.pem
+*.key
+*.crt
+credentials
+credentials.*
+.mcp.local.json
+tooling/local/
