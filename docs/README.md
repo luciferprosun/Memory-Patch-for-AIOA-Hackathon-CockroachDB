@@ -16,6 +16,7 @@ imported document has source commit, ref, date and SHA-256 provenance.
 
 ## Start here
 
+- [External data volume contract](EXTERNAL_DATA_VOLUME.md)
 - [Knowledge Module Migration Handoff 1B](history/2026-06-30_to_2026-07-24/plans/KNOWLEDGE_MODULE_MIGRATION_HANDOFF_1B.md)
 - [Provider-Independent Knowledge Context Bridge 1A](history/2026-06-30_to_2026-07-24/memory-and-retrieval/PROVIDER_INDEPENDENT_KNOWLEDGE_CONTEXT_BRIDGE_1A.md)
 - [German Federal Law Knowledge HAT integration map](history/2026-06-30_to_2026-07-24/german-law-hat/KNOWLEDGE_HAT_INTEGRATION_MAP.md)

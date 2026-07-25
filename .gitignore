@@ -12,3 +12,10 @@ credentials
 credentials.*
 .mcp.local.json
 tooling/local/
+
+# Machine-local external-storage identity and migration state.
+/.local/external-data.env
+/.local/external-data-journals/
+/.local/external-data-links/
+**/*.aioa-migration-hold-*/
+**/*.aioa-rollback-*/
