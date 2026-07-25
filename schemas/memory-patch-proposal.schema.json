@@ -1,0 +1,154 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.aioa.example/memory-kernel/memory-patch-proposal/1.0.0",
+  "title": "AIOA Memory Patch Proposal 1A",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "proposal_id",
+    "tenant_id",
+    "owner_user_id",
+    "target_scope",
+    "target_hat_id",
+    "target_personal_memory_space_id",
+    "origin",
+    "proposed_content",
+    "evidence_references",
+    "scope_dimensions",
+    "valid_from",
+    "valid_until",
+    "requested_trust_class",
+    "approval_requirement",
+    "lifecycle_state",
+    "content_kind",
+    "created_at",
+    "content_hash"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "proposal_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner_user_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "target_scope": {
+      "enum": [
+        "SESSION",
+        "USER_PERSONAL_HAT",
+        "SHARED_KNOWLEDGE_HAT"
+      ]
+    },
+    "target_hat_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "target_personal_memory_space_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "origin": {
+      "enum": [
+        "KNOWLEDGE_HUB",
+        "CRITIC_PROMPT_LOOP",
+        "MODEL_VERIFIER",
+        "USER_ENTRY",
+        "USER_DOCUMENT",
+        "HUMAN_REVIEW",
+        "SYSTEM_MIGRATION"
+      ]
+    },
+    "proposed_content": {},
+    "evidence_references": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "scope_dimensions": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "valid_from": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "valid_until": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "requested_trust_class": {
+      "enum": [
+        "SHARED_HAT_VERIFIED_MEMORY",
+        "PERSONAL_VERIFIED_PATCH",
+        "USER_ASSERTED_MEMORY",
+        "MODEL_EXPERIENCE_HINT",
+        "SESSION_MEMORY"
+      ]
+    },
+    "approval_requirement": {
+      "enum": [
+        "OWNER",
+        "DOMAIN_REVIEWER",
+        "SYSTEM_MIGRATION_REVIEW"
+      ]
+    },
+    "lifecycle_state": {
+      "enum": [
+        "DETECTED",
+        "PROPOSED",
+        "EVIDENCE_BOUND",
+        "VALIDATED",
+        "AWAITING_APPROVAL",
+        "APPROVED",
+        "COMMITTED",
+        "ACTIVE",
+        "SUPERSEDED",
+        "REJECTED",
+        "REVOKED"
+      ]
+    },
+    "content_kind": {
+      "enum": [
+        "FACTUAL",
+        "PREFERENCE",
+        "WORKFLOW",
+        "MODEL_EXPERIENCE",
+        "SESSION"
+      ]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "content_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

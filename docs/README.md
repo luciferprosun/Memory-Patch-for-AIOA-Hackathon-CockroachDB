@@ -16,6 +16,12 @@ imported document has source commit, ref, date and SHA-256 provenance.
 
 ## Start here
 
+- [Knowledge Kernel Contract Baseline 1A](architecture/KNOWLEDGE_KERNEL_CONTRACT_BASELINE_1A.md)
+- [Personal Memory HATs 1A](architecture/PERSONAL_MEMORY_HATS_1A.md)
+- [Memory Trust and Precedence 1A](architecture/MEMORY_TRUST_AND_PRECEDENCE_1A.md)
+- [Knowledge HAT SDK Contract 1A](architecture/HAT_SDK_CONTRACT_1A.md)
+- [Multi-Tenant Isolation Contract 1A](architecture/MULTI_TENANT_ISOLATION_CONTRACT_1A.md)
+- [Data Ownership and Storage Classes 1A](architecture/DATA_OWNERSHIP_AND_STORAGE_CLASSES_1A.md)
 - [External data volume contract](EXTERNAL_DATA_VOLUME.md)
 - [Knowledge Module Migration Handoff 1B](history/2026-06-30_to_2026-07-24/plans/KNOWLEDGE_MODULE_MIGRATION_HANDOFF_1B.md)
 - [Provider-Independent Knowledge Context Bridge 1A](history/2026-06-30_to_2026-07-24/memory-and-retrieval/PROVIDER_INDEPENDENT_KNOWLEDGE_CONTEXT_BRIDGE_1A.md)

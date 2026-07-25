@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.aioa.example/memory-kernel/hat-manifest/1.0.0",
+  "title": "AIOA Knowledge HAT Manifest 1A",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "hat_id",
+    "hat_version",
+    "display_name",
+    "domain_ids",
+    "kernel_api_compatibility",
+    "supported_languages",
+    "scope_dimension_definitions",
+    "capabilities",
+    "source_authority_policy",
+    "retrieval_contract",
+    "claim_contract",
+    "conflict_contract",
+    "memory_policy",
+    "security_policy",
+    "extension_points"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "hat_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "hat_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "display_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "domain_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]*$"
+      }
+    },
+    "kernel_api_compatibility": {
+      "type": "string",
+      "minLength": 1
+    },
+    "supported_languages": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$"
+      }
+    },
+    "scope_dimension_definitions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/scopeDimensionDefinition"
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "source_authority_policy": {
+      "type": "object"
+    },
+    "retrieval_contract": {
+      "type": "object"
+    },
+    "claim_contract": {
+      "type": "object"
+    },
+    "conflict_contract": {
+      "type": "object"
+    },
+    "memory_policy": {
+      "type": "object"
+    },
+    "security_policy": {
+      "$ref": "#/$defs/securityPolicy"
+    },
+    "extension_points": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "scopeDimensionDefinition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "value_type",
+        "comparison_mode",
+        "required",
+        "default_behavior",
+        "missing_creates_ambiguous"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value_type": {
+          "enum": [
+            "STRING",
+            "INTEGER",
+            "NUMBER",
+            "BOOLEAN",
+            "STRING_SET",
+            "TIMESTAMP",
+            "SEMVER",
+            "JSON"
+          ]
+        },
+        "comparison_mode": {
+          "enum": [
+            "EXACT",
+            "IN_SET",
+            "HIERARCHICAL",
+            "RANGE",
+            "SEMVER",
+            "TIMESTAMP",
+            "CUSTOM_HAT_RULE"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "default_behavior": {
+          "enum": [
+            "REJECT",
+            "AMBIGUOUS",
+            "USE_DEFAULT",
+            "OPTIONAL"
+          ]
+        },
+        "missing_creates_ambiguous": {
+          "type": "boolean"
+        },
+        "default_value": {},
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "securityPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "external_action_authority",
+        "canonical_write_authority",
+        "patch_approval_authority",
+        "patch_commit_authority",
+        "executable_user_code",
+        "private_memory_access"
+      ],
+      "properties": {
+        "external_action_authority": {
+          "const": "NONE"
+        },
+        "canonical_write_authority": {
+          "const": "NONE"
+        },
+        "patch_approval_authority": {
+          "const": "NONE"
+        },
+        "patch_commit_authority": {
+          "const": "NONE"
+        },
+        "executable_user_code": {
+          "const": false
+        },
+        "private_memory_access": {
+          "const": false
+        }
+      }
+    }
+  }
+}

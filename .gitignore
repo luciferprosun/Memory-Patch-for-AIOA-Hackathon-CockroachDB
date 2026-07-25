@@ -19,3 +19,7 @@ tooling/local/
 /.local/external-data-links/
 **/*.aioa-migration-hold-*/
 **/*.aioa-rollback-*/
+
+# Python validation artifacts (the contract package has no runtime dependency).
+__pycache__/
+*.py[cod]

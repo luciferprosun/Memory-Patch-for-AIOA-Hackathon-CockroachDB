@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.aioa.example/memory-kernel/audit-event/1.0.0",
+  "title": "AIOA Audit Event 1A",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "audit_event_id",
+    "tenant_id",
+    "user_id",
+    "personal_memory_space_id",
+    "kernel_run_id",
+    "event_type",
+    "sequence_number",
+    "event_hash",
+    "previous_event_hash",
+    "resource_type",
+    "resource_id",
+    "state_before",
+    "state_after",
+    "actor_type",
+    "actor_id",
+    "content_hashes",
+    "created_at",
+    "protected_payload_reference"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "audit_event_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "tenant_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "user_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "personal_memory_space_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "kernel_run_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "event_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sequence_number": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "event_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "previous_event_hash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "resource_type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "resource_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "state_before": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "state_after": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "actor_type": {
+      "enum": [
+        "USER",
+        "HUMAN_REVIEWER",
+        "SYSTEM",
+        "COMMIT_SERVICE",
+        "KNOWLEDGE_KERNEL",
+        "KNOWLEDGE_HAT",
+        "KNOWLEDGE_HUB",
+        "CRITIC_PROMPT_LOOP",
+        "MODEL",
+        "MODEL_VERIFIER",
+        "MIGRATION_SERVICE"
+      ]
+    },
+    "actor_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "content_hashes": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[0-9a-f]{64}$"
+      }
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "protected_payload_reference": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

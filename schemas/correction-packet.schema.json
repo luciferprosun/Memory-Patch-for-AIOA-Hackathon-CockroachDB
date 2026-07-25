@@ -1,0 +1,237 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.aioa.example/memory-kernel/correction-packet/1.0.0",
+  "title": "AIOA Correction Packet 1A",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kernel_run_id",
+    "draft_v1_id",
+    "selected_hat_id",
+    "knowledge_route",
+    "action_policy",
+    "evidence_status",
+    "scope_dimensions",
+    "knowledge_as_of",
+    "claims_under_review",
+    "ordered_evidence_items",
+    "source_version_ids",
+    "validity_or_version_scopes",
+    "conflicts",
+    "required_corrections",
+    "prohibited_claims",
+    "uncertainty",
+    "citation_requirements",
+    "retrieval_policy_version",
+    "embedding_model_version",
+    "packet_hash"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "kernel_run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "draft_v1_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "selected_hat_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "knowledge_route": {
+      "enum": [
+        "HAT_ASSIST",
+        "HAT_ENFORCE"
+      ]
+    },
+    "action_policy": {
+      "enum": [
+        "ALLOW",
+        "DENY_ACTION",
+        "REQUIRE_CONFIRMATION"
+      ]
+    },
+    "evidence_status": {
+      "enum": [
+        "NOT_REQUIRED",
+        "SUFFICIENT",
+        "INSUFFICIENT",
+        "CONFLICTING",
+        "UNAVAILABLE",
+        "STALE",
+        "INVALID"
+      ]
+    },
+    "scope_dimensions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/scopeDimension"
+      }
+    },
+    "knowledge_as_of": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    },
+    "claims_under_review": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/claim"
+      }
+    },
+    "ordered_evidence_items": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/evidence"
+      }
+    },
+    "source_version_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "validity_or_version_scopes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/scopeDimension"
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "required_corrections": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "prohibited_claims": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "uncertainty": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "citation_requirements": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "retrieval_policy_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "embedding_model_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "packet_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "scopeDimension": {
+      "type": "object",
+      "required": [
+        "name",
+        "value",
+        "value_type",
+        "comparison_mode",
+        "source",
+        "required"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {},
+        "value_type": {
+          "type": "string"
+        },
+        "comparison_mode": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "required": [
+        "claim_id",
+        "draft_id",
+        "statement",
+        "claim_category"
+      ],
+      "properties": {
+        "claim_id": {
+          "type": "string"
+        },
+        "draft_id": {
+          "type": "string"
+        },
+        "statement": {
+          "type": "string"
+        },
+        "claim_category": {
+          "type": "string"
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": [
+        "evidence_id",
+        "source_id",
+        "source_version_id",
+        "content_hash",
+        "trust_class"
+      ],
+      "properties": {
+        "evidence_id": {
+          "type": "string"
+        },
+        "source_id": {
+          "type": "string"
+        },
+        "source_version_id": {
+          "type": "string"
+        },
+        "content_hash": {
+          "type": "string"
+        },
+        "trust_class": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

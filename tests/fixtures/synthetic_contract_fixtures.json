@@ -1,0 +1,351 @@
+{
+  "fixture_kind": "SYNTHETIC_CONTRACT_FIXTURES",
+  "notice": "All names, domains, sources, users, and content in this file are fictional.",
+  "tenants": [
+    {
+      "tenant_id": "tenant-orchid"
+    },
+    {
+      "tenant_id": "tenant-cobalt"
+    }
+  ],
+  "users": [
+    {
+      "tenant_id": "tenant-orchid",
+      "user_id": "user-alba"
+    },
+    {
+      "tenant_id": "tenant-cobalt",
+      "user_id": "user-bryn"
+    }
+  ],
+  "source_scenarios": {
+    "generic_source_versions": [
+      {
+        "source_id": "source-runtime-guide",
+        "source_version_id": "runtime-guide-v1",
+        "content_hash": "1111111111111111111111111111111111111111111111111111111111111111"
+      },
+      {
+        "source_id": "source-device-manual",
+        "source_version_id": "device-manual-v4",
+        "content_hash": "2222222222222222222222222222222222222222222222222222222222222222"
+      }
+    ],
+    "temporal_update": {
+      "source_id": "source-runtime-guide",
+      "source_version_id": "runtime-guide-v2",
+      "supersedes": "runtime-guide-v1",
+      "valid_from": "2030-02-01T00:00:00Z"
+    },
+    "conflicting_source": {
+      "source_id": "source-community-note",
+      "source_version_id": "community-note-v1",
+      "conflicts_with": "runtime-guide-v2",
+      "authority_rank": 80
+    },
+    "missing_evidence_case": {
+      "case_id": "missing-evidence-1",
+      "evidence_status": "INSUFFICIENT",
+      "evidence_references": []
+    }
+  },
+  "hat_manifests": [
+    {
+      "schema_version": "1.0.0",
+      "hat_id": "synthetic-software-version",
+      "hat_version": "1.0.0",
+      "display_name": "Synthetic Software Version HAT",
+      "domain_ids": [
+        "synthetic.software"
+      ],
+      "kernel_api_compatibility": ">=1.0.0,<2.0.0",
+      "supported_languages": [
+        "en"
+      ],
+      "scope_dimension_definitions": [
+        {
+          "name": "runtime_version",
+          "value_type": "SEMVER",
+          "comparison_mode": "SEMVER",
+          "required": true,
+          "default_behavior": "AMBIGUOUS",
+          "missing_creates_ambiguous": true,
+          "description": "Fictional runtime version."
+        },
+        {
+          "name": "platform",
+          "value_type": "STRING",
+          "comparison_mode": "EXACT",
+          "required": false,
+          "default_behavior": "OPTIONAL",
+          "missing_creates_ambiguous": false,
+          "description": "Fictional operating platform."
+        }
+      ],
+      "capabilities": [
+        "REQUEST_NORMALIZATION",
+        "EVIDENCE_CONSTRAINTS",
+        "CLAIM_EXTRACTION",
+        "CORRECTION_PROPOSAL"
+      ],
+      "source_authority_policy": {
+        "policy_version": "synthetic-1",
+        "lower_rank_is_stronger": true
+      },
+      "retrieval_contract": {
+        "contract_version": "synthetic-1",
+        "requires_source_version": true
+      },
+      "claim_contract": {
+        "contract_version": "synthetic-1",
+        "claim_categories": [
+          "version-compatibility"
+        ]
+      },
+      "conflict_contract": {
+        "contract_version": "synthetic-1",
+        "preserve_same_rank_conflicts": true
+      },
+      "memory_policy": {
+        "contract_version": "synthetic-1",
+        "proposal_only": true
+      },
+      "security_policy": {
+        "external_action_authority": "NONE",
+        "canonical_write_authority": "NONE",
+        "patch_approval_authority": "NONE",
+        "patch_commit_authority": "NONE",
+        "executable_user_code": false,
+        "private_memory_access": false
+      },
+      "extension_points": {
+        "normalizer_contract": "synthetic-software-normalizer-v1"
+      }
+    },
+    {
+      "schema_version": "1.0.0",
+      "hat_id": "synthetic-equipment-manual",
+      "hat_version": "1.0.0",
+      "display_name": "Fictional Equipment Manual HAT",
+      "domain_ids": [
+        "synthetic.equipment"
+      ],
+      "kernel_api_compatibility": ">=1.0.0,<2.0.0",
+      "supported_languages": [
+        "en",
+        "pl"
+      ],
+      "scope_dimension_definitions": [
+        {
+          "name": "equipment_family",
+          "value_type": "STRING",
+          "comparison_mode": "HIERARCHICAL",
+          "required": true,
+          "default_behavior": "REJECT",
+          "missing_creates_ambiguous": false,
+          "description": "Fictional equipment family."
+        },
+        {
+          "name": "manual_revision",
+          "value_type": "STRING",
+          "comparison_mode": "EXACT",
+          "required": true,
+          "default_behavior": "AMBIGUOUS",
+          "missing_creates_ambiguous": true,
+          "description": "Fictional manual revision."
+        }
+      ],
+      "capabilities": [
+        "REQUEST_NORMALIZATION",
+        "SOURCE_AUTHORITY_RANKING",
+        "CONFLICT_DETECTION",
+        "CORRECTION_PROPOSAL"
+      ],
+      "source_authority_policy": {
+        "policy_version": "synthetic-2",
+        "manufacturer_manual_rank": 10
+      },
+      "retrieval_contract": {
+        "contract_version": "synthetic-2",
+        "requires_exact_revision": true
+      },
+      "claim_contract": {
+        "contract_version": "synthetic-2",
+        "claim_categories": [
+          "maintenance-interval"
+        ]
+      },
+      "conflict_contract": {
+        "contract_version": "synthetic-2",
+        "preserve_temporal_conflicts": true
+      },
+      "memory_policy": {
+        "contract_version": "synthetic-2",
+        "proposal_only": true
+      },
+      "security_policy": {
+        "external_action_authority": "NONE",
+        "canonical_write_authority": "NONE",
+        "patch_approval_authority": "NONE",
+        "patch_commit_authority": "NONE",
+        "executable_user_code": false,
+        "private_memory_access": false
+      },
+      "extension_points": {
+        "scope_rule_contract": "synthetic-equipment-scope-v1"
+      }
+    }
+  ],
+  "personal_memory_space": {
+    "schema_version": "1.0.0",
+    "personal_memory_space_id": "pms-orchid-alba-1",
+    "tenant_id": "tenant-orchid",
+    "user_id": "user-alba",
+    "state": "ACTIVE",
+    "display_name": "Synthetic private notes",
+    "created_at": "2030-01-01T12:00:00Z",
+    "updated_at": "2030-01-02T12:00:00Z",
+    "model_binding_ids": [
+      "model-binding-a",
+      "model-binding-b"
+    ],
+    "quota_policy": {
+      "maximum_total_spaces": 4,
+      "maximum_active_spaces": 2,
+      "maximum_archived_spaces": 4,
+      "maximum_bytes": 1048576,
+      "maximum_personal_sources": 10,
+      "maximum_active_memory_patches": 20,
+      "maximum_session_memory_bytes": 65536,
+      "maximum_ingestion_jobs": 1,
+      "maximum_embedding_or_index_bytes": 1048576
+    }
+  },
+  "personal_patch": {
+    "schema_version": "1.0.0",
+    "proposal_id": "patch-personal-synthetic-1",
+    "tenant_id": "tenant-orchid",
+    "owner_user_id": "user-alba",
+    "target_scope": "USER_PERSONAL_HAT",
+    "target_hat_id": null,
+    "target_personal_memory_space_id": "pms-orchid-alba-1",
+    "origin": "USER_ENTRY",
+    "proposed_content": {
+      "statement": "Synthetic device was inspected in the fictional exercise."
+    },
+    "evidence_references": [
+      "device-manual-v4"
+    ],
+    "scope_dimensions": [],
+    "valid_from": "2030-01-01T00:00:00Z",
+    "valid_until": null,
+    "requested_trust_class": "PERSONAL_VERIFIED_PATCH",
+    "approval_requirement": "OWNER",
+    "lifecycle_state": "PROPOSED",
+    "content_kind": "FACTUAL",
+    "created_at": "2030-01-02T12:00:00Z",
+    "content_hash": "3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "cross_user_access_attempt": {
+    "requesting_tenant_id": "tenant-cobalt",
+    "requesting_user_id": "user-bryn",
+    "target_tenant_id": "tenant-orchid",
+    "target_user_id": "user-alba",
+    "expected_result": "REJECT"
+  },
+  "critic_loop_proposal": {
+    "event_id": "correction-synthetic-1",
+    "tenant_id": "tenant-orchid",
+    "user_id": "user-alba",
+    "personal_memory_space_id": "pms-orchid-alba-1",
+    "source_component": "CRITIC_PROMPT_LOOP",
+    "state": "PROPOSED",
+    "authority": "NONE"
+  },
+  "shared_promotion_proposal": {
+    "shared_promotion_proposal_id": "promotion-synthetic-1",
+    "originating_personal_patch_id": "patch-personal-synthetic-1",
+    "state": "SHARED_PROMOTION_PROPOSED",
+    "independent_evidence_validated": false,
+    "domain_review_required": true,
+    "automatic_activation": false,
+    "shared_commit_id": null
+  },
+  "correction_packet": {
+    "schema_version": "1.0.0",
+    "kernel_run_id": "kernel-run-synthetic-1",
+    "draft_v1_id": "draft-synthetic-v1",
+    "selected_hat_id": "synthetic-software-version",
+    "knowledge_route": "HAT_ENFORCE",
+    "action_policy": "ALLOW",
+    "evidence_status": "SUFFICIENT",
+    "scope_dimensions": [
+      {
+        "name": "runtime_version",
+        "value": "4.2.0",
+        "value_type": "SEMVER",
+        "comparison_mode": "SEMVER",
+        "source": "request",
+        "required": true
+      }
+    ],
+    "knowledge_as_of": "2030-02-02T12:00:00Z",
+    "claims_under_review": [
+      {
+        "claim_id": "claim-synthetic-1",
+        "draft_id": "draft-synthetic-v1",
+        "statement": "Synthetic runtime compatibility claim.",
+        "claim_category": "version-compatibility"
+      }
+    ],
+    "ordered_evidence_items": [
+      {
+        "evidence_id": "evidence-synthetic-1",
+        "source_id": "source-runtime-guide",
+        "source_version_id": "runtime-guide-v2",
+        "content_hash": "4444444444444444444444444444444444444444444444444444444444444444",
+        "trust_class": "CANONICAL_SOURCE_EVIDENCE"
+      }
+    ],
+    "source_version_ids": [
+      "runtime-guide-v2"
+    ],
+    "validity_or_version_scopes": [],
+    "conflicts": [],
+    "required_corrections": [],
+    "prohibited_claims": [
+      "Unsupported compatibility assertion"
+    ],
+    "uncertainty": 0.1,
+    "citation_requirements": [
+      "Cite the synthetic source version."
+    ],
+    "retrieval_policy_version": "synthetic-1",
+    "embedding_model_version": null,
+    "packet_hash": "5555555555555555555555555555555555555555555555555555555555555555"
+  },
+  "audit_event": {
+    "schema_version": "1.0.0",
+    "audit_event_id": "audit-synthetic-1",
+    "tenant_id": "tenant-orchid",
+    "user_id": "user-alba",
+    "personal_memory_space_id": "pms-orchid-alba-1",
+    "kernel_run_id": "kernel-run-synthetic-1",
+    "event_type": "PATCH_PROPOSED",
+    "sequence_number": 0,
+    "event_hash": "6666666666666666666666666666666666666666666666666666666666666666",
+    "previous_event_hash": null,
+    "resource_type": "MemoryPatchProposal",
+    "resource_id": "patch-personal-synthetic-1",
+    "state_before": "DETECTED",
+    "state_after": "PROPOSED",
+    "actor_type": "USER",
+    "actor_id": "user-alba",
+    "content_hashes": {
+      "proposal": "3333333333333333333333333333333333333333333333333333333333333333"
+    },
+    "created_at": "2030-01-02T12:00:00Z",
+    "protected_payload_reference": null
+  }
+}
