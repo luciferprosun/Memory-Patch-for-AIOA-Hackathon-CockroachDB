@@ -17,7 +17,8 @@
 - `Step 0B`: `COMPLETE AND PUSHED` — commit `870145c78d9e6bf02e318bdca2327eb808f381b7`.
 - `Step 0C`: przyjęty jako ukończony baseline architektoniczny z roadmapy źródłowej.
 - `Step 1`: `COMPLETE AND PUSHED` — commit `3f6d341bc3ceb964a2b25d4913a0695595dbd7d0`.
-- Dokładny następny krok: `Step 2 — Kernel Contract Re-Audit and Authority Invariant Closure 1A`.
+- `Step 2`: `COMPLETE AND PUSHED` — commit `807b459b3d0270bd84c5590df6e7abf3e4f9842b`.
+- Dokładny następny krok: `Step 3 — CockroachDB v26.2 Capability Spike and Version Pin 1A`.
 
 ## Zasada prowadzenia prac
 
@@ -59,8 +60,9 @@ Zamrozić neutralny domenowo Kernel Core, HAT SDK, Personal Memory HAT-y, typy s
 - [x] **Step 1 — Knowledge Kernel Contracts, HAT SDK and Personal Memory HAT Slots Foundation 1A**
   Kontrakty Kernel Core, Knowledge HAT, Personal Memory HAT, trust hierarchy, quota policy, scope dimensions, state machines, hashing, JSON schemas, ADR-y i testy standard-library-only.
 
-- [ ] **Step 2 — Kernel Contract Re-Audit and Authority Invariant Closure 1A**
+- [x] **Step 2 — Kernel Contract Re-Audit and Authority Invariant Closure 1A**
   Audyt implementacji Stepu 1: brak model authority, brak execution authority HAT-u, brak cross-user path, brak bezpośredniego `PROPOSED → ACTIVE`, deterministyczne hashe i poprawne granice Critic Loop.
+  Zamknięcie: commit `807b459b3d0270bd84c5590df6e7abf3e4f9842b`; 211/211 testów; contract validator PASS; utwardzone granice authority, isolation, binding, mutability i schema. [Kanoniczny rekord zamknięcia](../audits/STEP_2_KERNEL_CONTRACT_REAUDIT_CLOSURE_1A.md).
 
 ### Gate fazy 1
 
