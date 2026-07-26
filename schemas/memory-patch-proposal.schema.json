@@ -41,7 +41,8 @@
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "minLength": 1
     },
     "target_scope": {
       "enum": [
@@ -54,13 +55,15 @@
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "minLength": 1
     },
     "target_personal_memory_space_id": {
       "type": [
         "string",
         "null"
-      ]
+      ],
+      "minLength": 1
     },
     "origin": {
       "enum": [
@@ -85,7 +88,7 @@
     "scope_dimensions": {
       "type": "array",
       "items": {
-        "type": "object"
+        "$ref": "#/$defs/scopeDimension"
       }
     },
     "valid_from": {
@@ -149,6 +152,57 @@
     "content_hash": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "$defs": {
+    "scopeDimension": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "value",
+        "value_type",
+        "comparison_mode",
+        "source",
+        "required"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {},
+        "value_type": {
+          "enum": [
+            "STRING",
+            "INTEGER",
+            "NUMBER",
+            "BOOLEAN",
+            "STRING_SET",
+            "TIMESTAMP",
+            "SEMVER",
+            "JSON"
+          ]
+        },
+        "comparison_mode": {
+          "enum": [
+            "EXACT",
+            "IN_SET",
+            "HIERARCHICAL",
+            "RANGE",
+            "SEMVER",
+            "TIMESTAMP",
+            "CUSTOM_HAT_RULE"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required": {
+          "type": "boolean"
+        }
+      }
     }
   }
 }

@@ -58,6 +58,9 @@ class ModelExperienceEvent:
             raise ContractValidationError(
                 "tenant and user scope must be both present or both absent"
             )
+        if self.tenant_id is not None:
+            require_non_empty(self.tenant_id, "tenant_id")
+            require_non_empty(self.user_id or "", "user_id")
         if self.personal_memory_space_id is not None:
             if self.tenant_id is None or self.user_id is None:
                 raise ContractValidationError(

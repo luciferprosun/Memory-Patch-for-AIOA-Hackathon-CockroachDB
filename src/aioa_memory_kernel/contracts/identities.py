@@ -12,7 +12,12 @@ from .enums import (
     KnowledgeRoute,
 )
 from .exceptions import ContractValidationError, OwnershipViolation
-from .serialization import ensure_utc, require_enum_member, require_non_empty
+from .serialization import (
+    ensure_utc,
+    freeze_string_tuple,
+    require_enum_member,
+    require_non_empty,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +76,14 @@ class RoutingDecision:
         require_enum_member(
             self.knowledge_route, KnowledgeRoute, "knowledge_route"
         )
+        object.__setattr__(
+            self,
+            "reason_codes",
+            freeze_string_tuple(
+                self.reason_codes,
+                "reason_codes",
+            ),
+        )
         if self.knowledge_route in {
             KnowledgeRoute.HAT_ASSIST,
             KnowledgeRoute.HAT_ENFORCE,
@@ -82,8 +95,6 @@ class RoutingDecision:
             )
         if not self.reason_codes:
             raise ContractValidationError("routing decision requires a reason code")
-        if any(not reason.strip() for reason in self.reason_codes):
-            raise ContractValidationError("routing reason codes must be non-empty")
         object.__setattr__(
             self, "decided_at", ensure_utc(self.decided_at, "decided_at")
         )
@@ -101,9 +112,15 @@ class ActionPolicyDecision:
     def __post_init__(self) -> None:
         require_non_empty(self.kernel_run_id, "kernel_run_id")
         require_enum_member(self.action_policy, ActionPolicy, "action_policy")
-        if not self.reason_codes or any(
-            not reason.strip() for reason in self.reason_codes
-        ):
+        object.__setattr__(
+            self,
+            "reason_codes",
+            freeze_string_tuple(
+                self.reason_codes,
+                "reason_codes",
+            ),
+        )
+        if not self.reason_codes:
             raise ContractValidationError(
                 "action policy decision requires non-empty reason codes"
             )
@@ -115,10 +132,14 @@ class ActionPolicyDecision:
 def require_tenant_context(tenant_id: str | None, user_id: str | None) -> None:
     """Fail closed when either part of a private ownership context is absent."""
 
-    if not tenant_id or not tenant_id.strip():
-        raise OwnershipViolation("tenant context is required")
-    if not user_id or not user_id.strip():
-        raise OwnershipViolation("user context is required")
+    try:
+        require_non_empty(tenant_id, "tenant context")  # type: ignore[arg-type]
+    except ContractValidationError as exc:
+        raise OwnershipViolation("tenant context is required") from exc
+    try:
+        require_non_empty(user_id, "user context")  # type: ignore[arg-type]
+    except ContractValidationError as exc:
+        raise OwnershipViolation("user context is required") from exc
 
 
 def verify_ownership(
@@ -135,8 +156,15 @@ def verify_ownership(
         raise OwnershipViolation("cross-tenant access is forbidden")
     if ownership.user_id != user_id:
         raise OwnershipViolation("cross-user access is forbidden")
-    if not personal_memory_space_id or not personal_memory_space_id.strip():
-        raise OwnershipViolation("personal memory space context is required")
+    try:
+        require_non_empty(
+            personal_memory_space_id,  # type: ignore[arg-type]
+            "personal memory space context",
+        )
+    except ContractValidationError as exc:
+        raise OwnershipViolation(
+            "personal memory space context is required"
+        ) from exc
     if ownership.personal_memory_space_id != personal_memory_space_id:
         raise OwnershipViolation("personal memory space ownership mismatch")
 

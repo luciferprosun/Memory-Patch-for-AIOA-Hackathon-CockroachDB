@@ -40,6 +40,12 @@ de-identification when required, HAT scope, domain review, domain approval, and
 separate technical commitment are mandatory stages. User approval alone is
 insufficient.
 
+Step 1A defines only string references for future shared domain approval and
+commitment artifacts. Such references are not authority and cannot advance the
+current state machine into an approved or committed shared state. A later
+bounded step must introduce exact hash-bound shared approval and commitment
+contracts before those transitions can be enabled.
+
 ## Defense in depth
 
 These application guards are necessary but are not a claim that database

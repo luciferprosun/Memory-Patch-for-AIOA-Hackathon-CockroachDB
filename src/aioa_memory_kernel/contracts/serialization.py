@@ -29,6 +29,7 @@ _MACHINE_PATH_PATTERNS = (
 )
 _SHA256_HEX = re.compile(r"^[0-9a-f]{64}$")
 _EnumT = TypeVar("_EnumT", bound=Enum)
+CONTRACT_SCHEMA_VERSION = "1.0.0"
 
 
 def require_non_empty(value: str, field_name: str) -> str:
@@ -60,6 +61,50 @@ def require_enum_member(
             f"{field_name} must be a {enum_type.__name__} member"
         )
     return value
+
+
+def require_schema_version(value: str) -> str:
+    """Reject missing, older, and future contract schema versions."""
+
+    require_non_empty(value, "schema_version")
+    if value != CONTRACT_SCHEMA_VERSION:
+        raise ContractValidationError(
+            f"unsupported contract schema_version {value!r}"
+        )
+    return value
+
+
+def freeze_typed_tuple(
+    value: Any,
+    expected_type: type[Any],
+    field_name: str,
+) -> tuple[Any, ...]:
+    """Copy a tuple/list and validate every nested contract element."""
+
+    if not isinstance(value, (tuple, list)):
+        raise ContractValidationError(f"{field_name} must be a tuple or list")
+    frozen = tuple(value)
+    if any(not isinstance(item, expected_type) for item in frozen):
+        raise ContractValidationError(
+            f"{field_name} items must be {expected_type.__name__} instances"
+        )
+    return frozen
+
+
+def freeze_string_tuple(
+    value: Any,
+    field_name: str,
+    *,
+    unique: bool = False,
+) -> tuple[str, ...]:
+    """Copy a tuple/list of non-empty strings with optional uniqueness."""
+
+    frozen = freeze_typed_tuple(value, str, field_name)
+    for item in frozen:
+        require_non_empty(item, f"{field_name} item")
+    if unique and len(frozen) != len(set(frozen)):
+        raise ContractValidationError(f"{field_name} items must be unique")
+    return frozen
 
 
 def ensure_utc(value: datetime, field_name: str = "timestamp") -> datetime:
@@ -249,20 +294,41 @@ def verify_canonical_hash(
 
 def approval_proof_hash(
     *,
+    approval_id: str,
+    proposal_id: str,
     proposal_hash: str,
+    tenant_id: str,
+    owner_user_id: str | None,
+    personal_memory_space_id: str | None,
     decision: str,
     approver_type: str,
     approver_id: str,
+    reason_code: str,
     decided_at: datetime,
 ) -> str:
-    """Bind an approval decision to an immutable proposal digest."""
+    """Bind every approval identity and scope field to the proposal digest."""
+
+    if owner_user_id is not None:
+        require_non_empty(owner_user_id, "owner_user_id")
+    if personal_memory_space_id is not None:
+        require_non_empty(
+            personal_memory_space_id, "personal_memory_space_id"
+        )
 
     return canonical_sha256(
         {
+            "contract_type": "MemoryPatchApproval",
+            "contract_version": CONTRACT_SCHEMA_VERSION,
+            "approval_id": require_non_empty(approval_id, "approval_id"),
+            "proposal_id": require_non_empty(proposal_id, "proposal_id"),
             "proposal_hash": require_sha256_hex(proposal_hash, "proposal_hash"),
+            "tenant_id": require_non_empty(tenant_id, "tenant_id"),
+            "owner_user_id": owner_user_id,
+            "personal_memory_space_id": personal_memory_space_id,
             "decision": require_non_empty(decision, "decision"),
             "approver_type": require_non_empty(approver_type, "approver_type"),
             "approver_id": require_non_empty(approver_id, "approver_id"),
+            "reason_code": require_non_empty(reason_code, "reason_code"),
             "decided_at": ensure_utc(decided_at, "decided_at"),
         }
     )

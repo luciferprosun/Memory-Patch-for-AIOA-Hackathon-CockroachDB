@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import datetime
 from types import MappingProxyType
 
@@ -10,12 +10,14 @@ from ..contracts.enums import ActorType, SharedPromotionState
 from ..contracts.exceptions import AuthorityViolation, ContractValidationError, InvalidTransition
 from ..contracts.patches import (
     SharedPromotionProposal,
+    _replace_shared_promotion_lifecycle,
     verify_shared_promotion_hash,
 )
 from ..contracts.serialization import (
     ensure_utc,
     require_enum_member,
     require_non_empty,
+    require_sha256_hex,
 )
 
 
@@ -65,8 +67,26 @@ class SharedPromotionTransitionRecord:
             self.shared_promotion_proposal_id,
             "shared_promotion_proposal_id",
         )
-        require_non_empty(self.proposal_hash_before, "proposal_hash_before")
-        require_non_empty(self.proposal_hash_after, "proposal_hash_after")
+        require_sha256_hex(self.proposal_hash_before, "proposal_hash_before")
+        require_sha256_hex(self.proposal_hash_after, "proposal_hash_after")
+        require_enum_member(
+            self.state_before,
+            SharedPromotionState,
+            "state_before",
+        )
+        require_enum_member(
+            self.state_after,
+            SharedPromotionState,
+            "state_after",
+        )
+        require_enum_member(self.actor_type, ActorType, "actor_type")
+        if not shared_promotion_transition_allowed(
+            self.state_before,
+            self.state_after,
+        ):
+            raise InvalidTransition(
+                "SharedPromotionTransitionRecord contains a forbidden edge"
+            )
         require_non_empty(self.actor_id, "actor_id")
         object.__setattr__(
             self,
@@ -129,12 +149,20 @@ def transition_shared_promotion(
                 "personal user approval alone is insufficient for sharing"
             )
         require_non_empty(domain_approval_id or "", "domain_approval_id")
+        raise AuthorityViolation(
+            "a domain approval identifier is only a future reference; "
+            "a hash-bound shared approval contract is not implemented"
+        )
     if target_state is SharedPromotionState.SHARED_PATCH_COMMITTED:
         if actor_type is not ActorType.COMMIT_SERVICE:
             raise AuthorityViolation(
                 "shared commitment requires the technical commit service"
             )
         require_non_empty(shared_commit_id or "", "shared_commit_id")
+        raise AuthorityViolation(
+            "a shared commit identifier is only a future reference; "
+            "a hash-bound shared commitment contract is not implemented"
+        )
     if target_state is SharedPromotionState.REJECTED and actor_type not in {
         ActorType.USER,
         ActorType.HUMAN_REVIEWER,
@@ -165,7 +193,7 @@ def transition_shared_promotion(
         updates["domain_approval_id"] = domain_approval_id
     if shared_commit_id is not None:
         updates["shared_commit_id"] = shared_commit_id
-    updated = replace(proposal, **updates)
+    updated = _replace_shared_promotion_lifecycle(proposal, **updates)
     transition = SharedPromotionTransitionRecord(
         shared_promotion_proposal_id=proposal.shared_promotion_proposal_id,
         proposal_hash_before=proposal.proposal_hash,

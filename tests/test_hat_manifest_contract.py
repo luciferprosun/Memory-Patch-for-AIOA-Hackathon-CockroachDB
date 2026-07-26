@@ -5,7 +5,7 @@ import unittest
 from dataclasses import fields, replace
 from pathlib import Path
 
-from _support import REPOSITORY_ROOT, make_manifest, make_scope
+from tests._support import REPOSITORY_ROOT, make_manifest, make_scope
 from aioa_memory_kernel.contracts import (
     AuthorityViolation,
     ContractValidationError,

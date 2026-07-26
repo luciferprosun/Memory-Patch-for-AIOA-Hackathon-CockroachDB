@@ -14,7 +14,9 @@
     "created_at",
     "updated_at",
     "model_binding_ids",
-    "quota_policy"
+    "export_requested_at",
+    "deletion_requested_at",
+    "deleted_at"
   ],
   "properties": {
     "schema_version": {
@@ -65,9 +67,6 @@
         "minLength": 1
       }
     },
-    "quota_policy": {
-      "$ref": "#/$defs/quotaPolicy"
-    },
     "export_requested_at": {
       "type": [
         "string",
@@ -88,77 +87,6 @@
         "null"
       ],
       "format": "date-time"
-    }
-  },
-  "$defs": {
-    "quotaPolicy": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "maximum_total_spaces": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 0
-        },
-        "maximum_active_spaces": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 0
-        },
-        "maximum_archived_spaces": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 0
-        },
-        "maximum_bytes": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 0
-        },
-        "maximum_personal_sources": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 0
-        },
-        "maximum_active_memory_patches": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 0
-        },
-        "maximum_session_memory_bytes": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 0
-        },
-        "maximum_ingestion_jobs": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 0
-        },
-        "maximum_embedding_or_index_bytes": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "minimum": 0
-        }
-      }
     }
   }
 }

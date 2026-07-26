@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from _support import (
+from tests._support import (
     LATER,
     MODEL_A,
     NOW,

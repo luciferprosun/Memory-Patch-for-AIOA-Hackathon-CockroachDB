@@ -1,11 +1,20 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import replace
 from datetime import timedelta
 
-from _support import NOW, SPACE_A, TENANT_A, USER_A, make_evidence, ownership_a
+from tests._support import (
+    NOW,
+    SPACE_A,
+    TENANT_A,
+    USER_A,
+    make_evidence,
+    ownership_a,
+)
 from aioa_memory_kernel.contracts import (
     ContractValidationError,
+    CONTRACT_SCHEMA_VERSION,
     EvidenceItem,
     MemoryConflictType,
     MemoryContentKind,
@@ -37,6 +46,7 @@ def memory_item(
     if content is None:
         content = {"statement": f"Synthetic {item_id}"}
     return MemoryItem(
+        schema_version=CONTRACT_SCHEMA_VERSION,
         memory_item_id=item_id,
         visibility=MemoryVisibility.PERSONAL,
         trust_class=trust,
@@ -131,9 +141,10 @@ class MemoryTrustPrecedenceTests(unittest.TestCase):
     def test_stale_personal_memory_is_excluded_and_flagged(self) -> None:
         stale = memory_item(
             item_id="stale",
-            trust=MemoryTrustClass.PERSONAL_VERIFIED_PATCH,
+            trust=MemoryTrustClass.USER_ASSERTED_MEMORY,
             valid_until=NOW - timedelta(seconds=1),
         )
+        stale = replace(stale, active=True)
         kwargs = {
             "at_time": NOW,
             "tenant_id": TENANT_A,

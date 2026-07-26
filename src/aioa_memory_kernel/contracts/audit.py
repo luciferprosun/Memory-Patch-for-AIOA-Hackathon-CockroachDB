@@ -4,16 +4,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Mapping
+from typing import Mapping
 
 from .enums import ActorType
 from .exceptions import ContractValidationError, IntegrityError
 from .serialization import (
+    CONTRACT_SCHEMA_VERSION,
     canonical_sha256,
     ensure_utc,
     freeze_json,
     require_enum_member,
     require_non_empty,
+    require_schema_version,
     require_sha256_hex,
     verify_canonical_hash,
 )
@@ -23,6 +25,7 @@ from .serialization import (
 class AuditEvent:
     """Metadata-only audit record suitable for future at-least-once export."""
 
+    schema_version: str
     audit_event_id: str
     tenant_id: str
     user_id: str | None
@@ -43,6 +46,7 @@ class AuditEvent:
     event_hash: str = field(init=False)
 
     def __post_init__(self) -> None:
+        require_schema_version(self.schema_version)
         for field_name in (
             "audit_event_id",
             "tenant_id",
@@ -52,6 +56,10 @@ class AuditEvent:
             "actor_id",
         ):
             require_non_empty(getattr(self, field_name), field_name)
+        for field_name in ("user_id", "kernel_run_id"):
+            value = getattr(self, field_name)
+            if value is not None:
+                require_non_empty(value, field_name)
         require_enum_member(self.actor_type, ActorType, "actor_type")
         if (
             not isinstance(self.sequence_number, int)
@@ -73,6 +81,10 @@ class AuditEvent:
             raise ContractValidationError(
                 "audit metadata requires at least one content hash"
             )
+        if not isinstance(self.content_hashes, Mapping):
+            raise ContractValidationError(
+                "content_hashes must be a mapping"
+            )
         for name, digest in self.content_hashes.items():
             require_non_empty(name, "content hash label")
             require_sha256_hex(digest, f"content hash {name}")
@@ -89,6 +101,10 @@ class AuditEvent:
                     "audit payload must be referenced, not embedded"
                 )
         if self.personal_memory_space_id is not None:
+            if self.user_id is None:
+                raise ContractValidationError(
+                    "personal audit scope requires user_id"
+                )
             require_non_empty(
                 self.personal_memory_space_id, "personal_memory_space_id"
             )
@@ -195,6 +211,7 @@ def build_audit_event(
             raise ContractValidationError("audit sequence must be contiguous")
         previous_hash = previous_event.event_hash
     return AuditEvent(
+        schema_version=CONTRACT_SCHEMA_VERSION,
         audit_event_id=audit_event_id,
         tenant_id=tenant_id,
         user_id=user_id,

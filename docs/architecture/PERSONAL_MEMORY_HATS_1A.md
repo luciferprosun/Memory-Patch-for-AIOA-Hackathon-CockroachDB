@@ -34,7 +34,7 @@ resources.
 
 Allocation checks ownership and quota, then creates an empty, unnamed,
 unbound, inert space in `EMPTY`. Quota rejection occurs before the pool is
-changed.
+changed. Quota policy belongs to the pool rather than to each serialized space.
 
 ## Lifecycle
 
@@ -54,6 +54,12 @@ The graph also permits bounded side transitions documented in code:
 configured or active spaces may archive or request deletion; suspended spaces
 may restore to active; archived spaces may restore to configured; and deletion
 completion occurs only from `DELETED_PENDING`. `DELETED` is terminal.
+
+`EMPTY` is the only lifecycle state accepted by the public constructor.
+Configured and later states are produced only by validated state-machine
+transitions. Owner, tenant, space, model-binding, and nested collection inputs
+are copied into immutable contract values so mutation of a caller-owned list
+cannot change a validated space or pool.
 
 Naming/configuration, activation, suspension, restoration, archival, export
 request, deletion request, deletion completion, and model binding all require

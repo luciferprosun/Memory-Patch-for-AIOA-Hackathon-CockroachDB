@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass, replace
 from datetime import datetime
 from typing import Any
 
@@ -24,8 +24,11 @@ from .scope import ScopeDimension, scope_interval_is_valid
 from .serialization import (
     ensure_utc,
     freeze_json,
+    freeze_string_tuple,
+    freeze_typed_tuple,
     require_enum_member,
     require_non_empty,
+    require_schema_version,
 )
 
 
@@ -52,6 +55,7 @@ _ALLOWED_PREFERENCE_KEYS = frozenset(
         "workflow_preference",
     }
 )
+_PERSONAL_MEMORY_LIFECYCLE_PERMIT = object()
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,6 +108,7 @@ class PersonalHatQuotaUsage:
 class PersonalMemorySpace:
     """Data namespace marketed as a Personal Memory HAT; never executable code."""
 
+    schema_version: str
     personal_memory_space_id: str
     tenant_id: str
     user_id: str
@@ -115,14 +120,33 @@ class PersonalMemorySpace:
     export_requested_at: datetime | None = None
     deletion_requested_at: datetime | None = None
     deleted_at: datetime | None = None
+    _lifecycle_permit: InitVar[object | None] = None
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, _lifecycle_permit: object | None) -> None:
+        require_schema_version(self.schema_version)
         require_non_empty(
             self.personal_memory_space_id, "personal_memory_space_id"
         )
         require_non_empty(self.tenant_id, "tenant_id")
         require_non_empty(self.user_id, "user_id")
         require_enum_member(self.state, PersonalMemorySpaceState, "state")
+        if (
+            self.state is not PersonalMemorySpaceState.EMPTY
+            and _lifecycle_permit is not _PERSONAL_MEMORY_LIFECYCLE_PERMIT
+        ):
+            raise ContractValidationError(
+                "non-empty Personal Memory HAT states require the validated "
+                "state-machine transition API"
+            )
+        object.__setattr__(
+            self,
+            "model_binding_ids",
+            freeze_string_tuple(
+                self.model_binding_ids,
+                "model_binding_ids",
+                unique=True,
+            ),
+        )
         object.__setattr__(
             self, "created_at", ensure_utc(self.created_at, "created_at")
         )
@@ -145,8 +169,6 @@ class PersonalMemorySpace:
             PersonalMemorySpaceState.ARCHIVED,
         }:
             require_non_empty(self.display_name or "", "display_name")
-        if len(set(self.model_binding_ids)) != len(self.model_binding_ids):
-            raise ContractValidationError("model bindings must be unique")
         for field_name in (
             "export_requested_at",
             "deletion_requested_at",
@@ -194,6 +216,19 @@ class PersonalMemoryPool:
     def __post_init__(self) -> None:
         require_non_empty(self.tenant_id, "tenant_id")
         require_non_empty(self.user_id, "user_id")
+        if not isinstance(self.quota_policy, PersonalHatQuotaPolicy):
+            raise ContractValidationError(
+                "quota_policy must be a PersonalHatQuotaPolicy"
+            )
+        object.__setattr__(
+            self,
+            "spaces",
+            freeze_typed_tuple(
+                self.spaces,
+                PersonalMemorySpace,
+                "spaces",
+            ),
+        )
         ids = [space.personal_memory_space_id for space in self.spaces]
         if len(ids) != len(set(ids)):
             raise ContractValidationError("personal memory space IDs must be unique")
@@ -209,6 +244,7 @@ class PersonalMemoryPool:
 class MemoryItem:
     """Governed memory record; it never carries executable authority."""
 
+    schema_version: str
     memory_item_id: str
     visibility: MemoryVisibility
     trust_class: MemoryTrustClass
@@ -222,10 +258,11 @@ class MemoryItem:
     valid_from: datetime | None = None
     valid_until: datetime | None = None
     expires_at: datetime | None = None
-    active: bool = True
+    active: bool = False
     revoked: bool = False
 
     def __post_init__(self) -> None:
+        require_schema_version(self.schema_version)
         require_non_empty(self.memory_item_id, "memory_item_id")
         require_enum_member(self.visibility, MemoryVisibility, "visibility")
         require_enum_member(
@@ -234,7 +271,54 @@ class MemoryItem:
         require_enum_member(
             self.content_kind, MemoryContentKind, "content_kind"
         )
+        if self.active is not True and self.active is not False:
+            raise ContractValidationError("active must be a boolean")
+        if self.revoked is not True and self.revoked is not False:
+            raise ContractValidationError("revoked must be a boolean")
+        if (
+            self.active
+            and self.trust_class
+            in {
+                MemoryTrustClass.PERSONAL_VERIFIED_PATCH,
+                MemoryTrustClass.SHARED_HAT_VERIFIED_MEMORY,
+            }
+        ):
+            raise ContractValidationError(
+                "verified MemoryItem activation requires a future "
+                "approval-and-commit-bound materialization contract"
+            )
+        if self.source_patch_id is not None:
+            require_non_empty(self.source_patch_id, "source_patch_id")
+        if (
+            self.trust_class
+            in {
+                MemoryTrustClass.PERSONAL_VERIFIED_PATCH,
+                MemoryTrustClass.SHARED_HAT_VERIFIED_MEMORY,
+            }
+            and self.source_patch_id is None
+        ):
+            raise ContractValidationError(
+                "verified memory requires its source_patch_id"
+            )
         object.__setattr__(self, "content", freeze_json(self.content))
+        object.__setattr__(
+            self,
+            "scope_dimensions",
+            freeze_typed_tuple(
+                self.scope_dimensions,
+                ScopeDimension,
+                "scope_dimensions",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "evidence_references",
+            freeze_string_tuple(
+                self.evidence_references,
+                "evidence_references",
+                unique=True,
+            ),
+        )
         object.__setattr__(
             self, "created_at", ensure_utc(self.created_at, "created_at")
         )
@@ -246,16 +330,14 @@ class MemoryItem:
                 )
         if not scope_interval_is_valid(self.valid_from, self.valid_until):
             raise ContractValidationError("memory validity interval is inverted")
+        if self.expires_at is not None and self.expires_at <= self.created_at:
+            raise ContractValidationError(
+                "memory expiry must follow creation"
+            )
         scope_names = [dimension.name for dimension in self.scope_dimensions]
         if len(scope_names) != len(set(scope_names)):
             raise ContractValidationError(
                 "memory scope dimension names must be unique"
-            )
-        if any(
-            not reference.strip() for reference in self.evidence_references
-        ) or len(self.evidence_references) != len(set(self.evidence_references)):
-            raise ContractValidationError(
-                "memory evidence references must be non-empty and unique"
             )
         if (
             self.visibility
@@ -302,6 +384,13 @@ class MemoryConflict:
     resolved_by_precedence: bool
 
     def __post_init__(self) -> None:
+        if (
+            self.resolved_by_precedence is not True
+            and self.resolved_by_precedence is not False
+        ):
+            raise ContractValidationError(
+                "resolved_by_precedence must be a boolean"
+            )
         require_non_empty(
             self.higher_or_primary_item_id, "higher_or_primary_item_id"
         )
@@ -326,6 +415,19 @@ def trust_rank(trust_class: MemoryTrustClass) -> int:
     """Return the deterministic factual precedence rank."""
 
     return _TRUST_RANK[trust_class]
+
+
+def _replace_personal_memory_space(
+    space: PersonalMemorySpace,
+    **updates: object,
+) -> PersonalMemorySpace:
+    """Internal constructor used only after lifecycle and owner validation."""
+
+    return replace(
+        space,
+        **updates,
+        _lifecycle_permit=_PERSONAL_MEMORY_LIFECYCLE_PERMIT,
+    )
 
 
 def compare_memory_trust(

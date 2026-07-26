@@ -210,17 +210,9 @@
       "model-binding-a",
       "model-binding-b"
     ],
-    "quota_policy": {
-      "maximum_total_spaces": 4,
-      "maximum_active_spaces": 2,
-      "maximum_archived_spaces": 4,
-      "maximum_bytes": 1048576,
-      "maximum_personal_sources": 10,
-      "maximum_active_memory_patches": 20,
-      "maximum_session_memory_bytes": 65536,
-      "maximum_ingestion_jobs": 1,
-      "maximum_embedding_or_index_bytes": 1048576
-    }
+    "export_requested_at": null,
+    "deletion_requested_at": null,
+    "deleted_at": null
   },
   "personal_patch": {
     "schema_version": "1.0.0",
@@ -296,7 +288,8 @@
         "claim_id": "claim-synthetic-1",
         "draft_id": "draft-synthetic-v1",
         "statement": "Synthetic runtime compatibility claim.",
-        "claim_category": "version-compatibility"
+        "claim_category": "version-compatibility",
+        "scope_dimensions": []
       }
     ],
     "ordered_evidence_items": [
@@ -304,8 +297,17 @@
         "evidence_id": "evidence-synthetic-1",
         "source_id": "source-runtime-guide",
         "source_version_id": "runtime-guide-v2",
+        "citation_reference": "synthetic:runtime-guide-v2",
         "content_hash": "4444444444444444444444444444444444444444444444444444444444444444",
-        "trust_class": "CANONICAL_SOURCE_EVIDENCE"
+        "trust_class": "CANONICAL_SOURCE_EVIDENCE",
+        "authority_rank": 10,
+        "scope_dimensions": [],
+        "retrieved_at": "2030-02-02T12:00:00Z",
+        "valid_from": "2030-02-01T00:00:00Z",
+        "valid_until": null,
+        "metadata": {
+          "fixture": "synthetic"
+        }
       }
     ],
     "source_version_ids": [

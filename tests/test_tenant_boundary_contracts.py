@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from datetime import timedelta
 
-from _support import (
+from tests._support import (
     MODEL_A,
     NOW,
     RUN_A,
@@ -17,6 +17,7 @@ from _support import (
 )
 from aioa_memory_kernel.contracts import (
     ActorType,
+    CONTRACT_SCHEMA_VERSION,
     ContractValidationError,
     CorrectionCandidate,
     CorrectionCandidateState,
@@ -36,9 +37,10 @@ from aioa_memory_kernel.contracts import (
 
 def personal_item(*, revoked: bool = False) -> MemoryItem:
     return MemoryItem(
+        schema_version=CONTRACT_SCHEMA_VERSION,
         memory_item_id="personal-item-1",
         visibility=MemoryVisibility.PERSONAL,
-        trust_class=MemoryTrustClass.PERSONAL_VERIFIED_PATCH,
+        trust_class=MemoryTrustClass.USER_ASSERTED_MEMORY,
         content_kind=MemoryContentKind.FACTUAL,
         content={"statement": "Synthetic private fact."},
         scope_dimensions=(),
@@ -47,6 +49,7 @@ def personal_item(*, revoked: bool = False) -> MemoryItem:
         ownership=ownership_a(),
         valid_from=NOW - timedelta(days=1),
         valid_until=NOW + timedelta(days=1),
+        active=True,
         revoked=revoked,
     )
 
@@ -208,6 +211,7 @@ class TenantBoundaryContractTests(unittest.TestCase):
             ContractValidationError, "requires explicit ownership"
         ):
             MemoryItem(
+                schema_version=CONTRACT_SCHEMA_VERSION,
                 memory_item_id="orphan-private-item",
                 visibility=MemoryVisibility.PERSONAL,
                 trust_class=MemoryTrustClass.USER_ASSERTED_MEMORY,
@@ -224,6 +228,7 @@ class TenantBoundaryContractTests(unittest.TestCase):
             ContractValidationError, "cannot carry private-space ownership"
         ):
             MemoryItem(
+                schema_version=CONTRACT_SCHEMA_VERSION,
                 memory_item_id="invalid-shared-item",
                 visibility=MemoryVisibility.SHARED,
                 trust_class=MemoryTrustClass.SHARED_HAT_VERIFIED_MEMORY,
@@ -233,6 +238,7 @@ class TenantBoundaryContractTests(unittest.TestCase):
                 evidence_references=("evidence-1",),
                 created_at=NOW,
                 ownership=ownership_a(),
+                source_patch_id="shared-patch-1",
             )
 
 

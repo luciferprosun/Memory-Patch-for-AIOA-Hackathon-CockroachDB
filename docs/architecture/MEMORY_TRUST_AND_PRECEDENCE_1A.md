@@ -21,6 +21,14 @@ Canonical evidence is deliberately not a `MemoryItem` and is not a valid
 Memory Patch target. A future controlled ingestion/publication pipeline is the
 only place that may create canonical source evidence.
 
+`MemoryItem` defaults to inactive. This contract baseline does not yet
+materialize an active `PERSONAL_VERIFIED_PATCH` or
+`SHARED_HAT_VERIFIED_MEMORY` item: direct activation of either trust class is
+rejected. A later bounded application/persistence step must materialize such an
+item from the exact approved and committed patch binding. Lower-trust
+user-asserted, session, and model-experience records remain non-authoritative
+even when an application explicitly marks them available for retrieval.
+
 ## Explicit conflicts
 
 Conflict classes are no conflict, lower-trust conflict, same-trust conflict,

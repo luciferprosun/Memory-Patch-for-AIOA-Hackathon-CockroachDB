@@ -13,7 +13,13 @@ from .exceptions import AuthorityViolation, ContractValidationError
 from .patches import MemoryPatchProposal
 from .personal_memory import MemoryConflict
 from .scope import HatScopeDimensionDefinition, ScopeDimension
-from .serialization import freeze_json, require_enum_member, require_non_empty
+from .serialization import (
+    freeze_json,
+    freeze_string_tuple,
+    freeze_typed_tuple,
+    require_enum_member,
+    require_non_empty,
+)
 
 
 _IDENTIFIER = re.compile(r"^[a-z0-9][a-z0-9._-]*$")
@@ -129,13 +135,43 @@ class HatManifest:
             raise ContractValidationError(
                 "hat_id must use lowercase letters, digits, dots, underscores, or hyphens"
             )
-        if not self.domain_ids or len(set(self.domain_ids)) != len(self.domain_ids):
+        object.__setattr__(
+            self,
+            "domain_ids",
+            freeze_string_tuple(self.domain_ids, "domain_ids", unique=True),
+        )
+        object.__setattr__(
+            self,
+            "supported_languages",
+            freeze_string_tuple(
+                self.supported_languages,
+                "supported_languages",
+                unique=True,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "scope_dimension_definitions",
+            freeze_typed_tuple(
+                self.scope_dimension_definitions,
+                HatScopeDimensionDefinition,
+                "scope_dimension_definitions",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "capabilities",
+            freeze_string_tuple(
+                self.capabilities,
+                "capabilities",
+                unique=True,
+            ),
+        )
+        if not self.domain_ids:
             raise ContractValidationError("domain_ids must be non-empty and unique")
         if any(not _IDENTIFIER.fullmatch(item) for item in self.domain_ids):
             raise ContractValidationError("domain_ids contain an invalid identifier")
-        if not self.supported_languages or len(
-            set(self.supported_languages)
-        ) != len(self.supported_languages):
+        if not self.supported_languages:
             raise ContractValidationError(
                 "supported_languages must be non-empty and unique"
             )
@@ -151,14 +187,10 @@ class HatManifest:
             raise ContractValidationError(
                 "scope_dimension_definitions must have unique names"
             )
-        if not self.capabilities or any(
-            not capability.strip() for capability in self.capabilities
-        ):
+        if not self.capabilities:
             raise ContractValidationError(
                 "capabilities must contain non-empty declarations"
             )
-        if len(set(self.capabilities)) != len(self.capabilities):
-            raise ContractValidationError("capabilities must be unique")
         for capability in self.capabilities:
             normalized = capability.upper()
             if any(

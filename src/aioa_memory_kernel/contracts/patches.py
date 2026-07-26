@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import InitVar, dataclass, field, replace
 from datetime import datetime
 from typing import Any
 
@@ -28,9 +28,12 @@ from .serialization import (
     approval_proof_hash,
     canonical_sha256,
     ensure_utc,
+    freeze_string_tuple,
+    freeze_typed_tuple,
     freeze_json,
     require_enum_member,
     require_non_empty,
+    require_schema_version,
     require_sha256_hex,
     verify_canonical_hash,
 )
@@ -52,12 +55,15 @@ NON_AUTHORITY_PROPOSERS = frozenset(
         ActorType.MODEL_VERIFIER,
     }
 )
+_MEMORY_PATCH_LIFECYCLE_PERMIT = object()
+_SHARED_PROMOTION_LIFECYCLE_PERMIT = object()
 
 
 @dataclass(frozen=True, slots=True)
 class MemoryPatchProposal:
     """Evidence-bound proposal whose origin never grants approval authority."""
 
+    schema_version: str
     proposal_id: str
     tenant_id: str
     owner_user_id: str | None
@@ -75,9 +81,11 @@ class MemoryPatchProposal:
     lifecycle_state: PatchState
     content_kind: MemoryContentKind
     created_at: datetime
+    _lifecycle_permit: InitVar[object | None] = None
     content_hash: str = field(init=False)
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, _lifecycle_permit: object | None) -> None:
+        require_schema_version(self.schema_version)
         require_non_empty(self.proposal_id, "proposal_id")
         require_non_empty(self.tenant_id, "tenant_id")
         require_enum_member(
@@ -100,8 +108,35 @@ class MemoryPatchProposal:
         require_enum_member(
             self.content_kind, MemoryContentKind, "content_kind"
         )
+        if (
+            self.lifecycle_state
+            not in {PatchState.DETECTED, PatchState.PROPOSED}
+            and _lifecycle_permit is not _MEMORY_PATCH_LIFECYCLE_PERMIT
+        ):
+            raise ContractValidationError(
+                "privileged Memory Patch states require the validated "
+                "state-machine transition API"
+            )
         object.__setattr__(
             self, "proposed_content", freeze_json(self.proposed_content)
+        )
+        object.__setattr__(
+            self,
+            "evidence_references",
+            freeze_string_tuple(
+                self.evidence_references,
+                "evidence_references",
+                unique=True,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "scope_dimensions",
+            freeze_typed_tuple(
+                self.scope_dimensions,
+                ScopeDimension,
+                "scope_dimensions",
+            ),
         )
         object.__setattr__(
             self, "created_at", ensure_utc(self.created_at, "created_at")
@@ -118,12 +153,6 @@ class MemoryPatchProposal:
         if len(scope_names) != len(set(scope_names)):
             raise ContractValidationError(
                 "patch scope dimension names must be unique"
-            )
-        if any(
-            not reference.strip() for reference in self.evidence_references
-        ) or len(self.evidence_references) != len(set(self.evidence_references)):
-            raise ContractValidationError(
-                "patch evidence references must be non-empty and unique"
             )
         if self.requested_trust_class is MemoryTrustClass.CANONICAL_SOURCE_EVIDENCE:
             raise ContractValidationError(
@@ -146,8 +175,16 @@ class MemoryPatchProposal:
                 raise ContractValidationError(
                     "a personal patch cannot request shared-HAT trust"
                 )
+            if self.approval_requirement is not ApprovalRequirement.OWNER:
+                raise ContractValidationError(
+                    "a Personal Memory HAT patch requires exact owner approval"
+                )
         elif self.target_scope is MemoryTargetScope.SHARED_KNOWLEDGE_HAT:
             require_non_empty(self.target_hat_id or "", "target_hat_id")
+            if self.owner_user_id is not None:
+                raise ContractValidationError(
+                    "shared Knowledge HAT patch cannot carry a private owner"
+                )
             if self.target_personal_memory_space_id is not None:
                 raise ContractValidationError(
                     "shared patch cannot target a Personal Memory HAT"
@@ -158,6 +195,13 @@ class MemoryPatchProposal:
             ):
                 raise ContractValidationError(
                     "shared patch must request shared-HAT verified trust"
+                )
+            if (
+                self.approval_requirement
+                is not ApprovalRequirement.DOMAIN_REVIEWER
+            ):
+                raise ContractValidationError(
+                    "shared Knowledge HAT patch requires domain reviewer approval"
                 )
         elif self.target_scope is MemoryTargetScope.SESSION:
             require_non_empty(self.owner_user_id or "", "owner_user_id")
@@ -175,6 +219,10 @@ class MemoryPatchProposal:
             ):
                 raise ContractValidationError(
                     "session patch must request SESSION_MEMORY trust"
+                )
+            if self.approval_requirement is not ApprovalRequirement.OWNER:
+                raise ContractValidationError(
+                    "session patch requires exact owner approval"
                 )
         if (
             self.content_kind is MemoryContentKind.MODEL_EXPERIENCE
@@ -215,8 +263,13 @@ class MemoryPatchProposal:
 
 @dataclass(frozen=True, slots=True)
 class MemoryPatchApproval:
-    """Human/owner decision cryptographically bound to proposal content."""
+    """Claimed human/owner decision digest-bound to exact proposal scope.
 
+    Construction validates the record shape and binding; it does not
+    authenticate the claimed actor.
+    """
+
+    schema_version: str
     approval_id: str
     proposal_id: str
     proposal_content_hash: str
@@ -231,6 +284,7 @@ class MemoryPatchApproval:
     approval_proof: str = field(init=False)
 
     def __post_init__(self) -> None:
+        require_schema_version(self.schema_version)
         for field_name in (
             "approval_id",
             "proposal_id",
@@ -248,10 +302,19 @@ class MemoryPatchApproval:
             raise AuthorityViolation(
                 f"{self.approver_type.value} cannot approve a Memory Patch"
             )
+        if (self.owner_user_id is None) != (
+            self.personal_memory_space_id is None
+        ):
+            raise ContractValidationError(
+                "approval owner and Personal Memory HAT scope must be "
+                "both present or both absent"
+            )
         if self.personal_memory_space_id is not None:
             require_non_empty(
                 self.personal_memory_space_id, "personal_memory_space_id"
             )
+        if self.owner_user_id is not None:
+            require_non_empty(self.owner_user_id, "owner_user_id")
         object.__setattr__(
             self, "decided_at", ensure_utc(self.decided_at, "decided_at")
         )
@@ -259,10 +322,16 @@ class MemoryPatchApproval:
             self,
             "approval_proof",
             approval_proof_hash(
+                approval_id=self.approval_id,
+                proposal_id=self.proposal_id,
                 proposal_hash=self.proposal_content_hash,
+                tenant_id=self.tenant_id,
+                owner_user_id=self.owner_user_id,
+                personal_memory_space_id=self.personal_memory_space_id,
                 decision=self.decision.value,
                 approver_type=self.approver_type.value,
                 approver_id=self.approver_id,
+                reason_code=self.reason_code,
                 decided_at=self.decided_at,
             ),
         )
@@ -270,8 +339,9 @@ class MemoryPatchApproval:
 
 @dataclass(frozen=True, slots=True)
 class MemoryPatchCommit:
-    """Technical commitment receipt; it is separate from human approval."""
+    """Claimed technical receipt, structurally separate from human approval."""
 
+    schema_version: str
     commit_id: str
     proposal_id: str
     proposal_content_hash: str
@@ -288,6 +358,7 @@ class MemoryPatchCommit:
     commit_hash: str = field(init=False)
 
     def __post_init__(self) -> None:
+        require_schema_version(self.schema_version)
         for field_name in (
             "commit_id",
             "proposal_id",
@@ -309,10 +380,19 @@ class MemoryPatchCommit:
             raise AuthorityViolation(
                 f"{self.actor_type.value} has no technical commit authority"
             )
+        if (self.owner_user_id is None) != (
+            self.personal_memory_space_id is None
+        ):
+            raise ContractValidationError(
+                "commit owner and Personal Memory HAT scope must be "
+                "both present or both absent"
+            )
         if self.personal_memory_space_id is not None:
             require_non_empty(
                 self.personal_memory_space_id, "personal_memory_space_id"
             )
+        if self.owner_user_id is not None:
+            require_non_empty(self.owner_user_id, "owner_user_id")
         if self.storage_class is not StorageClass.CRDB_TRANSACTIONAL:
             raise ContractValidationError(
                 "active patch commitment is future transactional state, "
@@ -332,6 +412,7 @@ class MemoryPatchCommit:
 class SharedPromotionProposal:
     """Separate review object; the originating personal patch is unchanged."""
 
+    schema_version: str
     shared_promotion_proposal_id: str
     originating_personal_patch_id: str
     originating_personal_patch_hash: str
@@ -351,9 +432,11 @@ class SharedPromotionProposal:
     state: SharedPromotionState
     created_at: datetime
     updated_at: datetime
+    _lifecycle_permit: InitVar[object | None] = None
     proposal_hash: str = field(init=False)
 
-    def __post_init__(self) -> None:
+    def __post_init__(self, _lifecycle_permit: object | None) -> None:
+        require_schema_version(self.schema_version)
         for field_name in (
             "shared_promotion_proposal_id",
             "originating_personal_patch_id",
@@ -379,6 +462,36 @@ class SharedPromotionProposal:
         )
         require_enum_member(self.state, SharedPromotionState, "state")
         if (
+            self.state is not SharedPromotionState.SHARED_PROMOTION_PROPOSED
+            and _lifecycle_permit is not _SHARED_PROMOTION_LIFECYCLE_PERMIT
+        ):
+            raise ContractValidationError(
+                "reviewed or committed shared-promotion states require the "
+                "validated state-machine transition API"
+            )
+        if not isinstance(self.independent_evidence_validated, bool):
+            raise ContractValidationError(
+                "independent_evidence_validated must be a boolean"
+            )
+        object.__setattr__(
+            self,
+            "independent_evidence_references",
+            freeze_string_tuple(
+                self.independent_evidence_references,
+                "independent_evidence_references",
+                unique=True,
+            ),
+        )
+        object.__setattr__(
+            self,
+            "hat_scope_dimensions",
+            freeze_typed_tuple(
+                self.hat_scope_dimensions,
+                ScopeDimension,
+                "hat_scope_dimensions",
+            ),
+        )
+        if (
             self.shared_promotion_proposal_id
             == self.originating_personal_patch_id
         ):
@@ -401,6 +514,25 @@ class SharedPromotionProposal:
                 )
         if not scope_interval_is_valid(self.valid_from, self.valid_until):
             raise ContractValidationError("promotion validity interval is inverted")
+        if (
+            self.domain_approval_id is not None
+            and self.state
+            not in {
+                SharedPromotionState.APPROVED_FOR_SHARED,
+                SharedPromotionState.SHARED_PATCH_COMMITTED,
+            }
+        ):
+            raise ContractValidationError(
+                "advisory shared-promotion states cannot carry domain approval"
+            )
+        if (
+            self.shared_commit_id is not None
+            and self.state
+            is not SharedPromotionState.SHARED_PATCH_COMMITTED
+        ):
+            raise ContractValidationError(
+                "uncommitted shared-promotion states cannot carry a commit"
+            )
         if (
             self.state
             in {
@@ -450,6 +582,8 @@ class SharedPromotionProposal:
             )
         if self.shared_commit_id is not None:
             require_non_empty(self.shared_commit_id, "shared_commit_id")
+        if self.domain_approval_id is not None:
+            require_non_empty(self.domain_approval_id, "domain_approval_id")
         object.__setattr__(
             self,
             "proposal_hash",
@@ -480,6 +614,15 @@ def verify_approval_binding(
 ) -> None:
     """Validate proposal identity, ownership, and proof binding."""
 
+    if not isinstance(proposal, MemoryPatchProposal):
+        raise ContractValidationError(
+            "proposal must be a MemoryPatchProposal"
+        )
+    if not isinstance(approval, MemoryPatchApproval):
+        raise ContractValidationError(
+            "approval must be a MemoryPatchApproval"
+        )
+    verify_memory_patch_proposal_hash(proposal)
     if approval.proposal_id != proposal.proposal_id:
         raise ContractValidationError("approval references another proposal")
     if approval.proposal_content_hash != proposal.content_hash:
@@ -487,7 +630,11 @@ def verify_approval_binding(
     if approval.tenant_id != proposal.tenant_id:
         raise ContractValidationError("approval tenant mismatch")
     if (
-        proposal.target_scope is MemoryTargetScope.USER_PERSONAL_HAT
+        proposal.target_scope
+        in {
+            MemoryTargetScope.USER_PERSONAL_HAT,
+            MemoryTargetScope.SESSION,
+        }
         and (
             approval.owner_user_id != proposal.owner_user_id
             or approval.personal_memory_space_id
@@ -495,13 +642,29 @@ def verify_approval_binding(
         )
     ):
         raise ContractValidationError("personal patch approval owner mismatch")
+    if (
+        proposal.target_scope is MemoryTargetScope.SHARED_KNOWLEDGE_HAT
+        and (
+            approval.owner_user_id is not None
+            or approval.personal_memory_space_id is not None
+        )
+    ):
+        raise ContractValidationError(
+            "shared patch approval cannot carry private ownership"
+        )
     if approval.decided_at < proposal.created_at:
         raise ContractValidationError("approval cannot precede proposal creation")
     expected = approval_proof_hash(
+        approval_id=approval.approval_id,
+        proposal_id=approval.proposal_id,
         proposal_hash=approval.proposal_content_hash,
+        tenant_id=approval.tenant_id,
+        owner_user_id=approval.owner_user_id,
+        personal_memory_space_id=approval.personal_memory_space_id,
         decision=approval.decision.value,
         approver_type=approval.approver_type.value,
         approver_id=approval.approver_id,
+        reason_code=approval.reason_code,
         decided_at=approval.decided_at,
     )
     if expected != approval.approval_proof:
@@ -515,6 +678,8 @@ def verify_commit_binding(
 ) -> None:
     """Validate technical commit receipt binding to content and approval."""
 
+    if not isinstance(commit, MemoryPatchCommit):
+        raise ContractValidationError("commit must be a MemoryPatchCommit")
     verify_approval_binding(proposal, approval)
     if approval.decision is not ApprovalDecision.APPROVE:
         raise ContractValidationError("a rejection cannot authorize commitment")
@@ -559,4 +724,31 @@ def verify_shared_promotion_hash(proposal: SharedPromotionProposal) -> None:
         proposal,
         proposal.proposal_hash,
         exclude_fields=("proposal_hash",),
+    )
+
+
+def _replace_memory_patch_lifecycle(
+    proposal: MemoryPatchProposal,
+    *,
+    lifecycle_state: PatchState,
+) -> MemoryPatchProposal:
+    """Internal constructor used only after state-machine validation."""
+
+    return replace(
+        proposal,
+        lifecycle_state=lifecycle_state,
+        _lifecycle_permit=_MEMORY_PATCH_LIFECYCLE_PERMIT,
+    )
+
+
+def _replace_shared_promotion_lifecycle(
+    proposal: SharedPromotionProposal,
+    **updates: object,
+) -> SharedPromotionProposal:
+    """Internal constructor used only after shared review validation."""
+
+    return replace(
+        proposal,
+        **updates,
+        _lifecycle_permit=_SHARED_PROMOTION_LIFECYCLE_PERMIT,
     )

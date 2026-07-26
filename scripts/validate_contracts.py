@@ -335,6 +335,86 @@ def validate_public_surface() -> None:
         raise ValidationFailure(f"public contract surface is missing: {missing}")
 
 
+def validate_runtime_schema_surfaces(
+    schemas: dict[str, dict[str, Any]],
+) -> None:
+    """Keep schema-backed runtime records structurally identical at the root."""
+
+    mappings = {
+        "hat-manifest.schema.json": kernel.HatManifest,
+        "personal-memory-space.schema.json": kernel.PersonalMemorySpace,
+        "memory-patch-proposal.schema.json": kernel.MemoryPatchProposal,
+        "correction-packet.schema.json": kernel.CorrectionPacket,
+        "audit-event.schema.json": kernel.AuditEvent,
+    }
+    for schema_name, contract_type in mappings.items():
+        schema = schemas[schema_name]
+        schema_fields = set(schema["properties"])
+        runtime_fields = {
+            field.name for field in dataclasses.fields(contract_type)
+        }
+        if schema_fields != runtime_fields:
+            raise ValidationFailure(
+                f"{schema_name}: schema/runtime field mismatch; "
+                f"schema-only={sorted(schema_fields - runtime_fields)}, "
+                f"runtime-only={sorted(runtime_fields - schema_fields)}"
+            )
+        if schema.get("additionalProperties") is not False:
+            raise ValidationFailure(
+                f"{schema_name}: top-level additional properties must fail closed"
+            )
+        version = schema["properties"].get("schema_version")
+        if version != {"const": kernel.CONTRACT_SCHEMA_VERSION}:
+            raise ValidationFailure(
+                f"{schema_name}: schema_version is not explicitly pinned"
+            )
+        schema_version_field = next(
+            field
+            for field in dataclasses.fields(contract_type)
+            if field.name == "schema_version"
+        )
+        if schema_version_field.default is not dataclasses.MISSING:
+            raise ValidationFailure(
+                f"{contract_type.__name__}: schema_version must be explicit"
+            )
+
+    for contract_type in (
+        kernel.MemoryPatchApproval,
+        kernel.MemoryPatchCommit,
+        kernel.MemoryItem,
+        kernel.SharedPromotionProposal,
+    ):
+        schema_version_fields = [
+            field
+            for field in dataclasses.fields(contract_type)
+            if field.name == "schema_version"
+        ]
+        if (
+            len(schema_version_fields) != 1
+            or schema_version_fields[0].default is not dataclasses.MISSING
+        ):
+            raise ValidationFailure(
+                f"{contract_type.__name__}: authority records require an "
+                "explicit schema_version"
+            )
+
+    closed_nested_definitions = (
+        ("correction-packet.schema.json", "scopeDimension"),
+        ("correction-packet.schema.json", "claim"),
+        ("correction-packet.schema.json", "evidence"),
+        ("correction-packet.schema.json", "memoryConflict"),
+        ("correction-packet.schema.json", "correctionRequirement"),
+        ("memory-patch-proposal.schema.json", "scopeDimension"),
+    )
+    for schema_name, definition_name in closed_nested_definitions:
+        definition = schemas[schema_name]["$defs"][definition_name]
+        if definition.get("additionalProperties") is not False:
+            raise ValidationFailure(
+                f"{schema_name}#/$defs/{definition_name}: "
+                "additional properties must fail closed"
+            )
+
+
 def validate_state_graphs() -> None:
     forbidden_patch_edges = (
         (kernel.PatchState.PROPOSED, kernel.PatchState.ACTIVE),
@@ -498,6 +578,7 @@ def main() -> int:
         raise ValidationFailure("synthetic source scenario coverage is incomplete")
     validate_enum_values()
     validate_public_surface()
+    validate_runtime_schema_surfaces(schemas)
     validate_state_graphs()
     validate_domain_neutrality()
     validate_documentation_inventory()

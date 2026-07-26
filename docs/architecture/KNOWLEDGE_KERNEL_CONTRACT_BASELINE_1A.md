@@ -26,11 +26,15 @@ it:
 7. reference Draft V2 and record claim verdicts;
 8. return a verified answer or a fail-closed answer status;
 9. create a `MemoryPatchProposal`;
-10. obtain authorized human or owner approval;
+10. obtain an authenticated and authorized human or owner action in a future
+    application and represent its exact binding as an approval contract;
 11. perform a separately authorized technical commitment;
 12. activate and reuse the committed patch within its scope.
 
 These are records and authority boundaries, not a live orchestration engine.
+The contract layer validates the structure and binding of an approval claim; it
+does not authenticate the claimed actor. Authentication and authorization must
+be supplied by a later application boundary before it creates that record.
 
 ## Independent decision axes
 
@@ -83,6 +87,19 @@ detection. An object's own hash field is excluded from its calculation.
 A hash is not a signature. It does not prove source authenticity or that a
 model semantically followed a packet. HMAC and digital signatures remain
 explicit future extension seams.
+
+Approval proofs bind the approval identifier, protected proposal hash,
+ownership scope, decision, claimed actor, reason, and decision time. This
+prevents detaching the same proof from that exact contract object, but does not
+consume the approval. Durable one-time consumption, identifier uniqueness, and
+transactional idempotency require future persistence.
+
+JSON Schema provides a strict transport shape, including a pinned schema
+version. Runtime constructors and state machines provide the authority
+boundary. Public construction starts in least-privileged states; privileged
+lifecycle states can only be produced by validated state-machine transitions.
+Validating or copying JSON alone never authorizes or reconstitutes such a
+transition.
 
 ## Fail-closed boundary
 

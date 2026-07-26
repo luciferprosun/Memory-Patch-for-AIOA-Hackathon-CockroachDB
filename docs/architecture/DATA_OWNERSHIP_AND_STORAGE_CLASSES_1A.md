@@ -45,3 +45,7 @@ have neither authority.
 
 The current commit receipt names `CRDB_TRANSACTIONAL` as the intended
 authoritative class, but this is not an operational database or RLS claim.
+Current contracts validate actor-type claims and exact object bindings; they do
+not authenticate a human or service. Authentication, authorization, durable
+uniqueness, approval consumption, idempotency, transactions, RLS, and audit
+storage remain future application and CockroachDB responsibilities.

@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from dataclasses import fields, replace
 
-from _support import (
+from tests._support import (
     LATER,
     NOW,
     RUN_A,

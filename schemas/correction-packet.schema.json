@@ -110,13 +110,13 @@
     "conflicts": {
       "type": "array",
       "items": {
-        "type": "object"
+        "$ref": "#/$defs/memoryConflict"
       }
     },
     "required_corrections": {
       "type": "array",
       "items": {
-        "type": "object"
+        "$ref": "#/$defs/correctionRequirement"
       }
     },
     "prohibited_claims": {
@@ -156,6 +156,7 @@
   "$defs": {
     "scopeDimension": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "name",
         "value",
@@ -166,17 +167,36 @@
       ],
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "value": {},
         "value_type": {
-          "type": "string"
+          "enum": [
+            "STRING",
+            "INTEGER",
+            "NUMBER",
+            "BOOLEAN",
+            "STRING_SET",
+            "TIMESTAMP",
+            "SEMVER",
+            "JSON"
+          ]
         },
         "comparison_mode": {
-          "type": "string"
+          "enum": [
+            "EXACT",
+            "IN_SET",
+            "HIERARCHICAL",
+            "RANGE",
+            "SEMVER",
+            "TIMESTAMP",
+            "CUSTOM_HAT_RULE"
+          ]
         },
         "source": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "required": {
           "type": "boolean"
@@ -185,51 +205,179 @@
     },
     "claim": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "claim_id",
         "draft_id",
         "statement",
-        "claim_category"
+        "claim_category",
+        "scope_dimensions"
       ],
       "properties": {
         "claim_id": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "draft_id": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "statement": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "claim_category": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
+        },
+        "scope_dimensions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/scopeDimension"
+          }
         }
       }
     },
     "evidence": {
       "type": "object",
+      "additionalProperties": false,
       "required": [
         "evidence_id",
         "source_id",
         "source_version_id",
+        "citation_reference",
         "content_hash",
-        "trust_class"
+        "trust_class",
+        "authority_rank",
+        "scope_dimensions",
+        "retrieved_at",
+        "valid_from",
+        "valid_until",
+        "metadata"
       ],
       "properties": {
         "evidence_id": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "source_id": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "source_version_id": {
-          "type": "string"
+          "type": "string",
+          "minLength": 1
+        },
+        "citation_reference": {
+          "type": "string",
+          "minLength": 1
         },
         "content_hash": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
         },
         "trust_class": {
+          "enum": [
+            "CANONICAL_SOURCE_EVIDENCE",
+            "SHARED_HAT_VERIFIED_MEMORY"
+          ]
+        },
+        "authority_rank": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "scope_dimensions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/scopeDimension"
+          }
+        },
+        "retrieved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "valid_from": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "valid_until": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "metadata": {
+          "type": "object"
+        }
+      }
+    },
+    "memoryConflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "conflict_type",
+        "higher_or_primary_item_id",
+        "lower_or_secondary_item_id",
+        "explanation",
+        "resolved_by_precedence"
+      ],
+      "properties": {
+        "conflict_type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "higher_or_primary_item_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lower_or_secondary_item_id": {
           "type": "string"
+        },
+        "explanation": {
+          "type": "string"
+        },
+        "resolved_by_precedence": {
+          "type": "boolean"
+        }
+      }
+    },
+    "correctionRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requirement_id",
+        "claim_id",
+        "instruction",
+        "evidence_references",
+        "mandatory"
+      ],
+      "properties": {
+        "requirement_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "claim_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "instruction": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_references": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "mandatory": {
+          "type": "boolean"
         }
       }
     }

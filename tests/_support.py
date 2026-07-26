@@ -18,6 +18,7 @@ from aioa_memory_kernel.contracts import (  # noqa: E402
     ApprovalDecision,
     ApprovalRequirement,
     ClaimCandidate,
+    CONTRACT_SCHEMA_VERSION,
     CorrectionPacket,
     CorrectionRequirement,
     DeidentificationStatus,
@@ -167,6 +168,7 @@ def make_packet(
         mandatory=True,
     )
     return CorrectionPacket(
+        schema_version=CONTRACT_SCHEMA_VERSION,
         kernel_run_id=RUN_A,
         draft_v1_id="draft-v1",
         selected_hat_id="synthetic-software-version",
@@ -213,7 +215,8 @@ def make_personal_proposal(
 ) -> MemoryPatchProposal:
     if content is None:
         content = {"statement": "Synthetic personal correction."}
-    return MemoryPatchProposal(
+    proposal = MemoryPatchProposal(
+        schema_version=CONTRACT_SCHEMA_VERSION,
         proposal_id="proposal-personal-1",
         tenant_id=TENANT_A,
         owner_user_id=USER_A,
@@ -228,10 +231,94 @@ def make_personal_proposal(
         valid_until=NOW + timedelta(days=30),
         requested_trust_class=MemoryTrustClass.PERSONAL_VERIFIED_PATCH,
         approval_requirement=ApprovalRequirement.OWNER,
-        lifecycle_state=state,
+        lifecycle_state=PatchState.DETECTED,
         content_kind=content_kind,
         created_at=NOW,
     )
+    if state is PatchState.DETECTED:
+        return proposal
+
+    from aioa_memory_kernel.state_machines import transition_memory_patch
+
+    preliminary_path = (
+        PatchState.PROPOSED,
+        PatchState.EVIDENCE_BOUND,
+        PatchState.VALIDATED,
+        PatchState.AWAITING_APPROVAL,
+    )
+    for target in preliminary_path:
+        proposal, _ = transition_memory_patch(
+            proposal,
+            target_state=target,
+            actor_type=ActorType.SYSTEM,
+            actor_id="kernel-contract",
+            transitioned_at=NOW,
+        )
+        if state is target:
+            return proposal
+
+    approval = make_approval(
+        proposal,
+        decision=(
+            ApprovalDecision.REJECT
+            if state is PatchState.REJECTED
+            else ApprovalDecision.APPROVE
+        ),
+    )
+    if state is PatchState.REJECTED:
+        proposal, _ = transition_memory_patch(
+            proposal,
+            target_state=PatchState.REJECTED,
+            actor_type=ActorType.USER,
+            actor_id=USER_A,
+            transitioned_at=LATER,
+            approval=approval,
+        )
+        return proposal
+    proposal, _ = transition_memory_patch(
+        proposal,
+        target_state=PatchState.APPROVED,
+        actor_type=ActorType.USER,
+        actor_id=USER_A,
+        transitioned_at=LATER,
+        approval=approval,
+    )
+    if state is PatchState.APPROVED:
+        return proposal
+
+    commit = make_commit(proposal, approval)
+    proposal, _ = transition_memory_patch(
+        proposal,
+        target_state=PatchState.COMMITTED,
+        actor_type=ActorType.COMMIT_SERVICE,
+        actor_id=commit.actor_id,
+        transitioned_at=LATER,
+        approval=approval,
+        commit=commit,
+    )
+    if state is PatchState.COMMITTED:
+        return proposal
+    proposal, _ = transition_memory_patch(
+        proposal,
+        target_state=PatchState.ACTIVE,
+        actor_type=ActorType.COMMIT_SERVICE,
+        actor_id=commit.actor_id,
+        transitioned_at=LATER,
+        approval=approval,
+        commit=commit,
+    )
+    if state is PatchState.ACTIVE:
+        return proposal
+    if state in {PatchState.SUPERSEDED, PatchState.REVOKED}:
+        proposal, _ = transition_memory_patch(
+            proposal,
+            target_state=state,
+            actor_type=ActorType.HUMAN_REVIEWER,
+            actor_id="reviewer-1",
+            transitioned_at=LATER,
+        )
+        return proposal
+    raise ValueError(f"unsupported synthetic patch state {state.value}")
 
 
 def make_approval(
@@ -242,6 +329,7 @@ def make_approval(
     approver_id: str = USER_A,
 ) -> MemoryPatchApproval:
     return MemoryPatchApproval(
+        schema_version=CONTRACT_SCHEMA_VERSION,
         approval_id="approval-1",
         proposal_id=proposal.proposal_id,
         proposal_content_hash=proposal.content_hash,
@@ -260,6 +348,7 @@ def make_commit(
     proposal: MemoryPatchProposal, approval: MemoryPatchApproval
 ) -> MemoryPatchCommit:
     return MemoryPatchCommit(
+        schema_version=CONTRACT_SCHEMA_VERSION,
         commit_id="commit-1",
         proposal_id=proposal.proposal_id,
         proposal_content_hash=proposal.content_hash,
@@ -285,6 +374,7 @@ def make_shared_promotion(
     ),
 ) -> SharedPromotionProposal:
     return SharedPromotionProposal(
+        schema_version=CONTRACT_SCHEMA_VERSION,
         shared_promotion_proposal_id=proposal_id,
         originating_personal_patch_id=originating_patch_id,
         originating_personal_patch_hash="b" * 64,

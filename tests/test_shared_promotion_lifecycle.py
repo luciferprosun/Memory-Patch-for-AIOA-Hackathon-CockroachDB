@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from _support import LATER, make_personal_proposal, make_shared_promotion
+from tests._support import LATER, make_personal_proposal, make_shared_promotion
 from aioa_memory_kernel.contracts import (
     ActorType,
     AuthorityViolation,
@@ -86,7 +86,9 @@ class SharedPromotionLifecycleTests(unittest.TestCase):
                 domain_approval_id="user-only-approval",
             )
 
-    def test_complete_separate_promotion_path_passes(self) -> None:
+    def test_unbound_domain_approval_reference_cannot_close_promotion(
+        self,
+    ) -> None:
         personal = make_personal_proposal()
         original_hash = personal.content_hash
         promotion = make_shared_promotion()
@@ -106,23 +108,22 @@ class SharedPromotionLifecycleTests(unittest.TestCase):
             actor_id="review-router",
             transitioned_at=LATER,
         )
-        promotion, _ = transition_shared_promotion(
-            promotion,
-            target_state=SharedPromotionState.APPROVED_FOR_SHARED,
-            actor_type=ActorType.HUMAN_REVIEWER,
-            actor_id="domain-reviewer",
-            transitioned_at=LATER,
-            domain_approval_id="domain-approval-1",
+        with self.assertRaisesRegex(
+            AuthorityViolation, "future reference"
+        ):
+            transition_shared_promotion(
+                promotion,
+                target_state=SharedPromotionState.APPROVED_FOR_SHARED,
+                actor_type=ActorType.HUMAN_REVIEWER,
+                actor_id="domain-reviewer",
+                transitioned_at=LATER,
+                domain_approval_id="domain-approval-1",
+            )
+        self.assertFalse(shared_promotion_is_committed(promotion))
+        self.assertIs(
+            promotion.state,
+            SharedPromotionState.DOMAIN_REVIEW_REQUIRED,
         )
-        promotion, _ = transition_shared_promotion(
-            promotion,
-            target_state=SharedPromotionState.SHARED_PATCH_COMMITTED,
-            actor_type=ActorType.COMMIT_SERVICE,
-            actor_id="bounded-commit-service",
-            transitioned_at=LATER,
-            shared_commit_id="shared-commit-1",
-        )
-        self.assertTrue(shared_promotion_is_committed(promotion))
         self.assertEqual(personal.content_hash, original_hash)
         self.assertEqual(personal.lifecycle_state.value, "DETECTED")
 

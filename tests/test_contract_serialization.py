@@ -5,10 +5,18 @@ import unittest
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta, timezone
 
-from _support import NOW, RUN_A, TENANT_A, USER_A, make_evidence, make_personal_proposal
+from tests._support import (
+    NOW,
+    RUN_A,
+    TENANT_A,
+    USER_A,
+    make_evidence,
+    make_personal_proposal,
+)
 from aioa_memory_kernel.contracts import (
     ActorType,
     AuditEvent,
+    CONTRACT_SCHEMA_VERSION,
     ContractValidationError,
     EvidenceBundle,
     EvidenceStatus,
@@ -121,10 +129,16 @@ class CanonicalSerializationTests(unittest.TestCase):
 
     def test_approval_proof_is_deterministic(self) -> None:
         kwargs = {
+            "approval_id": "approval-1",
+            "proposal_id": "proposal-1",
             "proposal_hash": "a" * 64,
+            "tenant_id": TENANT_A,
+            "owner_user_id": USER_A,
+            "personal_memory_space_id": "space-alpha-1",
             "decision": "APPROVE",
             "approver_type": "USER",
             "approver_id": USER_A,
+            "reason_code": "SYNTHETIC_REVIEW_COMPLETE",
             "decided_at": NOW,
         }
         self.assertEqual(approval_proof_hash(**kwargs), approval_proof_hash(**kwargs))
@@ -168,6 +182,7 @@ class AuditHashChainTests(unittest.TestCase):
     def test_broken_audit_link_is_rejected(self) -> None:
         first = self._event("audit-1", 0, None, NOW)
         broken = AuditEvent(
+            schema_version=CONTRACT_SCHEMA_VERSION,
             audit_event_id="audit-2",
             tenant_id=TENANT_A,
             user_id=USER_A,
@@ -204,6 +219,7 @@ class AuditHashChainTests(unittest.TestCase):
             ContractValidationError, "referenced, not embedded"
         ):
             AuditEvent(
+                schema_version=CONTRACT_SCHEMA_VERSION,
                 audit_event_id="audit-private",
                 tenant_id=TENANT_A,
                 user_id=USER_A,

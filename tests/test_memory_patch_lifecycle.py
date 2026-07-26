@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from _support import (
+from tests._support import (
     LATER,
     NOW,
     USER_A,
@@ -13,6 +13,7 @@ from _support import (
 from aioa_memory_kernel.contracts import (
     ActorType,
     ApprovalDecision,
+    CONTRACT_SCHEMA_VERSION,
     AuthorityViolation,
     ContractValidationError,
     MemoryContentKind,
@@ -113,7 +114,7 @@ class MemoryPatchLifecycleTests(unittest.TestCase):
             self._transition(proposal, PatchState.COMMITTED)
 
     def test_factual_validation_without_evidence_fails(self) -> None:
-        with self.assertRaisesRegex(ContractValidationError, "requires evidence"):
+        with self.assertRaisesRegex(ContractValidationError, "evidence"):
             make_personal_proposal(
                 state=PatchState.EVIDENCE_BOUND,
                 evidence_references=(),
@@ -156,6 +157,7 @@ class MemoryPatchLifecycleTests(unittest.TestCase):
         proposal = self._awaiting_approval()
         with self.assertRaises(AuthorityViolation):
             MemoryPatchApproval(
+                schema_version=CONTRACT_SCHEMA_VERSION,
                 approval_id="invalid-approval",
                 proposal_id=proposal.proposal_id,
                 proposal_content_hash=proposal.content_hash,
@@ -263,6 +265,7 @@ class MemoryPatchLifecycleTests(unittest.TestCase):
             ContractValidationError, "not a valid Memory Patch target"
         ):
             MemoryPatchProposal(
+                schema_version=CONTRACT_SCHEMA_VERSION,
                 proposal_id="invalid-canonical-target",
                 tenant_id="tenant-alpha",
                 owner_user_id=USER_A,

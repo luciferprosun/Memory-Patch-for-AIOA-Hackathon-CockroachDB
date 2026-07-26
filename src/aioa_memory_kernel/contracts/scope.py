@@ -38,6 +38,8 @@ class ScopeDimension:
         require_enum_member(
             self.comparison_mode, ScopeComparisonMode, "comparison_mode"
         )
+        if self.required is not True and self.required is not False:
+            raise ContractValidationError("scope required must be a boolean")
         object.__setattr__(self, "value", freeze_json(self.value))
         validate_scope_value(self.value, self.value_type, self.name)
 
@@ -66,6 +68,15 @@ class HatScopeDimensionDefinition:
             MissingDimensionBehavior,
             "default_behavior",
         )
+        if self.required is not True and self.required is not False:
+            raise ContractValidationError("scope required must be a boolean")
+        if (
+            self.missing_creates_ambiguous is not True
+            and self.missing_creates_ambiguous is not False
+        ):
+            raise ContractValidationError(
+                "missing_creates_ambiguous must be a boolean"
+            )
         frozen_default = freeze_json(self.default_value)
         object.__setattr__(self, "default_value", frozen_default)
         if self.default_behavior is MissingDimensionBehavior.USE_DEFAULT:

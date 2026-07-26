@@ -16,10 +16,12 @@ from ..contracts.identities import verify_ownership
 from ..contracts.personal_memory import (
     PersonalMemoryPool,
     PersonalMemorySpace,
+    _replace_personal_memory_space,
     enforce_quota,
     quota_usage,
 )
 from ..contracts.serialization import (
+    CONTRACT_SCHEMA_VERSION,
     ensure_utc,
     require_enum_member,
     require_non_empty,
@@ -153,6 +155,7 @@ def allocate_personal_memory_space(
         raise ContractValidationError("Personal Memory HAT ID already exists")
     created_at = ensure_utc(created_at, "created_at")
     space = PersonalMemorySpace(
+        schema_version=CONTRACT_SCHEMA_VERSION,
         personal_memory_space_id=personal_memory_space_id,
         tenant_id=pool.tenant_id,
         user_id=pool.user_id,
@@ -201,7 +204,7 @@ def transition_personal_memory_space(
         updates["deleted_at"] = changed_at
         updates["display_name"] = None
         updates["model_binding_ids"] = ()
-    updated = replace(space, **updates)
+    updated = _replace_personal_memory_space(space, **updates)
     return _replace_space(pool, updated)
 
 
@@ -231,7 +234,7 @@ def configure_personal_memory_space(
         if space.state is PersonalMemorySpaceState.EMPTY
         else space.state
     )
-    updated = replace(
+    updated = _replace_personal_memory_space(
         space,
         state=target_state,
         display_name=display_name,
@@ -282,7 +285,14 @@ def restore_personal_memory_space(
 ) -> PersonalMemoryPool:
     """Restore suspended to ACTIVE, or archived to CONFIGURED."""
 
-    space_id = str(context["personal_memory_space_id"])
+    if "personal_memory_space_id" not in context:
+        raise ContractValidationError(
+            "personal_memory_space_id is required for restore"
+        )
+    space_id = require_non_empty(
+        context["personal_memory_space_id"],  # type: ignore[arg-type]
+        "personal_memory_space_id",
+    )
     space = _find_space(pool, space_id)
     if space.state is PersonalMemorySpaceState.SUSPENDED:
         target = PersonalMemorySpaceState.ACTIVE
@@ -323,7 +333,7 @@ def request_personal_memory_export(
     _require_monotonic_update(space, requested_at)
     return _replace_space(
         pool,
-        replace(
+        _replace_personal_memory_space(
             space,
             export_requested_at=requested_at,
             updated_at=requested_at,
@@ -372,7 +382,7 @@ def bind_model_to_personal_memory_space(
     changed_at = ensure_utc(changed_at, "changed_at")
     _require_monotonic_update(space, changed_at)
     bindings = tuple(sorted(set(space.model_binding_ids + (model_binding_id,))))
-    updated = replace(
+    updated = _replace_personal_memory_space(
         space,
         model_binding_ids=bindings,
         updated_at=changed_at,

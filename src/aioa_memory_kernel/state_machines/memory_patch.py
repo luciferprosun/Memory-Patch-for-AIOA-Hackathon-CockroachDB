@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import datetime
 from types import MappingProxyType
 
@@ -20,11 +20,11 @@ from ..contracts.exceptions import (
     InvalidTransition,
 )
 from ..contracts.patches import (
-    APPROVAL_ACTOR_TYPES,
     COMMIT_ACTOR_TYPES,
     MemoryPatchApproval,
     MemoryPatchCommit,
     MemoryPatchProposal,
+    _replace_memory_patch_lifecycle,
     verify_approval_binding,
     verify_commit_binding,
     verify_memory_patch_proposal_hash,
@@ -33,6 +33,7 @@ from ..contracts.serialization import (
     ensure_utc,
     require_enum_member,
     require_non_empty,
+    require_sha256_hex,
 )
 
 
@@ -73,7 +74,20 @@ class PatchTransitionRecord:
 
     def __post_init__(self) -> None:
         require_non_empty(self.proposal_id, "proposal_id")
-        require_non_empty(self.proposal_content_hash, "proposal_content_hash")
+        require_sha256_hex(
+            self.proposal_content_hash,
+            "proposal_content_hash",
+        )
+        require_enum_member(self.state_before, PatchState, "state_before")
+        require_enum_member(self.state_after, PatchState, "state_after")
+        require_enum_member(self.actor_type, ActorType, "actor_type")
+        if not memory_patch_transition_allowed(
+            self.state_before,
+            self.state_after,
+        ):
+            raise InvalidTransition(
+                "PatchTransitionRecord contains a forbidden lifecycle edge"
+            )
         require_non_empty(self.actor_id, "actor_id")
         object.__setattr__(
             self,
@@ -194,6 +208,10 @@ def transition_memory_patch(
             raise AuthorityViolation(
                 "transition actor must be the bound approval actor"
             )
+        if transitioned_at < approval.decided_at:
+            raise ContractValidationError(
+                "approval transition cannot precede the bound decision"
+            )
     elif actor_type in {
         ActorType.KNOWLEDGE_HAT,
         ActorType.KNOWLEDGE_KERNEL,
@@ -222,6 +240,10 @@ def transition_memory_patch(
             raise AuthorityViolation("transition actor does not match commit receipt")
         _validate_approval_for_target(proposal, approval)
         verify_commit_binding(proposal, approval, commit)
+        if transitioned_at < commit.committed_at:
+            raise ContractValidationError(
+                "commit transition cannot precede the commit receipt"
+            )
     if target_state is PatchState.ACTIVE:
         if actor_type is not ActorType.COMMIT_SERVICE:
             raise AuthorityViolation(
@@ -235,6 +257,10 @@ def transition_memory_patch(
         if approval.decision is not ApprovalDecision.APPROVE:
             raise AuthorityViolation("rejected content cannot activate")
         verify_commit_binding(proposal, approval, commit)
+        if transitioned_at < commit.committed_at:
+            raise ContractValidationError(
+                "activation cannot precede the commit receipt"
+            )
     if target_state in {PatchState.SUPERSEDED, PatchState.REVOKED}:
         if actor_type not in {
             ActorType.USER,
@@ -255,7 +281,10 @@ def transition_memory_patch(
             raise AuthorityViolation(
                 "only the exact owner may revoke or supersede a personal patch"
             )
-    updated = replace(proposal, lifecycle_state=target_state)
+    updated = _replace_memory_patch_lifecycle(
+        proposal,
+        lifecycle_state=target_state,
+    )
     if updated.content_hash != proposal.content_hash:
         raise ContractValidationError(
             "lifecycle transition changed immutable proposal identity"

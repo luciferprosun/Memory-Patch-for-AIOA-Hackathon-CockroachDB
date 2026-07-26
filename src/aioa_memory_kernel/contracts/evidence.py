@@ -17,6 +17,8 @@ from .serialization import (
     canonical_sha256,
     ensure_utc,
     freeze_json,
+    freeze_string_tuple,
+    freeze_typed_tuple,
     require_enum_member,
     require_non_empty,
     require_sha256_hex,
@@ -74,6 +76,15 @@ class EvidenceItem:
                 "authority_rank must be a non-negative integer"
             )
         object.__setattr__(
+            self,
+            "scope_dimensions",
+            freeze_typed_tuple(
+                self.scope_dimensions,
+                ScopeDimension,
+                "scope_dimensions",
+            ),
+        )
+        object.__setattr__(
             self, "retrieved_at", ensure_utc(self.retrieved_at, "retrieved_at")
         )
         for field_name in ("valid_from", "valid_until"):
@@ -116,6 +127,15 @@ class EvidenceBundle:
         require_enum_member(
             self.evidence_status, EvidenceStatus, "evidence_status"
         )
+        object.__setattr__(
+            self,
+            "ordered_items",
+            freeze_typed_tuple(
+                self.ordered_items,
+                EvidenceItem,
+                "ordered_items",
+            ),
+        )
         ids = [item.evidence_id for item in self.ordered_items]
         if len(ids) != len(set(ids)):
             raise ContractValidationError("Evidence Bundle item IDs must be unique")
@@ -154,6 +174,15 @@ class ClaimCandidate:
     def __post_init__(self) -> None:
         for field_name in ("claim_id", "draft_id", "statement", "claim_category"):
             require_non_empty(getattr(self, field_name), field_name)
+        object.__setattr__(
+            self,
+            "scope_dimensions",
+            freeze_typed_tuple(
+                self.scope_dimensions,
+                ScopeDimension,
+                "scope_dimensions",
+            ),
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -172,6 +201,15 @@ class ClaimVerdict:
         require_enum_member(self.verdict, ClaimVerdictStatus, "verdict")
         require_non_empty(self.verifier_id, "verifier_id")
         require_non_empty(self.explanation_code, "explanation_code")
+        object.__setattr__(
+            self,
+            "evidence_references",
+            freeze_string_tuple(
+                self.evidence_references,
+                "evidence_references",
+                unique=True,
+            ),
+        )
         if (
             self.verdict is ClaimVerdictStatus.SUPPORTED
             and not self.evidence_references

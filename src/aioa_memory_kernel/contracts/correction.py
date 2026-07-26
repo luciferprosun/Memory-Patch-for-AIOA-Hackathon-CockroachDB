@@ -20,8 +20,11 @@ from .scope import ScopeDimension
 from .serialization import (
     canonical_sha256,
     ensure_utc,
+    freeze_string_tuple,
+    freeze_typed_tuple,
     require_enum_member,
     require_non_empty,
+    require_schema_version,
     verify_canonical_hash,
 )
 
@@ -81,6 +84,24 @@ class CorrectionCandidate:
             raise ContractValidationError(
                 f"{self.source_component.value} cannot produce Correction Candidates"
             )
+        object.__setattr__(
+            self,
+            "detected_claims",
+            freeze_typed_tuple(
+                self.detected_claims,
+                ClaimCandidate,
+                "detected_claims",
+            ),
+        )
+        object.__setattr__(
+            self,
+            "available_evidence_references",
+            freeze_string_tuple(
+                self.available_evidence_references,
+                "available_evidence_references",
+                unique=True,
+            ),
+        )
         if not self.detected_claims:
             raise ContractValidationError(
                 "a Correction Candidate requires at least one detected claim"
@@ -89,15 +110,6 @@ class CorrectionCandidate:
         if len(claim_ids) != len(set(claim_ids)):
             raise ContractValidationError(
                 "Correction Candidate claim IDs must be unique"
-            )
-        if any(
-            not reference.strip()
-            for reference in self.available_evidence_references
-        ) or len(self.available_evidence_references) != len(
-            set(self.available_evidence_references)
-        ):
-            raise ContractValidationError(
-                "available evidence references must be non-empty and unique"
             )
         if not isinstance(self.uncertainty, (int, float)) or isinstance(
             self.uncertainty, bool
@@ -137,6 +149,17 @@ class CorrectionRequirement:
         require_non_empty(self.requirement_id, "requirement_id")
         require_non_empty(self.claim_id, "claim_id")
         require_non_empty(self.instruction, "instruction")
+        if self.mandatory is not True and self.mandatory is not False:
+            raise ContractValidationError("mandatory must be a boolean")
+        object.__setattr__(
+            self,
+            "evidence_references",
+            freeze_string_tuple(
+                self.evidence_references,
+                "evidence_references",
+                unique=True,
+            ),
+        )
         if self.mandatory and not self.evidence_references:
             raise ContractValidationError(
                 "mandatory factual correction requires evidence references"
@@ -147,6 +170,7 @@ class CorrectionRequirement:
 class CorrectionPacket:
     """Frozen evidence and correction input for a future Draft V2 generator."""
 
+    schema_version: str
     kernel_run_id: str
     draft_v1_id: str
     selected_hat_id: str
@@ -169,6 +193,7 @@ class CorrectionPacket:
     packet_hash: str = field(init=False)
 
     def __post_init__(self) -> None:
+        require_schema_version(self.schema_version)
         for field_name in (
             "kernel_run_id",
             "draft_v1_id",
@@ -183,6 +208,42 @@ class CorrectionPacket:
         require_enum_member(
             self.evidence_status, EvidenceStatus, "evidence_status"
         )
+        for field_name, expected_type in (
+            ("scope_dimensions", ScopeDimension),
+            ("claims_under_review", ClaimCandidate),
+            ("ordered_evidence_items", EvidenceItem),
+            ("validity_or_version_scopes", ScopeDimension),
+            ("conflicts", MemoryConflict),
+            ("required_corrections", CorrectionRequirement),
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                freeze_typed_tuple(
+                    getattr(self, field_name),
+                    expected_type,
+                    field_name,
+                ),
+            )
+        for field_name in (
+            "source_version_ids",
+            "prohibited_claims",
+            "citation_requirements",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                freeze_string_tuple(
+                    getattr(self, field_name),
+                    field_name,
+                    unique=field_name == "source_version_ids",
+                ),
+            )
+        if self.embedding_model_version is not None:
+            require_non_empty(
+                self.embedding_model_version,
+                "embedding_model_version",
+            )
         if self.knowledge_route not in {
             KnowledgeRoute.HAT_ASSIST,
             KnowledgeRoute.HAT_ENFORCE,
@@ -241,12 +302,6 @@ class CorrectionPacket:
         ):
             raise ContractValidationError(
                 "sufficient Correction Packet requires evidence"
-            )
-        if any(not claim.strip() for claim in self.prohibited_claims):
-            raise ContractValidationError("prohibited claims must be non-empty")
-        if any(not rule.strip() for rule in self.citation_requirements):
-            raise ContractValidationError(
-                "citation requirements must be non-empty"
             )
         object.__setattr__(
             self, "packet_hash", compute_correction_packet_hash(self)

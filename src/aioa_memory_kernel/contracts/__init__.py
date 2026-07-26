@@ -129,6 +129,7 @@ from .scope import (
     validate_scope_value,
 )
 from .serialization import (
+    CONTRACT_SCHEMA_VERSION,
     approval_proof_hash,
     canonical_json,
     canonical_json_bytes,
@@ -139,6 +140,7 @@ from .serialization import (
     reject_machine_specific_path,
     require_enum_member,
     require_non_empty,
+    require_schema_version,
     require_sha256_hex,
     sha256_hex,
     to_canonical_data,
@@ -148,6 +150,7 @@ from .serialization import (
 __all__ = [
     "APPROVAL_ACTOR_TYPES",
     "COMMIT_ACTOR_TYPES",
+    "CONTRACT_SCHEMA_VERSION",
     "NON_AUTHORITY_PROPOSERS",
     "TRUST_PRECEDENCE",
     "ActionPolicy",
@@ -242,6 +245,7 @@ __all__ = [
     "reject_machine_specific_path",
     "require_enum_member",
     "require_non_empty",
+    "require_schema_version",
     "require_sha256_hex",
     "require_tenant_context",
     "scope_interval_is_valid",
