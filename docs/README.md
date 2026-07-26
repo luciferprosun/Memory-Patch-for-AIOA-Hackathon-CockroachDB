@@ -7,15 +7,18 @@ intentionally outside this submission.
 This import contains reports, plans, inventories and validation evidence
 created or substantively updated from June 30, 2026 through July 24, 2026.
 Importing historical reports does not mean that a final CockroachDB
-implementation already exists. The new hackathon implementation will be built
-separately in this repository.
+implementation already exists. The repository now also contains the
+domain-neutral Step 1 kernel contract foundation; later persistence and
+integration remain future roadmap work.
 
-Raw German-law datasets, raw UNIX corpus records, retrieval-index data,
-application code and provider secrets are intentionally excluded. Every
-imported document has source commit, ref, date and SHA-256 provenance.
+The historical provenance import intentionally excludes raw German-law
+datasets, raw UNIX corpus records, retrieval-index data, application code and
+provider secrets. Every imported document has source commit, ref, date and
+SHA-256 provenance.
 
 ## Start here
 
+- [Canonical production roadmap](roadmap/PRODUCTION_ROADMAP.md)
 - [Knowledge Kernel Contract Baseline 1A](architecture/KNOWLEDGE_KERNEL_CONTRACT_BASELINE_1A.md)
 - [Personal Memory HATs 1A](architecture/PERSONAL_MEMORY_HATS_1A.md)
 - [Memory Trust and Precedence 1A](architecture/MEMORY_TRUST_AND_PRECEDENCE_1A.md)
