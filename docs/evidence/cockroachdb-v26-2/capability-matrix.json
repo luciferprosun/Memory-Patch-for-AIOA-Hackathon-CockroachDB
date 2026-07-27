@@ -1,0 +1,1270 @@
+{
+  "capabilities": [
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-001",
+      "cleanup_verified": true,
+      "decision_reason": "binary build tag and SELECT version() both report v26.2.4.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/0",
+      "expected_error": null,
+      "expected_semantics": "Client, server, and pinned build tag are exactly identical.",
+      "known_limitations": [],
+      "maturity": "NOT_APPLICABLE",
+      "mvp_decision": "USE",
+      "name": "Exact v26.2.x client/server identity",
+      "observed_semantics": "binary build tag and SELECT version() both report v26.2.4.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://binaries.cockroachdb.com/cockroach-v26.2.4.linux-amd64.tgz.sha256sum",
+        "https://www.cockroachlabs.com/docs/releases/v26.2",
+        "https://www.cockroachlabs.com/docs/releases",
+        "https://www.cockroachlabs.com/docs/releases/v26.2#v26-2-4",
+        "https://www.cockroachlabs.com/docs/advisories",
+        "https://www.cockroachlabs.com/docs/releases/release-support-policy"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_001",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-002",
+      "cleanup_verified": true,
+      "decision_reason": "SHOW CLUSTER SETTING version returned 26.2; single-node exact-version startup finalized=true.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/1",
+      "expected_error": null,
+      "expected_semantics": "Cluster version is 26.2 and the single-node upgrade is finalized.",
+      "known_limitations": [],
+      "maturity": "NOT_APPLICABLE",
+      "mvp_decision": "USE",
+      "name": "Cluster version and finalization",
+      "observed_semantics": "SHOW CLUSTER SETTING version returned 26.2; single-node exact-version startup finalized=true.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/releases/v26.2",
+        "https://www.cockroachlabs.com/docs/releases/v26.2#v26-2-4"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_002",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-003",
+      "cleanup_verified": true,
+      "decision_reason": "VECTOR(3) round-trip returned [1,0,0].",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/2",
+      "expected_error": null,
+      "expected_semantics": "VECTOR(3) stores and returns fixed-dimensional values.",
+      "known_limitations": [],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE",
+      "name": "VECTOR type",
+      "observed_semantics": "VECTOR(3) round-trip returned [1,0,0].",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/vector"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_003",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-004",
+      "cleanup_verified": true,
+      "decision_reason": "L2 nearest ordering was ['mp_step3_20260727t041950z_075525_f42fd6ea_v2', 'mp_step3_20260727t041950z_075525_f42fd6ea_v5', 'mp_step3_20260727t041950z_075525_f42fd6ea_v1', 'mp_step3_20260727t041950z_075525_f42fd6ea_v4', 'mp_step3_20260727t041950z_075525_f42fd6ea_v3']; deterministic expected ordering matched=true.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/3",
+      "expected_error": null,
+      "expected_semantics": "L2 ordering matches deterministic hand-checkable vectors.",
+      "known_limitations": [],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE",
+      "name": "Vector Euclidean semantics",
+      "observed_semantics": "L2 nearest ordering was ['mp_step3_20260727t041950z_075525_f42fd6ea_v2', 'mp_step3_20260727t041950z_075525_f42fd6ea_v5', 'mp_step3_20260727t041950z_075525_f42fd6ea_v1', 'mp_step3_20260727t041950z_075525_f42fd6ea_v4', 'mp_step3_20260727t041950z_075525_f42fd6ea_v3']; deterministic expected ordering matched=true.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/vector"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_004",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-005",
+      "cleanup_verified": true,
+      "decision_reason": "Cosine nearest ordering was ['mp_step3_20260727t041950z_075525_f42fd6ea_v2', 'mp_step3_20260727t041950z_075525_f42fd6ea_v5', 'mp_step3_20260727t041950z_075525_f42fd6ea_v4', 'mp_step3_20260727t041950z_075525_f42fd6ea_v3']; deterministic expected ordering was verified.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/4",
+      "expected_error": null,
+      "expected_semantics": "Cosine ordering matches deterministic hand-checkable vectors.",
+      "known_limitations": [],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE",
+      "name": "Vector cosine semantics",
+      "observed_semantics": "Cosine nearest ordering was ['mp_step3_20260727t041950z_075525_f42fd6ea_v2', 'mp_step3_20260727t041950z_075525_f42fd6ea_v5', 'mp_step3_20260727t041950z_075525_f42fd6ea_v4', 'mp_step3_20260727t041950z_075525_f42fd6ea_v3']; deterministic expected ordering was verified.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/vector"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_005",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-006",
+      "cleanup_verified": true,
+      "decision_reason": "Negative inner-product ordering was ['mp_step3_20260727t041950z_075525_f42fd6ea_v2', 'mp_step3_20260727t041950z_075525_f42fd6ea_v4', 'mp_step3_20260727t041950z_075525_f42fd6ea_v5', 'mp_step3_20260727t041950z_075525_f42fd6ea_v3']; deterministic expected ordering was verified.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/5",
+      "expected_error": null,
+      "expected_semantics": "Negative inner-product ordering matches deterministic vectors.",
+      "known_limitations": [],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE",
+      "name": "Vector inner-product semantics",
+      "observed_semantics": "Negative inner-product ordering was ['mp_step3_20260727t041950z_075525_f42fd6ea_v2', 'mp_step3_20260727t041950z_075525_f42fd6ea_v4', 'mp_step3_20260727t041950z_075525_f42fd6ea_v5', 'mp_step3_20260727t041950z_075525_f42fd6ea_v3']; deterministic expected ordering was verified.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/vector"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_006",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-007",
+      "cleanup_verified": true,
+      "decision_reason": "Wrong-dimension and malformed vector inserts were both rejected (SQLSTATEs 22000, 22P02).",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/6",
+      "expected_error": "dimension and parse rejection",
+      "expected_semantics": "Wrong dimensions and malformed vectors fail closed.",
+      "known_limitations": [],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE",
+      "name": "Vector dimension rejection",
+      "observed_semantics": "Wrong-dimension and malformed vector inserts were both rejected (SQLSTATEs 22000, 22P02).",
+      "observed_sqlstate": "22000",
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/vector"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_007",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "CONDITIONAL",
+      "capability_id": "CRDB-008",
+      "cleanup_verified": true,
+      "decision_reason": "Empty-table prefix vector index is present in SHOW CREATE TABLE and pg_indexes as USING cspann.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/7",
+      "expected_error": null,
+      "expected_semantics": "An empty-table prefix VECTOR index is created and catalogued.",
+      "known_limitations": [
+        "Current v26.2 documentation warns that non-empty-table backfill blocks writes; this probe intentionally creates the index first."
+      ],
+      "maturity": "GA",
+      "mvp_decision": "USE_WITH_GUARD",
+      "name": "Vector index creation",
+      "observed_semantics": "Empty-table prefix vector index is present in SHOW CREATE TABLE and pg_indexes as USING cspann.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/vector-indexes"
+      ],
+      "prerequisites": [
+        "feature.vector_index.enabled=true",
+        "empty disposable table before load"
+      ],
+      "probe_id": "crdb_008",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "CONDITIONAL",
+      "capability_id": "CRDB-009",
+      "cleanup_verified": true,
+      "decision_reason": "Nearest-neighbor result was ['mp_step3_20260727t041950z_075525_f42fd6ea_vi1', 'mp_step3_20260727t041950z_075525_f42fd6ea_vi2']; optimizer selected the ANN index=true on the tiny fixture.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/8",
+      "expected_error": null,
+      "expected_semantics": "Indexed-table nearest-neighbor results are semantically correct.",
+      "known_limitations": [
+        "Index existence, semantic correctness, eligibility, and optimizer selection are separate findings; the tiny table may prefer a scan.",
+        "ANN results are approximate at production scale."
+      ],
+      "maturity": "GA",
+      "mvp_decision": "USE_WITH_GUARD",
+      "name": "Vector index query correctness",
+      "observed_semantics": "Nearest-neighbor result was ['mp_step3_20260727t041950z_075525_f42fd6ea_vi1', 'mp_step3_20260727t041950z_075525_f42fd6ea_vi2']; optimizer selected the ANN index=true on the tiny fixture.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/vector-indexes"
+      ],
+      "prerequisites": [
+        "CRDB-008 vector index"
+      ],
+      "probe_id": "crdb_009",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "CONDITIONAL",
+      "capability_id": "CRDB-010",
+      "cleanup_verified": true,
+      "decision_reason": "Exact tenant/HAT prefixes returned only IDs ['mp_step3_20260727t041950z_075525_f42fd6ea_vi1', 'mp_step3_20260727t041950z_075525_f42fd6ea_vi2'].",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/9",
+      "expected_error": null,
+      "expected_semantics": "Exact tenant and HAT prefix filters exclude other prefixes.",
+      "known_limitations": [],
+      "maturity": "GA",
+      "mvp_decision": "USE_WITH_GUARD",
+      "name": "Vector prefix filtering",
+      "observed_semantics": "Exact tenant/HAT prefixes returned only IDs ['mp_step3_20260727t041950z_075525_f42fd6ea_vi1', 'mp_step3_20260727t041950z_075525_f42fd6ea_vi2'].",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/vector-indexes"
+      ],
+      "prerequisites": [
+        "exact tenant_id and hat_id query predicates"
+      ],
+      "probe_id": "crdb_010",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-011",
+      "cleanup_verified": true,
+      "decision_reason": "English dictionary stemmed foxes/jumping to fox/jump and ranked IDs ['mp_step3_20260727t041950z_075525_f42fd6ea_fts1', 'mp_step3_20260727t041950z_075525_f42fd6ea_fts2'] with scores ['0.33673418', '0.098500855'].",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/10",
+      "expected_error": null,
+      "expected_semantics": "English stemming, matching, and ranking return expected rows.",
+      "known_limitations": [],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE",
+      "name": "Full-text English",
+      "observed_semantics": "English dictionary stemmed foxes/jumping to fox/jump and ranked IDs ['mp_step3_20260727t041950z_075525_f42fd6ea_fts1', 'mp_step3_20260727t041950z_075525_f42fd6ea_fts2'] with scores ['0.33673418', '0.098500855'].",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/full-text-search"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_011",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-012",
+      "cleanup_verified": true,
+      "decision_reason": "German dictionary stemmed Häuser/laufen to haus/lauf and ranked IDs ['mp_step3_20260727t041950z_075525_f42fd6ea_fts3', 'mp_step3_20260727t041950z_075525_f42fd6ea_fts4'] with scores ['0.32871187', '0.09524299'].",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/11",
+      "expected_error": null,
+      "expected_semantics": "German stemming, matching, and ranking return expected rows.",
+      "known_limitations": [
+        "Dictionary behavior does not prove legal-domain recall or ranking."
+      ],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE",
+      "name": "Full-text German",
+      "observed_semantics": "German dictionary stemmed Häuser/laufen to haus/lauf and ranked IDs ['mp_step3_20260727t041950z_075525_f42fd6ea_fts3', 'mp_step3_20260727t041950z_075525_f42fd6ea_fts4'] with scores ['0.32871187', '0.09524299'].",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/full-text-search"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_012",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-013",
+      "cleanup_verified": true,
+      "decision_reason": "Both supported GIN/inverted indexes are catalogued; malformed TSQUERY was rejected with 42601; websearch_to_tsquery was unavailable with 0A000.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/12",
+      "expected_error": "malformed TSQUERY rejection",
+      "expected_semantics": "Supported GIN/inverted full-text indexes are catalogued.",
+      "known_limitations": [
+        "websearch_to_tsquery is not supported in v26.2."
+      ],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE",
+      "name": "Full-text inverted index",
+      "observed_semantics": "Both supported GIN/inverted indexes are catalogued; malformed TSQUERY was rejected with 42601; websearch_to_tsquery was unavailable with 0A000.",
+      "observed_sqlstate": "42601",
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/full-text-search"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_013",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-014",
+      "cleanup_verified": true,
+      "decision_reason": "Tenant A saw ['mp_step3_20260727t041950z_075525_f42fd6ea_rls_a']; Tenant B saw ['mp_step3_20260727t041950z_075525_f42fd6ea_rls_b']; pg_policies preserved roles/cmd/USING/WITH CHECK=true.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/13",
+      "expected_error": null,
+      "expected_semantics": "Tenant A and B see only their own synthetic rows.",
+      "known_limitations": [],
+      "maturity": "GA",
+      "mvp_decision": "USE",
+      "name": "RLS SELECT isolation",
+      "observed_semantics": "Tenant A saw ['mp_step3_20260727t041950z_075525_f42fd6ea_rls_a']; Tenant B saw ['mp_step3_20260727t041950z_075525_f42fd6ea_rls_b']; pg_policies preserved roles/cmd/USING/WITH CHECK=true.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-security",
+        "https://www.cockroachlabs.com/docs/v26.2/create-policy"
+      ],
+      "prerequisites": [
+        "distinct non-admin roles",
+        "RLS policy enabled"
+      ],
+      "probe_id": "crdb_014",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-015",
+      "cleanup_verified": true,
+      "decision_reason": "Cross-tenant INSERT was rejected with SQLSTATE 42501.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/14",
+      "expected_error": "42501",
+      "expected_semantics": "Cross-tenant INSERT is rejected by WITH CHECK.",
+      "known_limitations": [],
+      "maturity": "GA",
+      "mvp_decision": "USE",
+      "name": "RLS INSERT enforcement",
+      "observed_semantics": "Cross-tenant INSERT was rejected with SQLSTATE 42501.",
+      "observed_sqlstate": "42501",
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-security",
+        "https://www.cockroachlabs.com/docs/v26.2/create-policy"
+      ],
+      "prerequisites": [
+        "RLS WITH CHECK policy"
+      ],
+      "probe_id": "crdb_015",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-016",
+      "cleanup_verified": true,
+      "decision_reason": "Cross-tenant UPDATE was rejected with SQLSTATE 42501.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/15",
+      "expected_error": "42501",
+      "expected_semantics": "Cross-tenant UPDATE is rejected by WITH CHECK.",
+      "known_limitations": [],
+      "maturity": "GA",
+      "mvp_decision": "USE",
+      "name": "RLS UPDATE enforcement",
+      "observed_semantics": "Cross-tenant UPDATE was rejected with SQLSTATE 42501.",
+      "observed_sqlstate": "42501",
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-security",
+        "https://www.cockroachlabs.com/docs/v26.2/create-policy"
+      ],
+      "prerequisites": [
+        "RLS WITH CHECK policy"
+      ],
+      "probe_id": "crdb_016",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-017",
+      "cleanup_verified": true,
+      "decision_reason": "Tenant A DELETE returned no rows and Tenant B row remained present.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/16",
+      "expected_error": null,
+      "expected_semantics": "Cross-tenant DELETE cannot remove an invisible row.",
+      "known_limitations": [],
+      "maturity": "GA",
+      "mvp_decision": "USE",
+      "name": "RLS DELETE enforcement",
+      "observed_semantics": "Tenant A DELETE returned no rows and Tenant B row remained present.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-security",
+        "https://www.cockroachlabs.com/docs/v26.2/create-policy"
+      ],
+      "prerequisites": [
+        "RLS USING policy"
+      ],
+      "probe_id": "crdb_017",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-018",
+      "cleanup_verified": true,
+      "decision_reason": "Table owner row count changed from 2 before FORCE to 0 after FORCE.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/17",
+      "expected_error": null,
+      "expected_semantics": "FORCE RLS changes owner visibility from bypass to policy-bound.",
+      "known_limitations": [],
+      "maturity": "GA",
+      "mvp_decision": "USE_WITH_GUARD",
+      "name": "FORCE RLS owner enforcement",
+      "observed_semantics": "Table owner row count changed from 2 before FORCE to 0 after FORCE.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-security",
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-security#force-row-level-security"
+      ],
+      "prerequisites": [
+        "table ownership",
+        "FORCE ROW LEVEL SECURITY"
+      ],
+      "probe_id": "crdb_018",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-019",
+      "cleanup_verified": true,
+      "decision_reason": "Ordinary app role saw 0 rows; root/admin saw 2; tenant roles remained at 1/1 rows after FORCE; all four synthetic roles had rolbypassrls=false.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/18",
+      "expected_error": null,
+      "expected_semantics": "Ordinary roles cannot bypass; root/admin remains an explicit boundary.",
+      "known_limitations": [
+        "Root/admin, constraints, TRUNCATE, backup/restore, LDR, and PCR are explicit RLS bypass or non-policy boundaries."
+      ],
+      "maturity": "GA",
+      "mvp_decision": "USE_WITH_GUARD",
+      "name": "RLS bypass boundary",
+      "observed_semantics": "Ordinary app role saw 0 rows; root/admin saw 2; tenant roles remained at 1/1 rows after FORCE; all four synthetic roles had rolbypassrls=false.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-security",
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-security#force-row-level-security",
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-security#known-limitations"
+      ],
+      "prerequisites": [
+        "ordinary, owner, and root/admin role comparison"
+      ],
+      "probe_id": "crdb_019",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "CONDITIONAL",
+      "capability_id": "CRDB-020",
+      "cleanup_verified": true,
+      "decision_reason": "SHOW CREATE TABLE preserved ttl_expiration_expression and the bounded one-minute disposable cron.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/19",
+      "expected_error": null,
+      "expected_semantics": "TTL DDL retains the expiration expression and bounded cron.",
+      "known_limitations": [
+        "TTL execution is asynchronous, never synchronous DML."
+      ],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE",
+      "name": "Row-Level TTL DDL",
+      "observed_semantics": "SHOW CREATE TABLE preserved ttl_expiration_expression and the bounded one-minute disposable cron.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-ttl"
+      ],
+      "prerequisites": [
+        "TTL expiration expression and bounded cron"
+      ],
+      "probe_id": "crdb_020",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "CONDITIONAL",
+      "capability_id": "CRDB-021",
+      "cleanup_verified": true,
+      "decision_reason": "Active TTL schedule registered; schedule present=true.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/20",
+      "expected_error": null,
+      "expected_semantics": "A row-level TTL schedule is registered and active.",
+      "known_limitations": [],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE",
+      "name": "Row-Level TTL job registration",
+      "observed_semantics": "Active TTL schedule registered; schedule present=true.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-ttl"
+      ],
+      "prerequisites": [
+        "CRDB-020 TTL table"
+      ],
+      "probe_id": "crdb_021",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "CONDITIONAL",
+      "capability_id": "CRDB-022",
+      "cleanup_verified": true,
+      "decision_reason": "Within the bounded observation window, the prefixed expired row was deleted and the prefixed future-expiring row remained.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/21",
+      "expected_error": null,
+      "expected_semantics": "Expired row is deleted while future row remains within 120 seconds.",
+      "known_limitations": [],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE_WITH_GUARD",
+      "name": "Row-Level TTL physical deletion",
+      "observed_semantics": "Within the bounded observation window, the prefixed expired row was deleted and the prefixed future-expiring row remained.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-ttl"
+      ],
+      "prerequisites": [
+        "active TTL schedule",
+        "bounded observation window"
+      ],
+      "probe_id": "crdb_022",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": false,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "CONDITIONAL",
+      "capability_id": "CRDB-023",
+      "cleanup_verified": true,
+      "decision_reason": "Semantic CDC decoding observed initial_scan=true, resolved=true; the exact child process was reaped; forced kill=false.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/22",
+      "expected_error": null,
+      "expected_semantics": "A bounded sinkless changefeed emits resolved/data events.",
+      "known_limitations": [],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE_WITH_GUARD",
+      "name": "Sinkless changefeed",
+      "observed_semantics": "Semantic CDC decoding observed initial_scan=true, resolved=true; the exact child process was reaped; forced kill=false.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/create-and-configure-changefeeds"
+      ],
+      "prerequisites": [
+        "kv.rangefeed.enabled=true",
+        "bounded sinkless process"
+      ],
+      "probe_id": "crdb_023",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": false,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "CONDITIONAL",
+      "capability_id": "CRDB-024",
+      "cleanup_verified": true,
+      "decision_reason": "Separate insert/update/delete commits were issued; semantic decoding observed v1, v2, and null-after=true.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/23",
+      "expected_error": null,
+      "expected_semantics": "Separate insert, update, and delete commits emit corresponding values.",
+      "known_limitations": [
+        "Changefeed delivery is at-least-once, not exactly-once."
+      ],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE_WITH_GUARD",
+      "name": "Changefeed insert/update/delete events",
+      "observed_semantics": "Separate insert/update/delete commits were issued; semantic decoding observed v1, v2, and null-after=true.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/create-and-configure-changefeeds"
+      ],
+      "prerequisites": [
+        "CRDB-023 sinkless feed",
+        "separate committed changes"
+      ],
+      "probe_id": "crdb_024",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": false,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "UNAVAILABLE",
+      "capability_id": "CRDB-025",
+      "cleanup_verified": true,
+      "decision_reason": "CDC query on an RLS table was rejected with SQLSTATE 0A000; official contract states emitted CDC messages are not RLS-filtered.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/24",
+      "expected_error": "CDC queries are not supported on RLS tables",
+      "expected_semantics": "CDC query on an RLS table is rejected; CDC is not assumed filtered.",
+      "known_limitations": [
+        "Changefeed consumers require an independent tenant-safe contract."
+      ],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE_WITH_GUARD",
+      "name": "Changefeed and RLS limitation",
+      "observed_semantics": "CDC query on an RLS table was rejected with SQLSTATE 0A000; official contract states emitted CDC messages are not RLS-filtered.",
+      "observed_sqlstate": "0A000",
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-security",
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-security#known-limitations",
+        "https://www.cockroachlabs.com/docs/v26.2/cdc-queries"
+      ],
+      "prerequisites": [
+        "RLS-enabled synthetic table",
+        "CDC query form"
+      ],
+      "probe_id": "crdb_025",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-026",
+      "cleanup_verified": true,
+      "decision_reason": "Predicate metadata contains WHERE active; inactive duplicates and same key in another tenant were accepted.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/25",
+      "expected_error": null,
+      "expected_semantics": "Partial unique predicate scopes uniqueness to active rows per tenant.",
+      "known_limitations": [],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE",
+      "name": "Partial unique index",
+      "observed_semantics": "Predicate metadata contains WHERE active; inactive duplicates and same key in another tenant were accepted.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/partial-indexes"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_026",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-027",
+      "cleanup_verified": true,
+      "decision_reason": "Second active duplicate returned SQLSTATE 23505; one active row remained=1.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/26",
+      "expected_error": "23505",
+      "expected_semantics": "Duplicate active key returns SQLSTATE 23505.",
+      "known_limitations": [
+        "23505 is permanent and must not be retried as 40001."
+      ],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE",
+      "name": "Partial uniqueness SQLSTATE 23505",
+      "observed_semantics": "Second active duplicate returned SQLSTATE 23505; one active row remained=1.",
+      "observed_sqlstate": "23505",
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/partial-indexes",
+        "https://www.cockroachlabs.com/docs/v26.2/transactions"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_027",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-028",
+      "cleanup_verified": true,
+      "decision_reason": "Current read returned v2; two reads at captured HLC returned v1; future timestamp was rejected with 22023.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/27",
+      "expected_error": "future historical timestamp rejection",
+      "expected_semantics": "AOST repeatedly returns v1 while current read returns v2.",
+      "known_limitations": [],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE_WITH_GUARD",
+      "name": "AS OF SYSTEM TIME historical read",
+      "observed_semantics": "Current read returned v2; two reads at captured HLC returned v1; future timestamp was rejected with 22023.",
+      "observed_sqlstate": "22023",
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/as-of-system-time"
+      ],
+      "prerequisites": [
+        "retained MVCC history within the GC window"
+      ],
+      "probe_id": "crdb_028",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": false,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-029",
+      "cleanup_verified": true,
+      "decision_reason": "default=serializable, explicit=serializable, READ COMMITTED availability=read committed, setting=t.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/28",
+      "expected_error": null,
+      "expected_semantics": "Server, session, and explicit transaction default is SERIALIZABLE.",
+      "known_limitations": [],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE",
+      "name": "Default SERIALIZABLE isolation",
+      "observed_semantics": "default=serializable, explicit=serializable, READ COMMITTED availability=read committed, setting=t.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/transactions"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_029",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "CONDITIONAL",
+      "capability_id": "CRDB-030",
+      "cleanup_verified": true,
+      "decision_reason": "No client-visible 40001 after 10 bounded explicit-barrier attempts; server/client completed with final value 2.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/29",
+      "expected_error": null,
+      "expected_semantics": "Bounded natural contention produces a client-visible 40001 if not auto-retried.",
+      "known_limitations": [
+        "Transparent server retries can make a natural client-visible signal nondeterministic on a single node."
+      ],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "DEFER",
+      "name": "Natural contention retry signal",
+      "observed_semantics": "No client-visible 40001 after 10 bounded explicit-barrier attempts; server/client completed with final value 2.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/transactions",
+        "https://www.cockroachlabs.com/docs/v26.2/transaction-retry-error-reference"
+      ],
+      "prerequisites": [
+        "two independent SERIALIZABLE sessions"
+      ],
+      "probe_id": "crdb_030",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "DEFER"
+    },
+    {
+      "availability": "CONDITIONAL",
+      "capability_id": "CRDB-031",
+      "cleanup_verified": true,
+      "decision_reason": "Official session-only test injector returned SQLSTATE 40001; the connection closed immediately afterward.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/30",
+      "expected_error": "40001",
+      "expected_semantics": "Official session-only injector produces an exact synthetic 40001.",
+      "known_limitations": [
+        "Synthetic injection proves signal classification, not contention rate."
+      ],
+      "maturity": "UNKNOWN",
+      "mvp_decision": "USE_WITH_GUARD",
+      "name": "Synthetic 40001 signal when needed",
+      "observed_semantics": "Official session-only test injector returned SQLSTATE 40001; the connection closed immediately afterward.",
+      "observed_sqlstate": "40001",
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/transaction-retry-error-reference"
+      ],
+      "prerequisites": [
+        "session-only inject_retry_errors_enabled"
+      ],
+      "probe_id": "crdb_031",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-032",
+      "cleanup_verified": true,
+      "decision_reason": "Harness classifier accepts only SQLSTATE 40001; attempts are capped at 10 and backoff at 1 second; a cleanup hook runs before sleeping; 23505 is non-retryable.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/31",
+      "expected_error": null,
+      "expected_semantics": "Only 40001 is retryable and retry attempts/backoff are bounded.",
+      "known_limitations": [],
+      "maturity": "NOT_APPLICABLE",
+      "mvp_decision": "USE",
+      "name": "Bounded retry classifier",
+      "observed_semantics": "Harness classifier accepts only SQLSTATE 40001; attempts are capped at 10 and backoff at 1 second; a cleanup hook runs before sleeping; 23505 is non-retryable.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/transaction-retry-error-reference",
+        "https://www.cockroachlabs.com/docs/v26.2/transactions"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_032",
+      "probe_plane": "OFFLINE_REPOSITORY",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-033",
+      "cleanup_verified": true,
+      "decision_reason": "An unfiltered privileged query saw both synthetic tenants ['tenant_a', 'tenant_b']; exact prefixes constrained search but supplied no authorization boundary.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/32",
+      "expected_error": null,
+      "expected_semantics": "Prefix filtering aids query scope but is not authorization.",
+      "known_limitations": [
+        "Prefix columns are optimizer/filter dimensions, not an identity or authorization boundary."
+      ],
+      "maturity": "NOT_APPLICABLE",
+      "mvp_decision": "USE_WITH_GUARD",
+      "name": "Vector prefix is not authorization",
+      "observed_semantics": "An unfiltered privileged query saw both synthetic tenants ['tenant_a', 'tenant_b']; exact prefixes constrained search but supplied no authorization boundary.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/vector-indexes",
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-security"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_033",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-034",
+      "cleanup_verified": true,
+      "decision_reason": "The live historical read succeeded inside the current MVCC window; official contract bounds AOST by GC retention.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/33",
+      "expected_error": null,
+      "expected_semantics": "AOST is explicitly bounded by retained MVCC/GC history.",
+      "known_limitations": [
+        "AOST is not permanent history or durable audit storage.",
+        "Placeholders are not supported for the AOST timestamp."
+      ],
+      "maturity": "NOT_APPLICABLE",
+      "mvp_decision": "USE_WITH_GUARD",
+      "name": "AOST GC-window boundary",
+      "observed_semantics": "The live historical read succeeded inside the current MVCC window; official contract bounds AOST by GC retention.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/as-of-system-time"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_034",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    },
+    {
+      "availability": "CONDITIONAL",
+      "capability_id": "CRDB-035",
+      "cleanup_verified": true,
+      "decision_reason": "Independent results were TTL=PASS, feed=PASS, events=PASS; the combined TTL-delete event stream was not forced in this bounded run.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/34",
+      "expected_error": null,
+      "expected_semantics": "TTL-generated deletes and changefeeds have an explicit tested or deferred interaction.",
+      "known_limitations": [
+        "Official v26.2 behavior emits TTL DELETE events unless disabled; production-like combined revalidation remains required."
+      ],
+      "maturity": "NOT_APPLICABLE",
+      "mvp_decision": "DEFER",
+      "name": "TTL/changefeed interaction",
+      "observed_semantics": "Independent results were TTL=PASS, feed=PASS, events=PASS; the combined TTL-delete event stream was not forced in this bounded run.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/row-level-ttl",
+        "https://www.cockroachlabs.com/docs/v26.2/create-and-configure-changefeeds"
+      ],
+      "prerequisites": [
+        "live TTL and changefeed interaction test"
+      ],
+      "probe_id": "crdb_035",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": false,
+      "runtime_exact_version": "v26.2.4",
+      "status": "DEFER"
+    },
+    {
+      "availability": "AVAILABLE",
+      "capability_id": "CRDB-036",
+      "cleanup_verified": true,
+      "decision_reason": "SQL resources and settings were restored; exact PID exited; all owned ports closed; step-owned temporary path removed.",
+      "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
+      "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/35",
+      "expected_error": null,
+      "expected_semantics": "Settings, SQL objects, process, ports, and temporary paths are cleaned.",
+      "known_limitations": [],
+      "maturity": "NOT_APPLICABLE",
+      "mvp_decision": "USE",
+      "name": "Cleanup and setting restoration",
+      "observed_semantics": "SQL resources and settings were restored; exact PID exited; all owned ports closed; step-owned temporary path removed.",
+      "observed_sqlstate": null,
+      "official_source_references": [
+        "https://www.cockroachlabs.com/docs/v26.2/transactions"
+      ],
+      "prerequisites": [],
+      "probe_id": "crdb_036",
+      "probe_plane": "LIVE_LOCAL",
+      "required_for_mvp": true,
+      "runtime_exact_version": "v26.2.4",
+      "status": "PASS"
+    }
+  ],
+  "official_sources": [
+    {
+      "capability_ids": [
+        "CRDB-001",
+        "CRDB-002"
+      ],
+      "category": "release_overview",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/releases",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "CockroachDB Releases Overview"
+    },
+    {
+      "capability_ids": [
+        "CRDB-001",
+        "CRDB-002"
+      ],
+      "category": "release",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/releases/v26.2",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "What's New in v26.2"
+    },
+    {
+      "capability_ids": [
+        "CRDB-001",
+        "CRDB-002"
+      ],
+      "category": "release_patch",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/releases/v26.2#v26-2-4",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "CockroachDB v26.2.4 Release Notes"
+    },
+    {
+      "capability_ids": [
+        "CRDB-001"
+      ],
+      "category": "support",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/releases/release-support-policy",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "Release Support Policy"
+    },
+    {
+      "capability_ids": [
+        "CRDB-003",
+        "CRDB-004",
+        "CRDB-005",
+        "CRDB-006",
+        "CRDB-007"
+      ],
+      "category": "vector",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/vector",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "VECTOR"
+    },
+    {
+      "capability_ids": [
+        "CRDB-008",
+        "CRDB-009",
+        "CRDB-010",
+        "CRDB-033"
+      ],
+      "category": "vector_index",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/vector-indexes",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "Vector Indexes"
+    },
+    {
+      "capability_ids": [
+        "CRDB-011",
+        "CRDB-012",
+        "CRDB-013"
+      ],
+      "category": "full_text",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/full-text-search",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "Full-Text Search"
+    },
+    {
+      "capability_ids": [
+        "CRDB-014",
+        "CRDB-015",
+        "CRDB-016",
+        "CRDB-017",
+        "CRDB-018",
+        "CRDB-019",
+        "CRDB-025",
+        "CRDB-033"
+      ],
+      "category": "rls",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/row-level-security",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "Row-Level Security Overview"
+    },
+    {
+      "capability_ids": [
+        "CRDB-018",
+        "CRDB-019"
+      ],
+      "category": "force_rls",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/row-level-security#force-row-level-security",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "FORCE ROW LEVEL SECURITY"
+    },
+    {
+      "capability_ids": [
+        "CRDB-019",
+        "CRDB-025"
+      ],
+      "category": "rls_limitations",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/row-level-security#known-limitations",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "Row-Level Security Known Limitations"
+    },
+    {
+      "capability_ids": [
+        "CRDB-014",
+        "CRDB-015",
+        "CRDB-016",
+        "CRDB-017"
+      ],
+      "category": "policy",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/create-policy",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "CREATE POLICY"
+    },
+    {
+      "capability_ids": [
+        "CRDB-020",
+        "CRDB-021",
+        "CRDB-022",
+        "CRDB-035"
+      ],
+      "category": "ttl",
+      "discrepancy": null,
+      "live_behavior_matched": null,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/row-level-ttl",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "Row-Level TTL"
+    },
+    {
+      "capability_ids": [
+        "CRDB-023",
+        "CRDB-024",
+        "CRDB-035"
+      ],
+      "category": "changefeed",
+      "discrepancy": null,
+      "live_behavior_matched": null,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/create-and-configure-changefeeds",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "Create and Configure Changefeeds"
+    },
+    {
+      "capability_ids": [
+        "CRDB-025"
+      ],
+      "category": "cdc_query",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/cdc-queries",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "Change Data Capture Queries"
+    },
+    {
+      "capability_ids": [
+        "CRDB-026",
+        "CRDB-027"
+      ],
+      "category": "partial",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/partial-indexes",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "Partial Indexes"
+    },
+    {
+      "capability_ids": [
+        "CRDB-028",
+        "CRDB-034"
+      ],
+      "category": "aost",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/as-of-system-time",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "AS OF SYSTEM TIME"
+    },
+    {
+      "capability_ids": [
+        "CRDB-027",
+        "CRDB-029",
+        "CRDB-030",
+        "CRDB-032",
+        "CRDB-036"
+      ],
+      "category": "transactions",
+      "discrepancy": null,
+      "live_behavior_matched": null,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/transactions",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "Transactions"
+    },
+    {
+      "capability_ids": [
+        "CRDB-030",
+        "CRDB-031",
+        "CRDB-032"
+      ],
+      "category": "retry",
+      "discrepancy": null,
+      "live_behavior_matched": null,
+      "location": "https://www.cockroachlabs.com/docs/v26.2/transaction-retry-error-reference",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "Transaction Retry Error Reference"
+    },
+    {
+      "capability_ids": [
+        "CRDB-001"
+      ],
+      "category": "security_advisories",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://www.cockroachlabs.com/docs/advisories",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "CockroachDB Security Advisories"
+    },
+    {
+      "capability_ids": [
+        "CRDB-001"
+      ],
+      "category": "artifact_checksum",
+      "discrepancy": null,
+      "live_behavior_matched": true,
+      "location": "https://binaries.cockroachdb.com/cockroach-v26.2.4.linux-amd64.tgz.sha256sum",
+      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "title": "CockroachDB v26.2.4 Linux amd64 SHA-256"
+    }
+  ],
+  "schema_version": 1,
+  "summary": {
+    "defer_count": 2,
+    "fail_count": 0,
+    "generated_at_utc": "2026-07-27T04:26:52Z",
+    "harness_version": "1.0.3",
+    "matrix_sha256": "b50f52d5985e9eccf44f9c63fb3edf9b2ee002907e20cf646262bdf9b6c485cf",
+    "overall_step3_decision": "PINNED_WITH_EXPLICIT_DEFERRED_ITEMS",
+    "pass_count": 34,
+    "runtime_exact_version": "v26.2.4",
+    "total_rows": 36
+  }
+}

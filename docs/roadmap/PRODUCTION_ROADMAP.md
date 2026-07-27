@@ -18,7 +18,8 @@
 - `Step 0C`: przyjęty jako ukończony baseline architektoniczny z roadmapy źródłowej.
 - `Step 1`: `COMPLETE AND PUSHED` — commit `3f6d341bc3ceb964a2b25d4913a0695595dbd7d0`.
 - `Step 2`: `COMPLETE AND PUSHED` — commit `807b459b3d0270bd84c5590df6e7abf3e4f9842b`.
-- Dokładny następny krok: `Step 3 — CockroachDB v26.2 Capability Spike and Version Pin 1A`.
+- `Step 3`: `COMPLETE` — CockroachDB `v26.2.4`; live local spike: `34 PASS / 0 FAIL / 2 DEFER`.
+- Dokładny następny krok: `Step 4 — CockroachDB Logical Schema and Migration Foundation 1A`.
 
 ## Zasada prowadzenia prac
 
@@ -82,9 +83,10 @@ Faza jest zamknięta, gdy:
 
 Udowodnić możliwości docelowej wersji CockroachDB i wdrożyć trwały, wielodostępny model danych z retry-safe transakcjami.
 
-- [ ] **Step 3 — CockroachDB v26.2 Capability Spike and Version Pin 1A**
+- [x] **Step 3 — CockroachDB v26.2 Capability Spike and Version Pin 1A**
   Zweryfikować na realnym środowisku: `VECTOR`, vector index, full-text search, RLS, `FORCE ROW LEVEL SECURITY`, Row-Level TTL, changefeed, partial unique indexes, `AS OF SYSTEM TIME`, transakcje `SERIALIZABLE` i błędy `40001`.
   Wynik: macierz PASS/FAIL/DEFER i przypięta wersja klastra.
+  Zamknięcie: CockroachDB `v26.2.4`, disposable local single-node na loopback, `34 PASS / 0 FAIL / 2 DEFER`. [Baseline możliwości](../architecture/COCKROACHDB_V26_2_CAPABILITY_BASELINE_1A.md), [macierz evidence](../evidence/cockroachdb-v26-2/capability-matrix.json), [rekord zamknięcia](../audits/STEP_3_COCKROACHDB_CAPABILITY_SPIKE_CLOSURE_1A.md).
 
 - [ ] **Step 4 — CockroachDB Logical Schema and Migration Foundation 1A**
   Tabele dla tenantów, użytkowników, HAT-ów, źródeł, snapshotów, wersji, chunków, kernel runs, routing decisions, evidence bundles, packets, drafts, verdicts, personal memory, patch proposals, approvals, committed patches i audit events.

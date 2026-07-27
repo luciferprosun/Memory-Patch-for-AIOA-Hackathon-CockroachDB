@@ -7,9 +7,10 @@ intentionally outside this submission.
 This import contains reports, plans, inventories and validation evidence
 created or substantively updated from June 30, 2026 through July 24, 2026.
 Importing historical reports does not mean that a final CockroachDB
-implementation already exists. The repository now also contains the
-domain-neutral Step 1 kernel contract foundation; later persistence and
-integration remain future roadmap work.
+implementation already exists. The repository now contains the domain-neutral
+Step 1 kernel contract foundation and the live-tested CockroachDB v26.2.4
+capability baseline. The logical schema, migrations, persistence adapters and
+production integration remain future roadmap work.
 
 The historical provenance import intentionally excludes raw German-law
 datasets, raw UNIX corpus records, retrieval-index data, application code and
@@ -20,6 +21,11 @@ SHA-256 provenance.
 
 - [Canonical production roadmap](roadmap/PRODUCTION_ROADMAP.md)
 - [Canonical Step 2 closure record](audits/STEP_2_KERNEL_CONTRACT_REAUDIT_CLOSURE_1A.md)
+- [CockroachDB v26.2 capability baseline 1A](architecture/COCKROACHDB_V26_2_CAPABILITY_BASELINE_1A.md)
+- [ADR-010: CockroachDB v26.2 version pin](adr/ADR-010-cockroachdb-v26-2-version-pin.md)
+- [Step 3 capability matrix](evidence/cockroachdb-v26-2/capability-matrix.json)
+- [Step 3 closure record](audits/STEP_3_COCKROACHDB_CAPABILITY_SPIKE_CLOSURE_1A.md)
+- [Immutable CockroachDB version pin](../config/cockroachdb/version-pin.json)
 - [Knowledge Kernel Contract Baseline 1A](architecture/KNOWLEDGE_KERNEL_CONTRACT_BASELINE_1A.md)
 - [Personal Memory HATs 1A](architecture/PERSONAL_MEMORY_HATS_1A.md)
 - [Memory Trust and Precedence 1A](architecture/MEMORY_TRUST_AND_PRECEDENCE_1A.md)
