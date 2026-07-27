@@ -19,7 +19,8 @@
 - `Step 1`: `COMPLETE AND PUSHED` — commit `3f6d341bc3ceb964a2b25d4913a0695595dbd7d0`.
 - `Step 2`: `COMPLETE AND PUSHED` — commit `807b459b3d0270bd84c5590df6e7abf3e4f9842b`.
 - `Step 3`: `COMPLETE` — CockroachDB `v26.2.4`; live local spike: `34 PASS / 0 FAIL / 2 DEFER`.
-- Dokładny następny krok: `Step 4 — CockroachDB Logical Schema and Migration Foundation 1A`.
+- `Step 4`: `COMPLETE` — CockroachDB `v26.2.4`; 3 deterministyczne migracje, 29 tabel i live schema validation PASS.
+- Dokładny następny krok: `Step 5 — Tenant Roles, Session Context and Row-Level Security 1A`.
 
 ## Zasada prowadzenia prac
 
@@ -88,8 +89,9 @@ Udowodnić możliwości docelowej wersji CockroachDB i wdrożyć trwały, wielod
   Wynik: macierz PASS/FAIL/DEFER i przypięta wersja klastra.
   Zamknięcie: CockroachDB `v26.2.4`, disposable local single-node na loopback, `34 PASS / 0 FAIL / 2 DEFER`. [Baseline możliwości](../architecture/COCKROACHDB_V26_2_CAPABILITY_BASELINE_1A.md), [macierz evidence](../evidence/cockroachdb-v26-2/capability-matrix.json), [rekord zamknięcia](../audits/STEP_3_COCKROACHDB_CAPABILITY_SPIKE_CLOSURE_1A.md).
 
-- [ ] **Step 4 — CockroachDB Logical Schema and Migration Foundation 1A**
+- [x] **Step 4 — CockroachDB Logical Schema and Migration Foundation 1A**
   Tabele dla tenantów, użytkowników, HAT-ów, źródeł, snapshotów, wersji, chunków, kernel runs, routing decisions, evidence bundles, packets, drafts, verdicts, personal memory, patch proposals, approvals, committed patches i audit events.
+  Zamknięcie: CockroachDB `v26.2.4`, 3 forward-only migracje, 29 tenant-ready tabel, identyczna reprodukcja dwóch świeżych schematów, no-op drugiego uruchomienia i negatywne constraint probes PASS. [Baseline schematu](../architecture/COCKROACHDB_LOGICAL_SCHEMA_AND_MIGRATION_FOUNDATION_1A.md), [live evidence](../evidence/cockroachdb-v26-2/step4-schema-validation.json), [rekord zamknięcia](../audits/STEP_4_COCKROACHDB_SCHEMA_MIGRATION_CLOSURE_1A.md).
 
 - [ ] **Step 5 — Tenant Roles, Session Context and Row-Level Security 1A**
   Role SQL, tenant context, RLS, `FORCE ROW LEVEL SECURITY`, brak `BYPASSRLS`, negatywne testy cross-tenant i cross-user.

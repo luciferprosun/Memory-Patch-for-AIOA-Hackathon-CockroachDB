@@ -1,0 +1,103 @@
+{
+  "binary_identity": {
+    "binary_sha256": "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf",
+    "build_tag": "v26.2.4"
+  },
+  "cleanup": {
+    "databases_removed": true,
+    "force_kill_used": true,
+    "no_credentials_created": true,
+    "owned_pid_exited": true,
+    "ports_closed": true,
+    "runtime_duration_seconds": 438.788,
+    "temporary_store_removed": true
+  },
+  "cluster_version": "26.2",
+  "database_count": 2,
+  "first_apply": {
+    "applied": [
+      "0001_step4_identity_and_hat_scopes",
+      "0002_step4_knowledge_lineage_and_retrieval",
+      "0003_step4_kernel_memory_and_audit_evidence"
+    ],
+    "applied_count": 3,
+    "skipped": [],
+    "skipped_count": 0
+  },
+  "generated_at_utc": "2026-07-27T09:48:23Z",
+  "loopback_only": true,
+  "no_op_apply": {
+    "applied": [],
+    "applied_count": 0,
+    "skipped": [
+      "0001_step4_identity_and_hat_scopes",
+      "0002_step4_knowledge_lineage_and_retrieval",
+      "0003_step4_kernel_memory_and_audit_evidence"
+    ],
+    "skipped_count": 3
+  },
+  "offline": {
+    "explicit_index_count": 9,
+    "migration_count": 3,
+    "migration_ids": [
+      "0001_step4_identity_and_hat_scopes",
+      "0002_step4_knowledge_lineage_and_retrieval",
+      "0003_step4_kernel_memory_and_audit_evidence"
+    ],
+    "schema_table_count": 29,
+    "status": "PASS",
+    "target_version": "v26.2.4",
+    "vector_boundary": "DEFERRED_NO_CANONICAL_DIMENSION"
+  },
+  "probes": {
+    "full_text_match_count": 1,
+    "negative_sqlstates": {
+      "cross_hat_chunk": "23503",
+      "cross_hat_snapshot": "23503",
+      "cross_owner_commit_binding": "23503",
+      "cross_owner_scope": "23503",
+      "cross_tenant_chunk": "23503",
+      "cross_tenant_snapshot": "23503",
+      "cross_tenant_version": "23503",
+      "duplicate_source_identity": "23505",
+      "forbidden_transition_edge": "23514",
+      "hat_cannot_claim_authority": "23514",
+      "model_cannot_claim_approval": "23514",
+      "personal_approval_requires_owner": "23514",
+      "personal_approval_scope_is_exact": "23503",
+      "personal_commit_requires_owner": "23514",
+      "personal_scope_cannot_replace_knowledge_hat": "23503",
+      "private_scope_requires_owner": "23514",
+      "shared_scope_rejects_private_owner": "23514",
+      "verified_memory_stays_inert": "23514"
+    },
+    "seeded_lineage": "source->snapshot->version->chunk",
+    "stored_kernel_run": true,
+    "stored_routing_decision": true,
+    "stored_structural_commit_receipt": true
+  },
+  "reproduction_apply": {
+    "applied": [
+      "0001_step4_identity_and_hat_scopes",
+      "0002_step4_knowledge_lineage_and_retrieval",
+      "0003_step4_kernel_memory_and_audit_evidence"
+    ],
+    "applied_count": 3,
+    "skipped": [],
+    "skipped_count": 0
+  },
+  "schema": {
+    "column_count": 289,
+    "constraint_counts": {
+      "CHECK": 414,
+      "FOREIGN KEY": 44,
+      "PRIMARY KEY": 29,
+      "UNIQUE": 24
+    },
+    "explicit_index_count": 9,
+    "schema_digest": "e600f0bed5d77618f02df822f9164282e82950ae9f867f11718b68a11d050d23",
+    "table_count": 29
+  },
+  "server_version": "CockroachDB CCL v26.2.4 (x86_64-pc-linux-gnu, built 2026/07/14 16:50:57, go1.25.5)",
+  "status": "PASS"
+}

@@ -1,0 +1,52 @@
+{
+  "canonical_schema": "memory_patch",
+  "deferred_features": [
+    "RLS_AND_FORCE_RLS_STEP_5",
+    "PERSISTENCE_ADAPTERS_STEP_6",
+    "VECTOR_COLUMN_AND_INDEX_PENDING_MODEL_AND_DIMENSION_PIN"
+  ],
+  "explicit_indexes": [
+    "audit_events_tenant_time_idx",
+    "chunk_search_documents_scope_idx",
+    "chunk_search_documents_vector_idx",
+    "hat_scopes_personal_owner_idx",
+    "hat_scopes_shared_hat_idx",
+    "knowledge_chunks_content_identity_idx",
+    "knowledge_chunks_scope_retrieval_idx",
+    "knowledge_versions_one_current_source_idx",
+    "memory_items_scope_retrieval_idx"
+  ],
+  "required_tables": [
+    "action_policy_decisions",
+    "audit_events",
+    "chunk_search_documents",
+    "claim_verdicts",
+    "claims",
+    "correction_packets",
+    "correction_requirements",
+    "drafts",
+    "evidence_bundle_items",
+    "evidence_bundles",
+    "evidence_items",
+    "hat_manifests",
+    "hat_scopes",
+    "kernel_runs",
+    "knowledge_chunks",
+    "knowledge_sources",
+    "knowledge_versions",
+    "memory_items",
+    "memory_patch_approvals",
+    "memory_patch_commits",
+    "memory_patch_proposals",
+    "patch_transition_records",
+    "personal_memory_model_bindings",
+    "personal_memory_spaces",
+    "routing_decisions",
+    "schema_migrations",
+    "source_snapshots",
+    "tenants",
+    "users"
+  ],
+  "schema_version": 1,
+  "target_cockroachdb_version": "v26.2.4"
+}

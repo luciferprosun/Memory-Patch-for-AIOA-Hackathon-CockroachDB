@@ -1,0 +1,25 @@
+{
+  "manifest_id": "memory-patch-step4-schema-1a",
+  "migrations": [
+    {
+      "filename": "0001_step4_identity_and_hat_scopes.sql",
+      "migration_id": "0001_step4_identity_and_hat_scopes",
+      "sha256": "a7d6e835d16debc77830cbcb2803c3b01400622c3186a64f7d627f4bf0a767a0"
+    },
+    {
+      "filename": "0002_step4_knowledge_lineage_and_retrieval.sql",
+      "migration_id": "0002_step4_knowledge_lineage_and_retrieval",
+      "sha256": "a8ddf1d342e58c8e12ecb082443b6367921fa5ec0e6edce92401f560300058d4"
+    },
+    {
+      "filename": "0003_step4_kernel_memory_and_audit_evidence.sql",
+      "migration_id": "0003_step4_kernel_memory_and_audit_evidence",
+      "sha256": "f25865e958d9bb352b8fc03512474fb848a688cfa6c73a5790664745779de881"
+    }
+  ],
+  "runner_version": "1.0.0",
+  "schema_version": 1,
+  "target_database": "CockroachDB",
+  "target_version": "v26.2.4",
+  "transaction_policy": "ONE_EXPLICIT_TRANSACTION_PER_MIGRATION"
+}

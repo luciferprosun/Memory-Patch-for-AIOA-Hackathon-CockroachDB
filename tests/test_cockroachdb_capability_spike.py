@@ -1028,7 +1028,7 @@ class DocumentationClosureTests(unittest.TestCase):
                 self.assertIn(f"]({target})", content)
                 self.assertTrue((DOCS_INDEX_PATH.parent / target).is_file())
 
-    def test_roadmap_marks_only_step3_closed_and_step4_next(self) -> None:
+    def test_roadmap_preserves_step3_closure_evidence(self) -> None:
         content = ROADMAP_PATH.read_text(encoding="utf-8")
         step3 = re.findall(
             r"^- \[([ x])\] \*\*Step 3 — "
@@ -1036,17 +1036,20 @@ class DocumentationClosureTests(unittest.TestCase):
             content,
             flags=re.MULTILINE,
         )
-        step4 = re.findall(
-            r"^- \[([ x])\] \*\*Step 4 — "
-            r"CockroachDB Logical Schema and Migration Foundation 1A\*\*",
-            content,
-            flags=re.MULTILINE,
-        )
         self.assertEqual(step3, ["x"])
-        self.assertEqual(step4, [" "])
         self.assertIn(
-            "Dokładny następny krok: "
-            "`Step 4 — CockroachDB Logical Schema and Migration Foundation 1A`",
+            "Zamknięcie: CockroachDB `v26.2.4`, disposable local single-node "
+            "na loopback, `34 PASS / 0 FAIL / 2 DEFER`.",
+            content,
+        )
+        self.assertIn(
+            "[Baseline możliwości]"
+            "(../architecture/COCKROACHDB_V26_2_CAPABILITY_BASELINE_1A.md)",
+            content,
+        )
+        self.assertIn(
+            "[rekord zamknięcia]"
+            "(../audits/STEP_3_COCKROACHDB_CAPABILITY_SPIKE_CLOSURE_1A.md)",
             content,
         )
 
