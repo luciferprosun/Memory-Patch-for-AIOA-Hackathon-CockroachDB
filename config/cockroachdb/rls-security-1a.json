@@ -1,0 +1,947 @@
+{
+  "access_classes": [
+    "GLOBAL_INTERNAL",
+    "HAT_SCOPE_APPEND_ORIENTED",
+    "HAT_SCOPE_MIXED",
+    "MIGRATION_INTERNAL",
+    "SECURITY_INTERNAL",
+    "TENANT_OR_USER_APPEND_ORIENTED",
+    "TENANT_SHARED",
+    "USER_PRIVATE",
+    "USER_PRIVATE_APPEND_ORIENTED"
+  ],
+  "manifest_id": "memory-patch-step5-rls-security-1a",
+  "protected_table_count": 27,
+  "roles": [
+    {
+      "bypassrls": false,
+      "createdb": false,
+      "createrole": false,
+      "login": false,
+      "member_of": [],
+      "role": "mp_app_runtime"
+    },
+    {
+      "bypassrls": false,
+      "createdb": false,
+      "createrole": false,
+      "login": false,
+      "member_of": [],
+      "role": "mp_request_context_setter"
+    },
+    {
+      "bypassrls": false,
+      "createdb": false,
+      "createrole": false,
+      "login": false,
+      "member_of": [],
+      "role": "mp_schema_owner"
+    },
+    {
+      "bypassrls": false,
+      "createdb": false,
+      "createrole": false,
+      "login": false,
+      "member_of": [],
+      "role": "mp_security_owner"
+    }
+  ],
+  "schema_version": 1,
+  "scope_identity_guards": [
+    {
+      "function": "guard_memory_item_identity",
+      "immutable_columns": [
+        "content",
+        "content_kind",
+        "created_at",
+        "evidence_references",
+        "hat_scope_id",
+        "memory_item_id",
+        "schema_version",
+        "scope_dimensions",
+        "source_patch_id",
+        "target_scope",
+        "tenant_id",
+        "trust_class",
+        "visibility"
+      ],
+      "table": "memory_items",
+      "trigger": "memory_items_s5_identity_guard"
+    },
+    {
+      "function": "guard_personal_memory_space_identity",
+      "immutable_columns": [
+        "created_at",
+        "personal_memory_space_id",
+        "schema_version",
+        "tenant_id",
+        "user_id"
+      ],
+      "table": "personal_memory_spaces",
+      "trigger": "personal_memory_spaces_s5_identity_guard"
+    }
+  ],
+  "security_internal_tables": [
+    {
+      "access_class": "SECURITY_INTERNAL",
+      "append_model": "MUTABLE_TRANSACTION_CONTEXT",
+      "force_rls": false,
+      "normal_runtime_access_required": false,
+      "operations": {
+        "delete": "DENY_NO_GRANT",
+        "insert": "DENY_NO_GRANT",
+        "select": "DENY_NO_GRANT",
+        "update": "DENY_NO_GRANT"
+      },
+      "owner_role": "mp_security_owner",
+      "reason_for_rls_exception": "Only fully-qualified SECURITY DEFINER context functions owned by the NOLOGIN security owner access this table; PUBLIC and both ordinary roles have no table privilege.",
+      "rls_enabled": false,
+      "runtime_grants": [],
+      "table": "request_contexts",
+      "tenant_column": "tenant_id",
+      "user_owner_column": "user_id"
+    }
+  ],
+  "step4_table_count": 29,
+  "tables": [
+    {
+      "access_class": "USER_PRIVATE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "action_policy_decisions_s5_insert",
+        "select": "action_policy_decisions_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "action_policy_decisions",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "kernel_run_id -> kernel_runs.user_id"
+    },
+    {
+      "access_class": "TENANT_OR_USER_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "audit_events_s5_insert",
+        "select": "audit_events_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "audit_events",
+      "tenant_column": "tenant_id",
+      "user_owner_column": "user_id",
+      "user_owner_resolution": "Direct user_id when personal; kernel_run_id is independently checked when present."
+    },
+    {
+      "access_class": "HAT_SCOPE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "chunk_search_documents_s5_insert",
+        "select": "chunk_search_documents_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "chunk_search_documents",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "hat_scope_id -> hat_scopes.owner_user_id"
+    },
+    {
+      "access_class": "USER_PRIVATE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "claim_verdicts_s5_insert",
+        "select": "claim_verdicts_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "claim_verdicts",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "claim_id -> claims.kernel_run_id -> kernel_runs.user_id"
+    },
+    {
+      "access_class": "USER_PRIVATE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "claims_s5_insert",
+        "select": "claims_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "claims",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "Both kernel_run_id -> kernel_runs.user_id and draft_id -> drafts.kernel_run_id are checked."
+    },
+    {
+      "access_class": "USER_PRIVATE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "correction_packets_s5_insert",
+        "select": "correction_packets_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "correction_packets",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "kernel_run_id and draft_v1_id resolve to the run user; selected_hat_scope_id is also checked."
+    },
+    {
+      "access_class": "USER_PRIVATE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "correction_requirements_s5_insert",
+        "select": "correction_requirements_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "correction_requirements",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "Both packet_hash -> correction_packets and claim_id -> claims are checked."
+    },
+    {
+      "access_class": "USER_PRIVATE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "drafts_s5_insert",
+        "select": "drafts_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "drafts",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "kernel_run_id -> kernel_runs.user_id"
+    },
+    {
+      "access_class": "USER_PRIVATE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "evidence_bundle_items_s5_insert",
+        "select": "evidence_bundle_items_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "evidence_bundle_items",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "Both evidence_bundle_id and evidence_id parents must be visible."
+    },
+    {
+      "access_class": "USER_PRIVATE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "evidence_bundles_s5_insert",
+        "select": "evidence_bundles_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "evidence_bundles",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "kernel_run_id -> kernel_runs.user_id; hat_scope_id must also be visible."
+    },
+    {
+      "access_class": "HAT_SCOPE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "evidence_items_s5_insert",
+        "select": "evidence_items_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "evidence_items",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "hat_scope_id -> hat_scopes.owner_user_id"
+    },
+    {
+      "access_class": "GLOBAL_INTERNAL",
+      "append_model": "IMMUTABLE_DEFINITION",
+      "force_rls": false,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT",
+        "insert": "DENY_NO_GRANT",
+        "select": "ALLOW_GLOBAL_READ_ONLY",
+        "update": "DENY_NO_GRANT"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": null,
+        "select": null,
+        "update": null
+      },
+      "reason_for_rls_exception": "Domain-neutral immutable HAT definitions contain no tenant or private payload; runtime receives SELECT only.",
+      "rls_enabled": false,
+      "runtime_grants": [
+        "SELECT"
+      ],
+      "table": "hat_manifests",
+      "tenant_column": null,
+      "user_owner_column": null
+    },
+    {
+      "access_class": "HAT_SCOPE_MIXED",
+      "append_model": "SECURITY_CRITICAL_SCOPE_MAPPING",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "DENY_NO_GRANT_NO_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": null,
+        "select": "hat_scopes_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "SELECT"
+      ],
+      "table": "hat_scopes",
+      "tenant_column": "tenant_id",
+      "user_owner_column": "owner_user_id",
+      "user_owner_resolution": "Direct owner_user_id for USER_PERSONAL_HAT; NULL is required for SHARED_KNOWLEDGE_HAT."
+    },
+    {
+      "access_class": "USER_PRIVATE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "kernel_runs_s5_insert",
+        "select": "kernel_runs_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "kernel_runs",
+      "tenant_column": "tenant_id",
+      "user_owner_column": "user_id"
+    },
+    {
+      "access_class": "HAT_SCOPE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "knowledge_chunks_s5_insert",
+        "select": "knowledge_chunks_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "knowledge_chunks",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "hat_scope_id -> hat_scopes.owner_user_id"
+    },
+    {
+      "access_class": "HAT_SCOPE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "knowledge_sources_s5_insert",
+        "select": "knowledge_sources_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "knowledge_sources",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "hat_scope_id -> hat_scopes.owner_user_id"
+    },
+    {
+      "access_class": "HAT_SCOPE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "knowledge_versions_s5_insert",
+        "select": "knowledge_versions_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "knowledge_versions",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "hat_scope_id -> hat_scopes.owner_user_id"
+    },
+    {
+      "access_class": "HAT_SCOPE_MIXED",
+      "append_model": "MUTABLE_REVOCATION_STATE",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "ALLOW_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "memory_items_s5_insert",
+        "select": "memory_items_s5_select",
+        "update": "memory_items_s5_update"
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "table": "memory_items",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "hat_scope_id -> hat_scopes.owner_user_id"
+    },
+    {
+      "access_class": "HAT_SCOPE_APPEND_ORIENTED",
+      "append_model": "IMMUTABLE_AUTHORITY_CLAIM",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "DENY_NO_GRANT_NO_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": null,
+        "select": "memory_patch_approvals_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "SELECT"
+      ],
+      "table": "memory_patch_approvals",
+      "tenant_column": "tenant_id",
+      "user_owner_column": "owner_user_id"
+    },
+    {
+      "access_class": "HAT_SCOPE_APPEND_ORIENTED",
+      "append_model": "IMMUTABLE_AUTHORITY_CLAIM",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "DENY_NO_GRANT_NO_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": null,
+        "select": "memory_patch_commits_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "SELECT"
+      ],
+      "table": "memory_patch_commits",
+      "tenant_column": "tenant_id",
+      "user_owner_column": "owner_user_id"
+    },
+    {
+      "access_class": "HAT_SCOPE_MIXED",
+      "append_model": "IMMUTABLE_PROPOSAL",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "DENY_NO_GRANT_NO_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": null,
+        "select": "memory_patch_proposals_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "SELECT"
+      ],
+      "table": "memory_patch_proposals",
+      "tenant_column": "tenant_id",
+      "user_owner_column": "owner_user_id"
+    },
+    {
+      "access_class": "HAT_SCOPE_APPEND_ORIENTED",
+      "append_model": "IMMUTABLE_TRANSITION_CLAIM",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "DENY_NO_GRANT_NO_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": null,
+        "select": "patch_transition_records_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "SELECT"
+      ],
+      "table": "patch_transition_records",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "proposal_id -> memory_patch_proposals.owner_user_id"
+    },
+    {
+      "access_class": "USER_PRIVATE",
+      "append_model": "MUTABLE_BINDING_SET",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "ALLOW_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": "personal_memory_model_bindings_s5_delete",
+        "insert": "personal_memory_model_bindings_s5_insert",
+        "select": "personal_memory_model_bindings_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "DELETE",
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "personal_memory_model_bindings",
+      "tenant_column": "tenant_id",
+      "user_owner_column": "user_id"
+    },
+    {
+      "access_class": "USER_PRIVATE",
+      "append_model": "MUTABLE_LIFECYCLE",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_STATEFUL_DELETION_ONLY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "ALLOW_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "personal_memory_spaces_s5_insert",
+        "select": "personal_memory_spaces_s5_select",
+        "update": "personal_memory_spaces_s5_update"
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "table": "personal_memory_spaces",
+      "tenant_column": "tenant_id",
+      "user_owner_column": "user_id"
+    },
+    {
+      "access_class": "USER_PRIVATE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "routing_decisions_s5_insert",
+        "select": "routing_decisions_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "routing_decisions",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "kernel_run_id -> kernel_runs.user_id; selected_hat_scope_id is independently checked when present."
+    },
+    {
+      "access_class": "MIGRATION_INTERNAL",
+      "append_model": "MIGRATION_BOOKKEEPING",
+      "force_rls": false,
+      "normal_runtime_access_required": false,
+      "operations": {
+        "delete": "DENY_NO_GRANT",
+        "insert": "DENY_NO_GRANT",
+        "select": "DENY_NO_GRANT",
+        "update": "DENY_NO_GRANT"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": null,
+        "select": null,
+        "update": null
+      },
+      "reason_for_rls_exception": "Migration bookkeeping is global operational metadata accessed only by the migration boundary.",
+      "rls_enabled": false,
+      "runtime_grants": [],
+      "table": "schema_migrations",
+      "tenant_column": null,
+      "user_owner_column": null
+    },
+    {
+      "access_class": "HAT_SCOPE_APPEND_ORIENTED",
+      "append_model": "APPEND_ORIENTED",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "ALLOW_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": "source_snapshots_s5_insert",
+        "select": "source_snapshots_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "source_snapshots",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null,
+      "user_owner_resolution": "hat_scope_id -> hat_scopes.owner_user_id"
+    },
+    {
+      "access_class": "TENANT_SHARED",
+      "append_model": "MUTABLE_OPERATIONAL_ROOT",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "DENY_NO_GRANT_NO_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": null,
+        "select": "tenants_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "SELECT"
+      ],
+      "table": "tenants",
+      "tenant_column": "tenant_id",
+      "user_owner_column": null
+    },
+    {
+      "access_class": "USER_PRIVATE",
+      "append_model": "MUTABLE_OPERATIONAL_IDENTITY",
+      "force_rls": true,
+      "normal_runtime_access_required": true,
+      "operations": {
+        "delete": "DENY_NO_GRANT_NO_POLICY",
+        "insert": "DENY_NO_GRANT_NO_POLICY",
+        "select": "ALLOW_POLICY",
+        "update": "DENY_NO_GRANT_NO_POLICY"
+      },
+      "owner_role": "mp_schema_owner",
+      "policies": {
+        "delete": null,
+        "insert": null,
+        "select": "users_s5_select",
+        "update": null
+      },
+      "reason_for_rls_exception": null,
+      "rls_enabled": true,
+      "runtime_grants": [
+        "SELECT"
+      ],
+      "table": "users",
+      "tenant_column": "tenant_id",
+      "user_owner_column": "user_id"
+    }
+  ],
+  "trusted_context_boundary": {
+    "access_modes": [
+      "TENANT_SHARED",
+      "USER_PRIVATE"
+    ],
+    "authentication_implemented": false,
+    "clear_function": "memory_patch.clear_request_context()",
+    "context_table": "memory_patch.request_contexts",
+    "setter_function": "memory_patch.set_request_context(STRING, STRING, STRING)",
+    "setter_role": "mp_request_context_setter",
+    "transaction_binding": [
+      "session_user",
+      "pg_backend_pid()",
+      "transaction_timestamp()"
+    ]
+  }
+}

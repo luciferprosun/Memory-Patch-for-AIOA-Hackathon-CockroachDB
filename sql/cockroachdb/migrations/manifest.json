@@ -1,5 +1,6 @@
 {
-  "manifest_id": "memory-patch-step4-schema-1a",
+  "cluster_role_policy": "IDEMPOTENT_CLUSTER_SCOPED_ROLE_DDL_MAY_OUTLIVE_A_FAILED_DATABASE_MIGRATION",
+  "manifest_id": "memory-patch-step5-security-1a",
   "migrations": [
     {
       "filename": "0001_step4_identity_and_hat_scopes.sql",
@@ -15,11 +16,16 @@
       "filename": "0003_step4_kernel_memory_and_audit_evidence.sql",
       "migration_id": "0003_step4_kernel_memory_and_audit_evidence",
       "sha256": "f25865e958d9bb352b8fc03512474fb848a688cfa6c73a5790664745779de881"
+    },
+    {
+      "filename": "0004_step5_tenant_roles_session_context_rls.sql",
+      "migration_id": "0004_step5_tenant_roles_session_context_rls",
+      "sha256": "6a8968dab3aa063b2d6f34bb31ecd26039e50f2f9351d961140c3a739106fbcd"
     }
   ],
-  "runner_version": "1.0.0",
-  "schema_version": 1,
+  "runner_version": "2.1.0",
+  "schema_version": 2,
   "target_database": "CockroachDB",
   "target_version": "v26.2.4",
-  "transaction_policy": "ONE_EXPLICIT_TRANSACTION_PER_MIGRATION"
+  "transaction_policy": "STEP4_ONE_TRANSACTION_STEP5_NINE_IDEMPOTENT_DATABASE_PHASES_WITH_NONATOMIC_CLUSTER_ROLE_DDL"
 }

@@ -48,8 +48,16 @@ At roadmap adoption:
 - Step 0C is an accepted architecture baseline from the source roadmap.
 - Step 1 is complete and pushed at
   `3f6d341bc3ceb964a2b25d4913a0695595dbd7d0`.
-- The exact next implementation task is Step 2, Kernel Contract Re-Audit and
-  Authority Invariant Closure 1A.
+- Step 2 is complete and pushed at
+  `807b459b3d0270bd84c5590df6e7abf3e4f9842b`.
+- Step 3 is complete and pushed at
+  `3e8c499fbcb2bb905fce451a163f913030ecacce`.
+- Step 4 is complete and pushed at
+  `ba825353d1a3df2e455f60061477cfa87cab08f9`.
+- Step 5 implementation and live validation are complete in its intended
+  closure commit; the operator closure report records that commit SHA.
+- The exact next implementation task is Step 6, Persistence Adapters,
+  Idempotency and Transaction Retry Foundation 1A.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

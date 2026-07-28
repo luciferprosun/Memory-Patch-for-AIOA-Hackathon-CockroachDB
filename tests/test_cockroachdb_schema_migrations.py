@@ -1,4 +1,4 @@
-"""Offline safety and contract tests for the Step 4 migration foundation."""
+"""Offline safety and contract tests for the Step 4–5 migration chain."""
 
 from __future__ import annotations
 
@@ -47,6 +47,17 @@ SQL_ROOT = ROOT / "sql" / "cockroachdb" / "migrations"
 MIGRATION_SQL = "\n".join(
     path.read_text(encoding="utf-8") for path in sorted(SQL_ROOT.glob("*.sql"))
 )
+STEP4_SQL = "\n".join(
+    (SQL_ROOT / filename).read_text(encoding="utf-8")
+    for filename in (
+        "0001_step4_identity_and_hat_scopes.sql",
+        "0002_step4_knowledge_lineage_and_retrieval.sql",
+        "0003_step4_kernel_memory_and_audit_evidence.sql",
+    )
+)
+STEP5_SQL = (
+    SQL_ROOT / "0004_step5_tenant_roles_session_context_rls.sql"
+).read_text(encoding="utf-8")
 
 
 class OfflineManifestTests(unittest.TestCase):
@@ -54,8 +65,11 @@ class OfflineManifestTests(unittest.TestCase):
         result = migrations.offline_validate()
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["target_version"], "v26.2.4")
-        self.assertEqual(result["migration_count"], 3)
-        self.assertEqual(result["schema_table_count"], 29)
+        self.assertEqual(result["migration_count"], 4)
+        self.assertEqual(result["step4_table_count"], 29)
+        self.assertEqual(result["schema_table_count"], 30)
+        self.assertEqual(result["protected_table_count"], 27)
+        self.assertEqual(result["identity_guard_trigger_count"], 2)
 
     def test_migration_order_and_ids_are_stable(self) -> None:
         loaded = migrations.load_migrations()
@@ -67,6 +81,7 @@ class OfflineManifestTests(unittest.TestCase):
                 "0001_step4_identity_and_hat_scopes",
                 "0002_step4_knowledge_lineage_and_retrieval",
                 "0003_step4_kernel_memory_and_audit_evidence",
+                "0004_step5_tenant_roles_session_context_rls",
             ],
         )
 
@@ -91,6 +106,7 @@ class OfflineManifestTests(unittest.TestCase):
         for path in (
             migrations.MIGRATION_MANIFEST_PATH,
             migrations.SCHEMA_MANIFEST_PATH,
+            migrations.SECURITY_MANIFEST_PATH,
         ):
             value = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(path.read_bytes(), migrations.canonical_json_bytes(value))
@@ -105,7 +121,7 @@ class OfflineManifestTests(unittest.TestCase):
         actual = sorted(
             re.findall(
                 r"^CREATE TABLE memory_patch\.([a-z0-9_]+)",
-                MIGRATION_SQL,
+                STEP4_SQL,
                 re.MULTILINE,
             )
         )
@@ -134,7 +150,7 @@ class OfflineManifestTests(unittest.TestCase):
         actual = sorted(
             re.findall(
                 r"^CREATE (?:UNIQUE |INVERTED )?INDEX ([a-z0-9_]+)",
-                MIGRATION_SQL,
+                STEP4_SQL,
                 re.MULTILINE,
             )
         )
@@ -220,7 +236,7 @@ class TenantLineageAndAuthorityStaticTests(unittest.TestCase):
             20,
         )
 
-    def test_no_step5_security_ddl_is_present(self) -> None:
+    def test_step4_migrations_remain_free_of_step5_security_ddl(self) -> None:
         for pattern in (
             r"(?i)\bCREATE\s+ROLE\b",
             r"(?i)\bCREATE\s+POLICY\b",
@@ -228,12 +244,16 @@ class TenantLineageAndAuthorityStaticTests(unittest.TestCase):
             r"(?i)\bFORCE\s+ROW\s+LEVEL\s+SECURITY\b",
             r"(?i)\bBYPASSRLS\b",
         ):
-            self.assertNotRegex(MIGRATION_SQL, pattern)
+            self.assertNotRegex(STEP4_SQL, pattern)
 
-    def test_no_database_trigger_or_generated_authority_exists(self) -> None:
-        self.assertNotRegex(MIGRATION_SQL, r"(?i)\bCREATE\s+TRIGGER\b")
+    def test_step4_has_no_database_trigger_or_generated_authority(self) -> None:
+        self.assertNotRegex(STEP4_SQL, r"(?i)\bCREATE\s+TRIGGER\b")
         self.assertNotRegex(
-            MIGRATION_SQL,
+            STEP4_SQL,
+            r"(?i)\bDEFAULT\s+'?(APPROVED|COMMITTED|ACTIVE|HUMAN|TRUSTED)'?",
+        )
+        self.assertNotRegex(
+            STEP5_SQL,
             r"(?i)\bDEFAULT\s+'?(APPROVED|COMMITTED|ACTIVE|HUMAN|TRUSTED)'?",
         )
 
@@ -462,13 +482,13 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
     def test_cleanup_requires_owned_database_marker(self) -> None:
         with self.assertRaises(migrations.MigrationError):
             migrations.assert_disposable_database("production_database")
-        migrations.assert_disposable_database("mp_step4_safe_fixture")
+        migrations.assert_disposable_database("mp_step5_safe_fixture")
 
     def test_runtime_path_requires_direct_tmp_ownership(self) -> None:
         with self.assertRaises(migrations.MigrationError):
             migrations.assert_owned_runtime_path(Path("/tmp/unowned"))
         with self.assertRaises(migrations.MigrationError):
-            migrations.assert_owned_runtime_path(Path("/tmp/parent/mp_step4_nested"))
+            migrations.assert_owned_runtime_path(Path("/tmp/parent/mp_step5_nested"))
 
     def test_timeout_is_bounded(self) -> None:
         for invalid in (0, -1, 181, True, "60"):
@@ -498,20 +518,23 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
                 ):
                     migrations.verify_binary_identity(binary)
 
-    def test_apply_uses_one_transaction_and_records_after_sql(self) -> None:
-        loaded = migrations.load_migrations()
+    def test_step4_apply_uses_one_transaction_and_records_after_sql(self) -> None:
+        loaded = migrations.load_migrations()[:3]
         snapshots: list[dict[str, str]] = [{}]
         current: dict[str, str] = {}
         for item in loaded:
             current = {**current, item.migration_id: item.sha256}
             snapshots.append(copy.deepcopy(current))
         client = mock.Mock()
-        with mock.patch.object(
-            migrations,
-            "applied_migrations",
-            side_effect=snapshots,
+        with (
+            mock.patch.object(migrations, "load_migrations", return_value=loaded),
+            mock.patch.object(
+                migrations,
+                "applied_migrations",
+                side_effect=snapshots,
+            ),
         ):
-            result = migrations.apply_migrations(client, "mp_step4_apply")
+            result = migrations.apply_migrations(client, "mp_step5_apply")
         self.assertEqual(result["applied_count"], 3)
         self.assertEqual(client.execute.call_count, 3)
         for call in client.execute.call_args_list:
@@ -530,9 +553,9 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
         with mock.patch.object(
             migrations, "applied_migrations", return_value=existing
         ):
-            result = migrations.apply_migrations(client, "mp_step4_noop")
+            result = migrations.apply_migrations(client, "mp_step5_noop")
         self.assertEqual(result["applied_count"], 0)
-        self.assertEqual(result["skipped_count"], 3)
+        self.assertEqual(result["skipped_count"], 4)
         client.execute.assert_not_called()
 
     def test_applied_checksum_mismatch_fails_closed(self) -> None:
@@ -546,7 +569,7 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
             with self.assertRaisesRegex(
                 migrations.MigrationError, "checksum mismatch"
             ):
-                migrations.apply_migrations(client, "mp_step4_mismatch")
+                migrations.apply_migrations(client, "mp_step5_mismatch")
 
     def test_failed_migration_is_not_reported_as_applied(self) -> None:
         client = mock.Mock()
@@ -557,7 +580,7 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
             migrations, "applied_migrations", return_value={}
         ):
             with self.assertRaises(migrations.SqlError):
-                migrations.apply_migrations(client, "mp_step4_failure")
+                migrations.apply_migrations(client, "mp_step5_failure")
         self.assertEqual(client.execute.call_count, 1)
 
     def test_runner_contains_no_broad_process_kill(self) -> None:
@@ -593,7 +616,7 @@ class DocumentationContractTests(unittest.TestCase):
         for table in migrations.load_schema_manifest()["required_tables"]:
             self.assertIn(f"`memory_patch.{table}`", architecture)
 
-    def test_roadmap_closes_step4_and_leaves_step5_open(self) -> None:
+    def test_roadmap_closes_step5_and_leaves_step6_open(self) -> None:
         roadmap = (
             ROOT / "docs" / "roadmap" / "PRODUCTION_ROADMAP.md"
         ).read_text(encoding="utf-8")
@@ -602,11 +625,15 @@ class DocumentationContractTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "- [ ] **Step 5 — Tenant Roles, Session Context and Row-Level Security 1A**",
+            "- [x] **Step 5 — Tenant Roles, Session Context and Row-Level Security 1A**",
             roadmap,
         )
         self.assertIn(
-            "Dokładny następny krok: `Step 5 — Tenant Roles, Session Context and Row-Level Security 1A`",
+            "- [ ] **Step 6 — Persistence Adapters, Idempotency and Transaction Retry Foundation 1A**",
+            roadmap,
+        )
+        self.assertIn(
+            "Dokładny następny krok: `Step 6 — Persistence Adapters, Idempotency and Transaction Retry Foundation 1A`",
             roadmap,
         )
 

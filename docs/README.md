@@ -9,9 +9,9 @@ created or substantively updated from June 30, 2026 through July 24, 2026.
 Importing historical reports does not mean that a final CockroachDB
 implementation already exists. The repository now contains the domain-neutral
 Step 1 kernel contract foundation and the live-tested CockroachDB v26.2.4
-capability baseline, plus the Step 4 tenant-ready logical schema and
-forward-only migration foundation. SQL-enforced isolation, persistence
-adapters and production integration remain future roadmap work.
+capability baseline, plus the Step 4 tenant-ready logical schema and the Step
+5 SQL-enforced tenant/user isolation boundary. Persistence adapters and
+production integration remain future roadmap work.
 
 The historical provenance import intentionally excludes raw German-law
 datasets, raw UNIX corpus records, retrieval-index data, application code and
@@ -31,6 +31,10 @@ SHA-256 provenance.
 - [ADR-011: CockroachDB logical schema and forward-only migrations](adr/ADR-011-cockroachdb-schema-migrations.md)
 - [Step 4 live schema validation evidence](evidence/cockroachdb-v26-2/step4-schema-validation.json)
 - [Step 4 closure record](audits/STEP_4_COCKROACHDB_SCHEMA_MIGRATION_CLOSURE_1A.md)
+- [CockroachDB tenant roles, session context and RLS 1A](architecture/COCKROACHDB_TENANT_ROLES_SESSION_CONTEXT_AND_RLS_1A.md)
+- [ADR-012: CockroachDB tenant roles, transaction context and forced RLS](adr/ADR-012-cockroachdb-tenant-roles-session-context-rls.md)
+- [Step 5 live RLS validation evidence](evidence/cockroachdb-v26-2/step5-rls-validation.json)
+- [Step 5 closure record](audits/STEP_5_TENANT_RLS_CLOSURE_1A.md)
 - [Knowledge Kernel Contract Baseline 1A](architecture/KNOWLEDGE_KERNEL_CONTRACT_BASELINE_1A.md)
 - [Personal Memory HATs 1A](architecture/PERSONAL_MEMORY_HATS_1A.md)
 - [Memory Trust and Precedence 1A](architecture/MEMORY_TRUST_AND_PRECEDENCE_1A.md)

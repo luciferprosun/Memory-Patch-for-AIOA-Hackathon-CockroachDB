@@ -1,0 +1,1628 @@
+{
+  "authority_and_role_escalation": {
+    "escalation_sqlstates": {
+      "ESC-001": "42501",
+      "ESC-002": "42501",
+      "ESC-003": "42501",
+      "ESC-004": "42501",
+      "ESC-005": "42501",
+      "ESC-006": "42501",
+      "ESC-007": "42501",
+      "ESC-008": "42501",
+      "ESC-009": "42501",
+      "ESC-010": "42501",
+      "ESC-011": "42501",
+      "ESC-012": "01006",
+      "ESC-013": "42501",
+      "ESC-014": "42501",
+      "ESC-015": "42501",
+      "ESC-016": "42501"
+    },
+    "fixed_and_test_role_options": [
+      {
+        "rolbypassrls": "f",
+        "rolcanlogin": "f",
+        "rolcreatedb": "f",
+        "rolcreaterole": "f",
+        "rolname": "mp_app_runtime",
+        "rolsuper": "f"
+      },
+      {
+        "rolbypassrls": "f",
+        "rolcanlogin": "f",
+        "rolcreatedb": "f",
+        "rolcreaterole": "f",
+        "rolname": "mp_request_context_setter",
+        "rolsuper": "f"
+      },
+      {
+        "rolbypassrls": "f",
+        "rolcanlogin": "f",
+        "rolcreatedb": "f",
+        "rolcreaterole": "f",
+        "rolname": "mp_schema_owner",
+        "rolsuper": "f"
+      },
+      {
+        "rolbypassrls": "f",
+        "rolcanlogin": "f",
+        "rolcreatedb": "f",
+        "rolcreaterole": "f",
+        "rolname": "mp_security_owner",
+        "rolsuper": "f"
+      },
+      {
+        "rolbypassrls": "f",
+        "rolcanlogin": "t",
+        "rolcreatedb": "f",
+        "rolcreaterole": "f",
+        "rolname": "mp_step5_a92b335fe7da_a1",
+        "rolsuper": "f"
+      },
+      {
+        "rolbypassrls": "f",
+        "rolcanlogin": "t",
+        "rolcreatedb": "f",
+        "rolcreaterole": "f",
+        "rolname": "mp_step5_a92b335fe7da_a2",
+        "rolsuper": "f"
+      },
+      {
+        "rolbypassrls": "f",
+        "rolcanlogin": "t",
+        "rolcreatedb": "f",
+        "rolcreaterole": "f",
+        "rolname": "mp_step5_a92b335fe7da_b1",
+        "rolsuper": "f"
+      },
+      {
+        "rolbypassrls": "f",
+        "rolcanlogin": "t",
+        "rolcreatedb": "f",
+        "rolcreaterole": "f",
+        "rolname": "mp_step5_a92b335fe7da_owner",
+        "rolsuper": "f"
+      },
+      {
+        "rolbypassrls": "f",
+        "rolcanlogin": "t",
+        "rolcreatedb": "f",
+        "rolcreaterole": "f",
+        "rolname": "mp_step5_a92b335fe7da_runtime",
+        "rolsuper": "f"
+      }
+    ],
+    "root_admin_row_count_without_context": 7,
+    "runtime_only_memberships": [
+      "mp_app_runtime"
+    ],
+    "session_authorization_sqlstate": "0A000",
+    "table_owners": [
+      "mp_schema_owner",
+      "mp_security_owner"
+    ]
+  },
+  "binary_identity": {
+    "binary_sha256": "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf",
+    "build_commit": "80586181eb50e380e2cc982f61841eaf38af9982",
+    "build_tag": "v26.2.4",
+    "platform": "linux amd64 (x86_64-pc-linux-gnu)"
+  },
+  "cleanup": {
+    "databases_removed": true,
+    "disposable_and_fixed_roles_removed": true,
+    "force_kill_used": false,
+    "owned_pid_exited": true,
+    "ports_closed": true,
+    "temporary_store_removed": true
+  },
+  "cluster_version": "26.2",
+  "fixture_summary": {
+    "personal_memory_principal_count": 3,
+    "synthetic_only": true,
+    "tenant_count": 2,
+    "user_count": 3
+  },
+  "generated_at_utc": "2026-07-28T18:48:13Z",
+  "insecure_local_transport": {
+    "limitations": "Validates SQL principals, context, grants, RLS, FORCE RLS, and denial semantics; it does not validate production certificates, transport authentication, SSO, or secret storage.",
+    "loopback_only": true,
+    "used": true
+  },
+  "migration": {
+    "first_apply": {
+      "applied": [
+        "0001_step4_identity_and_hat_scopes",
+        "0002_step4_knowledge_lineage_and_retrieval",
+        "0003_step4_kernel_memory_and_audit_evidence",
+        "0004_step5_tenant_roles_session_context_rls"
+      ],
+      "applied_count": 4,
+      "skipped": [],
+      "skipped_count": 0
+    },
+    "no_op_apply": {
+      "applied": [],
+      "applied_count": 0,
+      "skipped": [
+        "0001_step4_identity_and_hat_scopes",
+        "0002_step4_knowledge_lineage_and_retrieval",
+        "0003_step4_kernel_memory_and_audit_evidence",
+        "0004_step5_tenant_roles_session_context_rls"
+      ],
+      "skipped_count": 4
+    },
+    "reproduction_apply": {
+      "applied": [
+        "0001_step4_identity_and_hat_scopes",
+        "0002_step4_knowledge_lineage_and_retrieval",
+        "0003_step4_kernel_memory_and_audit_evidence",
+        "0004_step5_tenant_roles_session_context_rls"
+      ],
+      "applied_count": 4,
+      "skipped": [],
+      "skipped_count": 0
+    }
+  },
+  "offline": {
+    "fixed_role_count": 4,
+    "identity_guard_trigger_count": 2,
+    "migration_count": 4,
+    "policy_count": 50,
+    "protected_table_count": 27,
+    "status": "PASS",
+    "step4_table_count": 29,
+    "target_version": "v26.2.4"
+  },
+  "probe_summary": {
+    "category_counts": {
+      "cross_tenant": 16,
+      "cross_user": 17,
+      "force_owner": 7,
+      "migration": 1,
+      "positive": 12,
+      "role_escalation": 21,
+      "session_context": 20,
+      "table_coverage": 1
+    },
+    "fail_count": 0,
+    "pass_count": 95,
+    "probe_count": 95
+  },
+  "probes": [
+    {
+      "category": "migration",
+      "observed": "fresh 0001-0004 apply, four-migration no-op replay, and second-database security digest matched",
+      "probe_id": "MIG-001",
+      "status": "PASS"
+    },
+    {
+      "category": "table_coverage",
+      "observed": "protected tables=27, all seeded=True, unset-context all zero=True",
+      "probe_id": "COVER-001",
+      "status": "PASS"
+    },
+    {
+      "category": "positive",
+      "observed": "Tenant A shared row count=1",
+      "probe_id": "POS-001",
+      "status": "PASS"
+    },
+    {
+      "category": "positive",
+      "observed": "Tenant B shared row count=1",
+      "probe_id": "POS-002",
+      "status": "PASS"
+    },
+    {
+      "category": "positive",
+      "observed": "a1 private row count=1",
+      "probe_id": "POS-003",
+      "status": "PASS"
+    },
+    {
+      "category": "positive",
+      "observed": "a2 private row count=1",
+      "probe_id": "POS-004",
+      "status": "PASS"
+    },
+    {
+      "category": "positive",
+      "observed": "b1 private row count=1",
+      "probe_id": "POS-005",
+      "status": "PASS"
+    },
+    {
+      "category": "positive",
+      "observed": "valid private INSERT stored rows=1",
+      "probe_id": "POS-006",
+      "status": "PASS"
+    },
+    {
+      "category": "positive",
+      "observed": "valid private INSERT stored rows=1",
+      "probe_id": "POS-007",
+      "status": "PASS"
+    },
+    {
+      "category": "positive",
+      "observed": "same-tenant source/snapshot child rows=1",
+      "probe_id": "POS-008",
+      "status": "PASS"
+    },
+    {
+      "category": "positive",
+      "observed": "valid Step 4 kernel path count=1",
+      "probe_id": "POS-009",
+      "status": "PASS"
+    },
+    {
+      "category": "positive",
+      "observed": "permitted lifecycle UPDATE state=SUSPENDED",
+      "probe_id": "POS-010",
+      "status": "PASS"
+    },
+    {
+      "category": "positive",
+      "observed": "permitted revocation UPDATE=false:true",
+      "probe_id": "POS-011",
+      "status": "PASS"
+    },
+    {
+      "category": "positive",
+      "observed": "global read-only HAT manifest count=1",
+      "probe_id": "POS-012",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "Tenant A broad Tenant B SELECT rows=0",
+      "probe_id": "TENANT-001",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "Tenant A exact Tenant B SELECT rows=0",
+      "probe_id": "TENANT-002",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "Tenant A cross-tenant INSERT denied",
+      "probe_id": "TENANT-003",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "Tenant A child-to-Tenant B scope denied",
+      "probe_id": "TENANT-004",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "cross-tenant source/snapshot FK denied",
+      "probe_id": "TENANT-005",
+      "sqlstate": "23503",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "cross-tenant snapshot/version lineage FK denied",
+      "probe_id": "TENANT-005A",
+      "sqlstate": "23503",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "cross-tenant version/chunk lineage FK denied",
+      "probe_id": "TENANT-005B",
+      "sqlstate": "23503",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "tenant identity UPDATE denied by immutable guard",
+      "probe_id": "TENANT-006",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "Tenant A UPDATE of Tenant B row retained state=false:false:false:false",
+      "probe_id": "TENANT-006A",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "cross-tenant DELETE retained row before/after=1/1",
+      "probe_id": "TENANT-007",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "cross-tenant JOIN rows=0",
+      "probe_id": "TENANT-008",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "cross-tenant subquery rows=0",
+      "probe_id": "TENANT-009",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "cross-tenant run attachment denied",
+      "probe_id": "TENANT-010",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "cross-tenant evidence bundle/run attachment denied",
+      "probe_id": "TENANT-010A",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "Tenant B representative Tenant A SELECT rows=0",
+      "probe_id": "TENANT-011",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_tenant",
+      "observed": "Tenant B representative Tenant A INSERT denied",
+      "probe_id": "TENANT-012",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "A1 known A2 personal_memory_spaces rows=0",
+      "probe_id": "USER-001",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "A1 known A2 personal_memory_model_bindings rows=0",
+      "probe_id": "USER-002",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "A1 known A2 memory_items rows=0",
+      "probe_id": "USER-003",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "A1 known A2 memory_patch_proposals rows=0",
+      "probe_id": "USER-004",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "A1 known A2 kernel_runs rows=0",
+      "probe_id": "USER-005",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "A1 INSERT into A2 Personal Memory denied",
+      "probe_id": "USER-006",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "A1 UPDATE A2 retained active=true",
+      "probe_id": "USER-007",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "A1 DELETE A2 binding retained=1",
+      "probe_id": "USER-008",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "A1 private item rebind to A2 denied",
+      "probe_id": "USER-009",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "owner_user_id rebind denied by identity guard",
+      "probe_id": "USER-010",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "A1 child attachment to A2 private parent denied",
+      "probe_id": "USER-011",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "tenant-only context private rows=0",
+      "probe_id": "USER-012",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "private-to-shared conversion denied",
+      "probe_id": "USER-013",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "shared-to-private conversion denied",
+      "probe_id": "USER-014",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "routing/kernel relationship traversal into A2 rows=0",
+      "probe_id": "USER-015",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "A2 representative A1 read rows=0",
+      "probe_id": "USER-016",
+      "status": "PASS"
+    },
+    {
+      "category": "cross_user",
+      "observed": "B1 representative Tenant A private rows=0",
+      "probe_id": "USER-017",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "unset context rows=0",
+      "probe_id": "CTX-001",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "empty tenant rejected",
+      "probe_id": "CTX-002",
+      "sqlstate": "22023",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "whitespace tenant rejected",
+      "probe_id": "CTX-003",
+      "sqlstate": "22023",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "unknown tenant rejected by FK",
+      "probe_id": "CTX-004",
+      "sqlstate": "23503",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "tenant-only private rows=0",
+      "probe_id": "CTX-005",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "user without tenant rejected",
+      "probe_id": "CTX-006",
+      "sqlstate": "22023",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "user from another tenant rejected",
+      "probe_id": "CTX-007",
+      "sqlstate": "23503",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "private context without user rejected",
+      "probe_id": "CTX-008",
+      "sqlstate": "22023",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "unknown user rejected by FK",
+      "probe_id": "CTX-009",
+      "sqlstate": "23503",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "explicit context replacement visibility=0:1",
+      "probe_id": "CTX-010",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "explicit clear rows=0",
+      "probe_id": "CTX-011",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "same connection after COMMIT rows=0",
+      "probe_id": "CTX-012",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "same connection after ROLLBACK rows=0",
+      "probe_id": "CTX-013",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "failed statement SQLSTATE=42501, post-rollback rows=0",
+      "probe_id": "CTX-014",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "independent CLI connection rows=0",
+      "probe_id": "CTX-015",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "direct context-table spoof denied",
+      "probe_id": "CTX-016",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "runtime-only caller cannot invoke trusted setter",
+      "probe_id": "CTX-017",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "runtime-only caller cannot SET ROLE to setter",
+      "probe_id": "CTX-018",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "caller-controlled custom session variable is ignored by every policy; visible rows=0",
+      "probe_id": "CTX-019",
+      "status": "PASS"
+    },
+    {
+      "category": "session_context",
+      "observed": "NULL context match result=f",
+      "probe_id": "CTX-020",
+      "status": "PASS"
+    },
+    {
+      "category": "force_owner",
+      "observed": "FORCE owner rows=0; root/admin rows=7",
+      "probe_id": "FORCE-001",
+      "status": "PASS"
+    },
+    {
+      "category": "force_owner",
+      "observed": "runtime cannot SET ROLE to table owner",
+      "probe_id": "FORCE-002",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "force_owner",
+      "observed": "runtime cannot change table owner",
+      "probe_id": "FORCE-003",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "force_owner",
+      "observed": "runtime cannot disable RLS",
+      "probe_id": "FORCE-004",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "force_owner",
+      "observed": "runtime cannot remove FORCE RLS",
+      "probe_id": "FORCE-005",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "force_owner",
+      "observed": "runtime cannot drop protected policy",
+      "probe_id": "FORCE-006",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "force_owner",
+      "observed": "runtime cannot create allow-all policy",
+      "probe_id": "FORCE-007",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "CREATE ROLE denied",
+      "probe_id": "ESC-001",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "ALTER privileged role denied",
+      "probe_id": "ESC-002",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "GRANT owner role to self denied",
+      "probe_id": "ESC-003",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "ALTER own role to BYPASSRLS denied",
+      "probe_id": "ESC-004",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "CREATE DATABASE denied",
+      "probe_id": "ESC-005",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "ALTER DATABASE owner denied",
+      "probe_id": "ESC-006",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "ALTER SCHEMA owner denied",
+      "probe_id": "ESC-007",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "ALTER TABLE denied",
+      "probe_id": "ESC-008",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "DROP TABLE denied",
+      "probe_id": "ESC-009",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "ALTER POLICY denied",
+      "probe_id": "ESC-010",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "GRANT broad table access denied",
+      "probe_id": "ESC-011",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "REVOKE runtime protections denied",
+      "probe_id": "ESC-012",
+      "sqlstate": "01006",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "TRUNCATE protected table denied",
+      "probe_id": "ESC-013",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "modify migration bookkeeping denied",
+      "probe_id": "ESC-014",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "read security-internal context table denied",
+      "probe_id": "ESC-015",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "read migration bookkeeping denied",
+      "probe_id": "ESC-016",
+      "sqlstate": "42501",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "runtime SELECT grant remained after rejected REVOKE=1",
+      "probe_id": "ESC-012A",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "session authorization change did not succeed; catalog membership is the primary proof (SQLSTATE=0A000)",
+      "probe_id": "ESC-017",
+      "sqlstate": "0A000",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "fixed/test role option rows=9, all nonprivileged=True",
+      "probe_id": "ESC-018",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "runtime-only inherited roles=['mp_app_runtime']",
+      "probe_id": "ESC-019",
+      "status": "PASS"
+    },
+    {
+      "category": "role_escalation",
+      "observed": "table owners=['mp_schema_owner', 'mp_security_owner']",
+      "probe_id": "ESC-020",
+      "status": "PASS"
+    }
+  ],
+  "security_catalog": {
+    "fixed_roles": [
+      {
+        "rolbypassrls": "f",
+        "rolcanlogin": "f",
+        "rolcreatedb": "f",
+        "rolcreaterole": "f",
+        "rolname": "mp_app_runtime",
+        "rolsuper": "f"
+      },
+      {
+        "rolbypassrls": "f",
+        "rolcanlogin": "f",
+        "rolcreatedb": "f",
+        "rolcreaterole": "f",
+        "rolname": "mp_request_context_setter",
+        "rolsuper": "f"
+      },
+      {
+        "rolbypassrls": "f",
+        "rolcanlogin": "f",
+        "rolcreatedb": "f",
+        "rolcreaterole": "f",
+        "rolname": "mp_schema_owner",
+        "rolsuper": "f"
+      },
+      {
+        "rolbypassrls": "f",
+        "rolcanlogin": "f",
+        "rolcreatedb": "f",
+        "rolcreaterole": "f",
+        "rolname": "mp_security_owner",
+        "rolsuper": "f"
+      }
+    ],
+    "membership_edges_before_test_roles": [],
+    "policy_count": 50,
+    "policy_coverage": [
+      {
+        "command": "INSERT",
+        "policy": "action_policy_decisions_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "action_policy_decisions"
+      },
+      {
+        "command": "SELECT",
+        "policy": "action_policy_decisions_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "action_policy_decisions"
+      },
+      {
+        "command": "INSERT",
+        "policy": "audit_events_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "audit_events"
+      },
+      {
+        "command": "SELECT",
+        "policy": "audit_events_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "audit_events"
+      },
+      {
+        "command": "INSERT",
+        "policy": "chunk_search_documents_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "chunk_search_documents"
+      },
+      {
+        "command": "SELECT",
+        "policy": "chunk_search_documents_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "chunk_search_documents"
+      },
+      {
+        "command": "INSERT",
+        "policy": "claim_verdicts_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "claim_verdicts"
+      },
+      {
+        "command": "SELECT",
+        "policy": "claim_verdicts_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "claim_verdicts"
+      },
+      {
+        "command": "INSERT",
+        "policy": "claims_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "claims"
+      },
+      {
+        "command": "SELECT",
+        "policy": "claims_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "claims"
+      },
+      {
+        "command": "INSERT",
+        "policy": "correction_packets_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "correction_packets"
+      },
+      {
+        "command": "SELECT",
+        "policy": "correction_packets_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "correction_packets"
+      },
+      {
+        "command": "INSERT",
+        "policy": "correction_requirements_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "correction_requirements"
+      },
+      {
+        "command": "SELECT",
+        "policy": "correction_requirements_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "correction_requirements"
+      },
+      {
+        "command": "INSERT",
+        "policy": "drafts_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "drafts"
+      },
+      {
+        "command": "SELECT",
+        "policy": "drafts_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "drafts"
+      },
+      {
+        "command": "INSERT",
+        "policy": "evidence_bundle_items_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "evidence_bundle_items"
+      },
+      {
+        "command": "SELECT",
+        "policy": "evidence_bundle_items_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "evidence_bundle_items"
+      },
+      {
+        "command": "INSERT",
+        "policy": "evidence_bundles_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "evidence_bundles"
+      },
+      {
+        "command": "SELECT",
+        "policy": "evidence_bundles_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "evidence_bundles"
+      },
+      {
+        "command": "INSERT",
+        "policy": "evidence_items_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "evidence_items"
+      },
+      {
+        "command": "SELECT",
+        "policy": "evidence_items_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "evidence_items"
+      },
+      {
+        "command": "SELECT",
+        "policy": "hat_scopes_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "hat_scopes"
+      },
+      {
+        "command": "INSERT",
+        "policy": "kernel_runs_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "kernel_runs"
+      },
+      {
+        "command": "SELECT",
+        "policy": "kernel_runs_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "kernel_runs"
+      },
+      {
+        "command": "INSERT",
+        "policy": "knowledge_chunks_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "knowledge_chunks"
+      },
+      {
+        "command": "SELECT",
+        "policy": "knowledge_chunks_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "knowledge_chunks"
+      },
+      {
+        "command": "INSERT",
+        "policy": "knowledge_sources_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "knowledge_sources"
+      },
+      {
+        "command": "SELECT",
+        "policy": "knowledge_sources_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "knowledge_sources"
+      },
+      {
+        "command": "INSERT",
+        "policy": "knowledge_versions_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "knowledge_versions"
+      },
+      {
+        "command": "SELECT",
+        "policy": "knowledge_versions_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "knowledge_versions"
+      },
+      {
+        "command": "INSERT",
+        "policy": "memory_items_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "memory_items"
+      },
+      {
+        "command": "SELECT",
+        "policy": "memory_items_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "memory_items"
+      },
+      {
+        "command": "UPDATE",
+        "policy": "memory_items_s5_update",
+        "roles": "{mp_app_runtime}",
+        "table": "memory_items"
+      },
+      {
+        "command": "SELECT",
+        "policy": "memory_patch_approvals_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "memory_patch_approvals"
+      },
+      {
+        "command": "SELECT",
+        "policy": "memory_patch_commits_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "memory_patch_commits"
+      },
+      {
+        "command": "SELECT",
+        "policy": "memory_patch_proposals_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "memory_patch_proposals"
+      },
+      {
+        "command": "SELECT",
+        "policy": "patch_transition_records_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "patch_transition_records"
+      },
+      {
+        "command": "DELETE",
+        "policy": "personal_memory_model_bindings_s5_delete",
+        "roles": "{mp_app_runtime}",
+        "table": "personal_memory_model_bindings"
+      },
+      {
+        "command": "INSERT",
+        "policy": "personal_memory_model_bindings_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "personal_memory_model_bindings"
+      },
+      {
+        "command": "SELECT",
+        "policy": "personal_memory_model_bindings_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "personal_memory_model_bindings"
+      },
+      {
+        "command": "INSERT",
+        "policy": "personal_memory_spaces_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "personal_memory_spaces"
+      },
+      {
+        "command": "SELECT",
+        "policy": "personal_memory_spaces_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "personal_memory_spaces"
+      },
+      {
+        "command": "UPDATE",
+        "policy": "personal_memory_spaces_s5_update",
+        "roles": "{mp_app_runtime}",
+        "table": "personal_memory_spaces"
+      },
+      {
+        "command": "INSERT",
+        "policy": "routing_decisions_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "routing_decisions"
+      },
+      {
+        "command": "SELECT",
+        "policy": "routing_decisions_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "routing_decisions"
+      },
+      {
+        "command": "INSERT",
+        "policy": "source_snapshots_s5_insert",
+        "roles": "{mp_app_runtime}",
+        "table": "source_snapshots"
+      },
+      {
+        "command": "SELECT",
+        "policy": "source_snapshots_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "source_snapshots"
+      },
+      {
+        "command": "SELECT",
+        "policy": "tenants_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "tenants"
+      },
+      {
+        "command": "SELECT",
+        "policy": "users_s5_select",
+        "roles": "{mp_app_runtime}",
+        "table": "users"
+      }
+    ],
+    "reproduction_digest": "60f8814bf5a1eb9b210521e4deed6959f927c6941e155c357bd81cb7127d09ef",
+    "routine_grants": [],
+    "summary": {
+      "fixed_role_count": 4,
+      "identity_guard_trigger_count": 2,
+      "policy_count": 50,
+      "protected_table_count": 27,
+      "runtime_table_grant_count": 51,
+      "table_owner_count": 30
+    },
+    "table_coverage": {
+      "protected_table_count": 27,
+      "root_nonempty_table_count": 27,
+      "unset_context_zero_table_count": 27
+    },
+    "table_grants": [
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "action_policy_decisions"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "action_policy_decisions"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "audit_events"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "audit_events"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "chunk_search_documents"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "chunk_search_documents"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "claim_verdicts"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "claim_verdicts"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "claims"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "claims"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "correction_packets"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "correction_packets"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "correction_requirements"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "correction_requirements"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "drafts"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "drafts"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "evidence_bundle_items"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "evidence_bundle_items"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "evidence_bundles"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "evidence_bundles"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "evidence_items"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "evidence_items"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "hat_manifests"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "hat_scopes"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "kernel_runs"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "kernel_runs"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "knowledge_chunks"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "knowledge_chunks"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "knowledge_sources"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "knowledge_sources"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "knowledge_versions"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "knowledge_versions"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "memory_items"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "memory_items"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "UPDATE",
+        "table_name": "memory_items"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "memory_patch_approvals"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "memory_patch_commits"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "memory_patch_proposals"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "patch_transition_records"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "DELETE",
+        "table_name": "personal_memory_model_bindings"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "personal_memory_model_bindings"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "personal_memory_model_bindings"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "personal_memory_spaces"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "personal_memory_spaces"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "UPDATE",
+        "table_name": "personal_memory_spaces"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "routing_decisions"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "routing_decisions"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "INSERT",
+        "table_name": "source_snapshots"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "source_snapshots"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "tenants"
+      },
+      {
+        "grantee": "mp_app_runtime",
+        "privilege_type": "SELECT",
+        "table_name": "users"
+      }
+    ],
+    "table_security": [
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "action_policy_decisions"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "audit_events"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "chunk_search_documents"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "claim_verdicts"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "claims"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "correction_packets"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "correction_requirements"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "drafts"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "evidence_bundle_items"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "evidence_bundles"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "evidence_items"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "f",
+        "relrowsecurity": "f",
+        "table_name": "hat_manifests"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "hat_scopes"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "kernel_runs"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "knowledge_chunks"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "knowledge_sources"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "knowledge_versions"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "memory_items"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "memory_patch_approvals"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "memory_patch_commits"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "memory_patch_proposals"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "patch_transition_records"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "personal_memory_model_bindings"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "personal_memory_spaces"
+      },
+      {
+        "owner_role": "mp_security_owner",
+        "relforcerowsecurity": "f",
+        "relrowsecurity": "f",
+        "table_name": "request_contexts"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "routing_decisions"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "f",
+        "relrowsecurity": "f",
+        "table_name": "schema_migrations"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "source_snapshots"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "tenants"
+      },
+      {
+        "owner_role": "mp_schema_owner",
+        "relforcerowsecurity": "t",
+        "relrowsecurity": "t",
+        "table_name": "users"
+      }
+    ],
+    "triggers": [
+      {
+        "function_name": "guard_memory_item_identity",
+        "table_name": "memory_items",
+        "trigger_name": "memory_items_s5_identity_guard"
+      },
+      {
+        "function_name": "guard_personal_memory_space_identity",
+        "table_name": "personal_memory_spaces",
+        "trigger_name": "personal_memory_spaces_s5_identity_guard"
+      }
+    ]
+  },
+  "server_version": "CockroachDB CCL v26.2.4 (x86_64-pc-linux-gnu, built 2026/07/14 16:50:57, go1.25.5)",
+  "status": "PASS",
+  "trust_boundary": {
+    "database_principal_binding": false,
+    "end_user_authentication_implemented": false,
+    "setter_role": "mp_request_context_setter",
+    "statement": "Only a future authenticated trusted application boundary may hold the setter role; RLS context does not authenticate a human.",
+    "transaction_bound": true
+  }
+}

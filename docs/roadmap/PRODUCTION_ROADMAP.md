@@ -20,7 +20,8 @@
 - `Step 2`: `COMPLETE AND PUSHED` — commit `807b459b3d0270bd84c5590df6e7abf3e4f9842b`.
 - `Step 3`: `COMPLETE` — CockroachDB `v26.2.4`; live local spike: `34 PASS / 0 FAIL / 2 DEFER`.
 - `Step 4`: `COMPLETE` — CockroachDB `v26.2.4`; 3 deterministyczne migracje, 29 tabel i live schema validation PASS.
-- Dokładny następny krok: `Step 5 — Tenant Roles, Session Context and Row-Level Security 1A`.
+- `Step 5`: `COMPLETE` — 4 role `NOLOGIN`, 27 tabel z RLS i FORCE RLS, 50 polityk oraz live isolation validation `95 PASS / 0 FAIL`.
+- Dokładny następny krok: `Step 6 — Persistence Adapters, Idempotency and Transaction Retry Foundation 1A`.
 
 ## Zasada prowadzenia prac
 
@@ -93,8 +94,9 @@ Udowodnić możliwości docelowej wersji CockroachDB i wdrożyć trwały, wielod
   Tabele dla tenantów, użytkowników, HAT-ów, źródeł, snapshotów, wersji, chunków, kernel runs, routing decisions, evidence bundles, packets, drafts, verdicts, personal memory, patch proposals, approvals, committed patches i audit events.
   Zamknięcie: CockroachDB `v26.2.4`, 3 forward-only migracje, 29 tenant-ready tabel, identyczna reprodukcja dwóch świeżych schematów, no-op drugiego uruchomienia i negatywne constraint probes PASS. [Baseline schematu](../architecture/COCKROACHDB_LOGICAL_SCHEMA_AND_MIGRATION_FOUNDATION_1A.md), [live evidence](../evidence/cockroachdb-v26-2/step4-schema-validation.json), [rekord zamknięcia](../audits/STEP_4_COCKROACHDB_SCHEMA_MIGRATION_CLOSURE_1A.md).
 
-- [ ] **Step 5 — Tenant Roles, Session Context and Row-Level Security 1A**
+- [x] **Step 5 — Tenant Roles, Session Context and Row-Level Security 1A**
   Role SQL, tenant context, RLS, `FORCE ROW LEVEL SECURITY`, brak `BYPASSRLS`, negatywne testy cross-tenant i cross-user.
+  Zamknięcie: CockroachDB `v26.2.4`, cztery role `NOLOGIN` bez `BYPASSRLS`, transakcyjny trusted context, 27 tabel chronionych przez RLS i FORCE RLS, 50 polityk oraz live validation `95 PASS / 0 FAIL`. [Model izolacji](../architecture/COCKROACHDB_TENANT_ROLES_SESSION_CONTEXT_AND_RLS_1A.md), [live evidence](../evidence/cockroachdb-v26-2/step5-rls-validation.json), [rekord zamknięcia](../audits/STEP_5_TENANT_RLS_CLOSURE_1A.md).
 
 - [ ] **Step 6 — Persistence Adapters, Idempotency and Transaction Retry Foundation 1A**
   Adapter CockroachDB, krótkie transakcje, idempotency keys, obsługa `40001`, immutable evidence IDs, resume states i brak transakcji otwartych podczas wywołań modeli lub AWS.
