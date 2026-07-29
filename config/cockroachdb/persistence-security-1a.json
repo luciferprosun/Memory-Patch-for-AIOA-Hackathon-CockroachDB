@@ -1,0 +1,69 @@
+{
+  "external_reference_identity": [
+    "tenant_id",
+    "origin_kind",
+    "origin_system",
+    "origin_version",
+    "adapter_version",
+    "artifact_kind",
+    "external_ref"
+  ],
+  "fixed_roles": [
+    "mp_app_runtime",
+    "mp_request_context_setter",
+    "mp_schema_owner",
+    "mp_security_owner"
+  ],
+  "historical_step5_baseline": {
+    "policy_count": 50,
+    "protected_table_count": 27,
+    "security_manifest": "rls-security-1a.json"
+  },
+  "manifest_id": "memory-patch-step6-persistence-security-1a",
+  "schema_version": 1,
+  "status_vocabulary": [
+    "PENDING",
+    "IN_PROGRESS",
+    "COMPLETED",
+    "INTERRUPTED",
+    "FAILED_FINAL"
+  ],
+  "tables": [
+    {
+      "access_class": "TENANT_SHARED_OR_USER_PRIVATE_MUTABLE_WORKFLOW",
+      "delete_policy": null,
+      "force_rls": true,
+      "immutable_columns": [
+        "tenant_id",
+        "operation_id",
+        "schema_version",
+        "owner_user_id",
+        "operation_kind",
+        "idempotency_key",
+        "request_digest",
+        "scope_digest",
+        "created_at",
+        "origin_kind",
+        "origin_system",
+        "origin_version",
+        "adapter_version",
+        "artifact_kind",
+        "external_ref"
+      ],
+      "insert_policy": "persistence_operations_s6_insert",
+      "owner_role": "mp_schema_owner",
+      "rls_enabled": true,
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "select_policy": "persistence_operations_s6_select",
+      "table": "persistence_operations",
+      "tenant_column": "tenant_id",
+      "update_policy": "persistence_operations_s6_update",
+      "user_owner_column": "owner_user_id"
+    }
+  ],
+  "target_cockroachdb_version": "v26.2.4"
+}

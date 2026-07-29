@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate and apply the Memory Patch CockroachDB Step 4–5 migrations.
+"""Validate and apply the Memory Patch CockroachDB Step 4–6 migrations.
 
 Ordinary repository tests import this module without opening a socket or
 starting a process. Live actions require ``--allow-live`` and an exact pinned
@@ -37,15 +37,21 @@ SCHEMA_MANIFEST_PATH = (
 SECURITY_MANIFEST_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "rls-security-1a.json"
 )
+PERSISTENCE_MANIFEST_PATH = (
+    REPOSITORY_ROOT
+    / "config"
+    / "cockroachdb"
+    / "persistence-security-1a.json"
+)
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "2.1.0"
+RUNNER_VERSION = "3.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
 START_TIMEOUT_SECONDS = 45.0
-DISPOSABLE_DATABASE_PREFIX = "mp_step5_"
+DISPOSABLE_DATABASE_PREFIXES = ("mp_step5_", "mp_step6_")
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
@@ -62,6 +68,10 @@ STEP4_MIGRATION_HASHES = {
     ),
 }
 STEP5_MIGRATION_ID = "0004_step5_tenant_roles_session_context_rls"
+STEP5_MIGRATION_SHA256 = (
+    "6a8968dab3aa063b2d6f34bb31ecd26039e50f2f9351d961140c3a739106fbcd"
+)
+STEP6_MIGRATION_ID = "0005_step6_persistence_idempotency_retry_foundation"
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
 STEP5_CLUSTER_ROLE_END = "-- STEP5_CLUSTER_ROLE_DDL_END"
 STEP5_DATABASE_PHASE_MARKERS = tuple(
@@ -136,6 +146,45 @@ STEP5_FORBIDDEN_MIGRATION_PATTERNS: tuple[
     ),
     (
         "domain-specific kernel rule",
+        re.compile(
+            r"\b(?:Nachweisgesetz|German\s+law|German-law|employment\s+law)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "machine-specific path",
+        re.compile(r"(?:/home/|/Users/|[A-Za-z]:\\\\)"),
+    ),
+)
+
+STEP6_FORBIDDEN_MIGRATION_PATTERNS: tuple[
+    tuple[str, re.Pattern[str]], ...
+] = (
+    (
+        "role creation",
+        re.compile(r"\bCREATE\s+ROLE\b", re.IGNORECASE),
+    ),
+    (
+        "positive BYPASSRLS grant",
+        re.compile(r"(?<!NO)\bBYPASSRLS\b", re.IGNORECASE),
+    ),
+    (
+        "cascade deletion",
+        re.compile(r"\bON\s+DELETE\s+CASCADE\b", re.IGNORECASE),
+    ),
+    (
+        "authority-bearing default",
+        re.compile(
+            r"\bDEFAULT\s+'?(?:APPROVED|COMMITTED|ACTIVE|HUMAN|TRUSTED|CANONICAL)'?\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "NVIDIA-branded database object",
+        re.compile(r"\b(?:NVIDIA|NOOA|OpenShell)\b", re.IGNORECASE),
+    ),
+    (
+        "domain-specific persistence rule",
         re.compile(
             r"\b(?:Nachweisgesetz|German\s+law|German-law|employment\s+law)\b",
             re.IGNORECASE,
@@ -471,6 +520,42 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
                 raise MigrationError(
                     f"{migration_id} lacks required security fragment: {fragment}"
                 )
+    elif migration_id == STEP6_MIGRATION_ID:
+        forbidden_patterns = STEP6_FORBIDDEN_MIGRATION_PATTERNS
+        required_fragments = (
+            "CREATE TABLE memory_patch.persistence_operations",
+            "persistence_operations_shared_idempotency_uq",
+            "persistence_operations_private_idempotency_uq",
+            "persistence_operations_external_identity_uq",
+            "guard_persistence_operation_identity",
+            "OWNER TO mp_schema_owner",
+            "GRANT SELECT, INSERT, UPDATE",
+            "ENABLE ROW LEVEL SECURITY",
+            "FORCE ROW LEVEL SECURITY",
+            "CREATE POLICY persistence_operations_s6_select",
+            "CREATE POLICY persistence_operations_s6_insert",
+            "CREATE POLICY persistence_operations_s6_update",
+            "TO mp_app_runtime",
+        )
+        for fragment in required_fragments:
+            if fragment not in sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required persistence fragment: {fragment}"
+                )
+        if re.search(r"\bTO\s+PUBLIC\b", sql, re.IGNORECASE):
+            raise MigrationError("Step 6 policy or grant targets PUBLIC")
+        if re.search(
+            r"\bUSING\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 6 contains an allow-all RLS policy")
+        if re.search(
+            r"UNIQUE\s*(?:INDEX)?[^;]*\(\s*external_ref\s*\)",
+            sql,
+            re.IGNORECASE | re.DOTALL,
+        ):
+            raise MigrationError("external_ref cannot be globally unique alone")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -480,8 +565,10 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 2:
-        raise MigrationError("migration manifest schema_version must be 2")
+    if manifest.get("schema_version") != 3:
+        raise MigrationError("migration manifest schema_version must be 3")
+    if manifest.get("manifest_id") != "memory-patch-step6-persistence-1a":
+        raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
         raise MigrationError("migration manifest runner_version mismatch")
     if manifest.get("target_database") != "CockroachDB":
@@ -490,7 +577,7 @@ def load_migrations() -> list[Migration]:
         raise MigrationError("migration manifest target version mismatch")
     if manifest.get("transaction_policy") != (
         "STEP4_ONE_TRANSACTION_STEP5_NINE_IDEMPOTENT_DATABASE_PHASES_"
-        "WITH_NONATOMIC_CLUSTER_ROLE_DDL"
+        "WITH_NONATOMIC_CLUSTER_ROLE_DDL_STEP6_ONE_TRANSACTION"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -536,6 +623,11 @@ def load_migrations() -> list[Migration]:
             and checksum != immutable_step4_checksum
         ):
             raise MigrationError(f"immutable Step 4 checksum changed: {migration_id}")
+        if (
+            migration_id == STEP5_MIGRATION_ID
+            and checksum != STEP5_MIGRATION_SHA256
+        ):
+            raise MigrationError("immutable Step 5 checksum changed")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -545,9 +637,15 @@ def load_migrations() -> list[Migration]:
     declared = {migration.filename for migration in migrations}
     if discovered != declared:
         raise MigrationError("migration manifest and SQL directory differ")
-    expected_identifiers = [*STEP4_MIGRATION_HASHES, STEP5_MIGRATION_ID]
+    expected_identifiers = [
+        *STEP4_MIGRATION_HASHES,
+        STEP5_MIGRATION_ID,
+        STEP6_MIGRATION_ID,
+    ]
     if identifiers != expected_identifiers:
-        raise MigrationError("migration chain is not the exact Step 4 -> Step 5 chain")
+        raise MigrationError(
+            "migration chain is not the exact Step 4 -> Step 5 -> Step 6 chain"
+        )
     return migrations
 
 
@@ -727,11 +825,104 @@ def load_security_manifest() -> dict[str, Any]:
     return manifest
 
 
+def load_persistence_manifest() -> dict[str, Any]:
+    manifest = load_json(PERSISTENCE_MANIFEST_PATH)
+    if manifest.get("schema_version") != 1:
+        raise MigrationError("persistence manifest schema_version must be 1")
+    if (
+        manifest.get("manifest_id")
+        != "memory-patch-step6-persistence-security-1a"
+    ):
+        raise MigrationError("persistence manifest identity mismatch")
+    if manifest.get("target_cockroachdb_version") != PINNED_VERSION:
+        raise MigrationError("persistence manifest version pin mismatch")
+    if manifest.get("fixed_roles") != [
+        "mp_app_runtime",
+        "mp_request_context_setter",
+        "mp_schema_owner",
+        "mp_security_owner",
+    ]:
+        raise MigrationError("persistence manifest fixed role set is not exact")
+    if manifest.get("status_vocabulary") != [
+        "PENDING",
+        "IN_PROGRESS",
+        "COMPLETED",
+        "INTERRUPTED",
+        "FAILED_FINAL",
+    ]:
+        raise MigrationError("persistence status vocabulary is not exact")
+    if manifest.get("external_reference_identity") != [
+        "tenant_id",
+        "origin_kind",
+        "origin_system",
+        "origin_version",
+        "adapter_version",
+        "artifact_kind",
+        "external_ref",
+    ]:
+        raise MigrationError("external reference identity is incomplete")
+    tables = manifest.get("tables")
+    if not isinstance(tables, list) or len(tables) != 1:
+        raise MigrationError("Step 6 must declare exactly one persistence table")
+    table = tables[0]
+    required_fields = {
+        "access_class",
+        "delete_policy",
+        "force_rls",
+        "immutable_columns",
+        "insert_policy",
+        "owner_role",
+        "rls_enabled",
+        "runtime_privileges",
+        "select_policy",
+        "table",
+        "tenant_column",
+        "update_policy",
+        "user_owner_column",
+    }
+    if not isinstance(table, dict) or set(table) != required_fields:
+        raise MigrationError("persistence table classification has invalid shape")
+    if (
+        table["table"] != "persistence_operations"
+        or table["tenant_column"] != "tenant_id"
+        or table["user_owner_column"] != "owner_user_id"
+        or table["owner_role"] != "mp_schema_owner"
+        or table["rls_enabled"] is not True
+        or table["force_rls"] is not True
+        or table["delete_policy"] is not None
+        or table["runtime_privileges"] != ["INSERT", "SELECT", "UPDATE"]
+        or table["select_policy"] != "persistence_operations_s6_select"
+        or table["insert_policy"] != "persistence_operations_s6_insert"
+        or table["update_policy"] != "persistence_operations_s6_update"
+    ):
+        raise MigrationError("persistence table security decision is unsafe")
+    immutable = table["immutable_columns"]
+    if (
+        not isinstance(immutable, list)
+        or len(immutable) != len(set(immutable))
+        or not {
+            "tenant_id",
+            "operation_id",
+            "owner_user_id",
+            "operation_kind",
+            "idempotency_key",
+            "request_digest",
+            "scope_digest",
+            "created_at",
+            "origin_system",
+            "external_ref",
+        }.issubset(immutable)
+    ):
+        raise MigrationError("persistence immutable identity is incomplete")
+    return manifest
+
+
 def offline_validate() -> dict[str, Any]:
     pin = load_version_pin()
     migrations = load_migrations()
     schema_manifest = load_schema_manifest()
     security_manifest = load_security_manifest()
+    persistence_manifest = load_persistence_manifest()
     step4_sql = "\n".join(
         migration.sql
         for migration in migrations
@@ -742,7 +933,12 @@ def offline_validate() -> dict[str, Any]:
         for migration in migrations
         if migration.migration_id == STEP5_MIGRATION_ID
     )
-    all_sql = step4_sql + "\n" + step5_sql
+    step6_sql = next(
+        migration.sql
+        for migration in migrations
+        if migration.migration_id == STEP6_MIGRATION_ID
+    )
+    historical_sql = step4_sql + "\n" + step5_sql
     step4_tables = sorted(
         re.findall(
             r"^CREATE TABLE memory_patch\.([a-z0-9_]+)",
@@ -764,16 +960,43 @@ def offline_validate() -> dict[str, Any]:
     )
     if security_tables != expected_security_tables:
         raise MigrationError("security-internal tables differ from migration SQL")
-    created_tables = sorted([*step4_tables, *security_tables])
+    persistence_tables = sorted(
+        re.findall(
+            r"^CREATE TABLE memory_patch\.([a-z0-9_]+)",
+            step6_sql,
+            re.MULTILINE,
+        )
+    )
+    expected_persistence_tables = sorted(
+        row["table"] for row in persistence_manifest["tables"]
+    )
+    if persistence_tables != expected_persistence_tables:
+        raise MigrationError("persistence tables differ from migration SQL")
+    created_tables = sorted(
+        [*step4_tables, *security_tables, *persistence_tables]
+    )
     created_indexes = sorted(
         re.findall(
             r"^CREATE (?:UNIQUE |INVERTED )?INDEX ([a-z0-9_]+)",
-            all_sql,
+            historical_sql,
             re.MULTILINE,
         )
     )
     if created_indexes != schema_manifest["explicit_indexes"]:
         raise MigrationError("schema manifest indexes differ from migration SQL")
+    persistence_indexes = sorted(
+        re.findall(
+            r"^CREATE (?:UNIQUE |INVERTED )?INDEX ([a-z0-9_]+)",
+            step6_sql,
+            re.MULTILINE,
+        )
+    )
+    if persistence_indexes != [
+        "persistence_operations_external_identity_uq",
+        "persistence_operations_private_idempotency_uq",
+        "persistence_operations_shared_idempotency_uq",
+    ]:
+        raise MigrationError("persistence index boundary is not exact")
     required_entities = {
         "tenants",
         "users",
@@ -847,15 +1070,58 @@ def offline_validate() -> dict[str, Any]:
                 raise MigrationError(
                     f"declared policy missing from migration: {policy_name}"
                 )
+    persistence_table = persistence_manifest["tables"][0]
+    persistence_enabled = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"ENABLE ROW LEVEL SECURITY;",
+            step6_sql,
+        )
+    )
+    persistence_forced = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"FORCE ROW LEVEL SECURITY;",
+            step6_sql,
+        )
+    )
+    if persistence_enabled != {"persistence_operations"}:
+        raise MigrationError("Step 6 RLS coverage is incomplete")
+    if persistence_forced != {"persistence_operations"}:
+        raise MigrationError("Step 6 FORCE RLS coverage is incomplete")
+    for command in ("select", "insert", "update"):
+        policy = persistence_table[f"{command}_policy"]
+        pattern = re.compile(
+            rf"CREATE POLICY {re.escape(policy)}\s+"
+            r"ON memory_patch\.persistence_operations\s+"
+            rf"FOR {command.upper()}\s+TO mp_app_runtime",
+            re.MULTILINE,
+        )
+        if pattern.search(step6_sql) is None:
+            raise MigrationError(f"Step 6 policy is missing: {policy}")
+    if "raw_error" in step6_sql.lower() or "exception_message" in step6_sql.lower():
+        raise MigrationError("Step 6 must not persist raw error payloads")
+    if (
+        "status = 'COMPLETED'" not in step6_sql
+        or "result_digest IS NOT NULL" not in step6_sql
+        or "completed_at IS NOT NULL" not in step6_sql
+    ):
+        raise MigrationError("Step 6 completion shape is incomplete")
+    if (
+        "persistence_operations_s6_identity_guard" not in step6_sql
+        or "guard_persistence_operation_identity" not in step6_sql
+    ):
+        raise MigrationError("Step 6 immutable identity guard is missing")
     return {
         "migration_count": len(migrations),
         "migration_ids": [migration.migration_id for migration in migrations],
         "schema_table_count": len(created_tables),
         "security_internal_table_count": len(security_tables),
+        "persistence_table_count": len(persistence_tables),
         "step4_table_count": len(step4_tables),
-        "protected_table_count": len(protected),
-        "identity_guard_trigger_count": len(guard_triggers),
-        "explicit_index_count": len(created_indexes),
+        "protected_table_count": len(protected) + len(persistence_tables),
+        "identity_guard_trigger_count": len(guard_triggers) + 1,
+        "explicit_index_count": len(created_indexes) + len(persistence_indexes),
         "status": "PASS",
         "target_version": pin["exact_version"],
         "vector_boundary": "DEFERRED_NO_CANONICAL_DIMENSION",
@@ -876,8 +1142,10 @@ def validate_database_identifier(database: str) -> None:
 
 def assert_disposable_database(database: str) -> None:
     validate_database_identifier(database)
-    if not database.startswith(DISPOSABLE_DATABASE_PREFIX):
-        raise MigrationError("destructive cleanup requires an mp_step5_ database")
+    if not database.startswith(DISPOSABLE_DATABASE_PREFIXES):
+        raise MigrationError(
+            "destructive cleanup requires an mp_step5_ or mp_step6_ database"
+        )
 
 
 def require_loopback(host: str) -> None:
@@ -918,7 +1186,7 @@ def assert_owned_runtime_path(
     runtime_parent = parent.resolve()
     assert_safe_runtime_parent(runtime_parent)
     if resolved.parent != runtime_parent or not resolved.name.startswith(
-        DISPOSABLE_DATABASE_PREFIX
+        DISPOSABLE_DATABASE_PREFIXES
     ):
         raise MigrationError("refusing cleanup of an unowned runtime path")
 
@@ -1134,6 +1402,14 @@ def assert_step5_security_catalog(
         row for row in manifest["tables"] if row["rls_enabled"]
     ]
     protected_names = {row["table"] for row in protected_rows}
+    historical_table_names = {
+        row["table"] for row in manifest["tables"]
+    } | {
+        row["table"] for row in manifest["security_internal_tables"]
+    }
+    quoted_historical_tables = ", ".join(
+        sql_literal(table) for table in sorted(historical_table_names)
+    )
     table_catalog = parse_tsv(
         client.execute(
             database,
@@ -1144,6 +1420,7 @@ def assert_step5_security_catalog(
             "JOIN pg_catalog.pg_namespace AS n ON n.oid = c.relnamespace "
             "JOIN pg_catalog.pg_roles AS owner ON owner.oid = c.relowner "
             "WHERE n.nspname = 'memory_patch' AND c.relkind = 'r' "
+            f"AND c.relname IN ({quoted_historical_tables}) "
             "ORDER BY c.relname",
         )
     )
@@ -1183,6 +1460,7 @@ def assert_step5_security_catalog(
             "SELECT tablename, policyname, cmd, roles, qual, with_check "
             "FROM pg_catalog.pg_policies "
             "WHERE schemaname = 'memory_patch' "
+            f"AND tablename IN ({quoted_historical_tables}) "
             "ORDER BY tablename, policyname",
         )
     )
@@ -1263,6 +1541,7 @@ def assert_step5_security_catalog(
             "FROM information_schema.table_privileges "
             "WHERE table_schema = 'memory_patch' "
             "AND grantee = 'mp_app_runtime' "
+            f"AND table_name IN ({quoted_historical_tables}) "
             "ORDER BY table_name, privilege_type",
         )
     )
@@ -1284,6 +1563,7 @@ def assert_step5_security_catalog(
             "JOIN pg_catalog.pg_proc AS procedure "
             "ON procedure.oid = trigger.tgfoid "
             "WHERE namespace.nspname = 'memory_patch' "
+            "AND target.relname IN ('memory_items', 'personal_memory_spaces') "
             "AND NOT trigger.tgisinternal "
             "ORDER BY trigger.tgname",
         )
@@ -1317,6 +1597,139 @@ def assert_step5_security_catalog(
         "protected_table_count": len(protected_names),
         "runtime_table_grant_count": len(runtime_grants),
         "table_owner_count": len(table_catalog),
+    }
+
+
+def assert_step6_security_catalog(
+    client: SqlClient,
+    database: str,
+) -> dict[str, Any]:
+    load_persistence_manifest()
+    table_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT c.relname AS table_name, c.relrowsecurity, "
+            "c.relforcerowsecurity, owner.rolname AS owner_role "
+            "FROM pg_catalog.pg_class AS c "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = c.relnamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = c.relowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND c.relname = 'persistence_operations' "
+            "AND c.relkind = 'r'",
+        )
+    )
+    if table_rows != [
+        {
+            "table_name": "persistence_operations",
+            "relrowsecurity": "t",
+            "relforcerowsecurity": "t",
+            "owner_role": "mp_schema_owner",
+        }
+    ]:
+        raise MigrationError("Step 6 table ownership or RLS state differs")
+    policy_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT policyname, cmd, roles, qual, with_check "
+            "FROM pg_catalog.pg_policies "
+            "WHERE schemaname = 'memory_patch' "
+            "AND tablename = 'persistence_operations' "
+            "ORDER BY policyname",
+        )
+    )
+    expected_policies = {
+        "persistence_operations_s6_insert": "INSERT",
+        "persistence_operations_s6_select": "SELECT",
+        "persistence_operations_s6_update": "UPDATE",
+    }
+    if {
+        row["policyname"]: row["cmd"].upper() for row in policy_rows
+    } != expected_policies:
+        raise MigrationError("Step 6 live policy set differs from manifest")
+    for row in policy_rows:
+        if "mp_app_runtime" not in row["roles"]:
+            raise MigrationError("Step 6 policy lacks the runtime role")
+        if row["cmd"].upper() == "SELECT" and not row["qual"]:
+            raise MigrationError("Step 6 SELECT policy lacks USING")
+        if row["cmd"].upper() == "INSERT" and not row["with_check"]:
+            raise MigrationError("Step 6 INSERT policy lacks WITH CHECK")
+        if row["cmd"].upper() == "UPDATE" and (
+            not row["qual"] or not row["with_check"]
+        ):
+            raise MigrationError("Step 6 UPDATE policy lacks USING/WITH CHECK")
+    grant_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT privilege_type "
+            "FROM information_schema.table_privileges "
+            "WHERE table_schema = 'memory_patch' "
+            "AND table_name = 'persistence_operations' "
+            "AND grantee = 'mp_app_runtime' "
+            "ORDER BY privilege_type",
+        )
+    )
+    grants = [row["privilege_type"] for row in grant_rows]
+    if grants != ["INSERT", "SELECT", "UPDATE"]:
+        raise MigrationError("Step 6 runtime grants are not least privilege")
+    trigger_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT trigger.tgname AS trigger_name, "
+            "procedure.proname AS function_name "
+            "FROM pg_catalog.pg_trigger AS trigger "
+            "JOIN pg_catalog.pg_class AS target "
+            "ON target.oid = trigger.tgrelid "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = target.relnamespace "
+            "JOIN pg_catalog.pg_proc AS procedure "
+            "ON procedure.oid = trigger.tgfoid "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND target.relname = 'persistence_operations' "
+            "AND NOT trigger.tgisinternal",
+        )
+    )
+    if trigger_rows != [
+        {
+            "trigger_name": "persistence_operations_s6_identity_guard",
+            "function_name": "guard_persistence_operation_identity",
+        }
+    ]:
+        raise MigrationError("Step 6 immutable identity trigger differs")
+    index_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT DISTINCT index_name "
+            "FROM information_schema.statistics "
+            "WHERE table_schema = 'memory_patch' "
+            "AND table_name = 'persistence_operations' "
+            "AND index_name LIKE 'persistence_operations_%_uq' "
+            "ORDER BY index_name",
+        )
+    )
+    indexes = [row["index_name"] for row in index_rows]
+    if indexes != [
+        "persistence_operations_external_identity_uq",
+        "persistence_operations_private_idempotency_uq",
+        "persistence_operations_shared_idempotency_uq",
+    ]:
+        raise MigrationError("Step 6 unique index set differs")
+    digest_input = {
+        "grants": grants,
+        "indexes": indexes,
+        "policies": policy_rows,
+        "table": table_rows[0],
+        "trigger": trigger_rows[0],
+    }
+    return {
+        "policy_count": len(policy_rows),
+        "protected_table_count": 1,
+        "runtime_table_grant_count": len(grant_rows),
+        "security_digest": hashlib.sha256(
+            canonical_json_bytes(digest_input)
+        ).hexdigest(),
+        "trigger_count": len(trigger_rows),
+        "unique_index_count": len(index_rows),
     }
 
 
@@ -1470,6 +1883,7 @@ def schema_catalog(client: SqlClient, database: str) -> dict[str, Any]:
 def assert_catalog(catalog: Mapping[str, Any]) -> None:
     schema_manifest = load_schema_manifest()
     security_manifest = load_security_manifest()
+    persistence_manifest = load_persistence_manifest()
     expected_tables = sorted(
         [
             *schema_manifest["required_tables"],
@@ -1477,14 +1891,23 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
                 row["table"]
                 for row in security_manifest["security_internal_tables"]
             ],
+            *[row["table"] for row in persistence_manifest["tables"]],
         ]
     )
     if catalog["tables"] != expected_tables:
         raise MigrationError(
-            "live catalog table set differs from Step 4 + Step 5 manifests"
+            "live catalog table set differs from Step 4–6 manifests"
         )
     indexes = set(catalog["explicit_indexes"])
-    missing_indexes = set(schema_manifest["explicit_indexes"]) - indexes
+    required_persistence_indexes = {
+        "persistence_operations_external_identity_uq",
+        "persistence_operations_private_idempotency_uq",
+        "persistence_operations_shared_idempotency_uq",
+    }
+    missing_indexes = (
+        set(schema_manifest["explicit_indexes"])
+        | required_persistence_indexes
+    ) - indexes
     if missing_indexes:
         raise MigrationError(f"live catalog lacks indexes: {sorted(missing_indexes)}")
     constraint_counts = catalog["constraint_counts"]
@@ -1959,7 +2382,7 @@ def run_live_validation(binary: Path) -> dict[str, Any]:
     offline = offline_validate()
     migration_count = offline["migration_count"]
     binary_identity = verify_binary_identity(binary)
-    run_id = DISPOSABLE_DATABASE_PREFIX + uuid.uuid4().hex[:12]
+    run_id = "mp_step6_" + uuid.uuid4().hex[:12]
     database_a = run_id + "_a"
     database_b = run_id + "_b"
     runtime = LocalRuntime(binary=binary, run_id=run_id)

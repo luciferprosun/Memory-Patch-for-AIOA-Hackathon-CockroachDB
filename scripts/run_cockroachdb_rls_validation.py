@@ -2580,14 +2580,15 @@ def run_live_validation(binary: Path, json_output: Path) -> dict[str, Any]:
             database_b,
             timeout=180,
         )
-        if first_apply["applied_count"] != 4:
-            raise RlsValidationError("fresh database did not apply four migrations")
+        expected_migration_count = len(migrations.load_migrations())
+        if first_apply["applied_count"] != expected_migration_count:
+            raise RlsValidationError("fresh database did not apply all migrations")
         if (
             no_op_apply["applied_count"] != 0
-            or no_op_apply["skipped_count"] != 4
+            or no_op_apply["skipped_count"] != expected_migration_count
         ):
             raise RlsValidationError("second migration run was not a complete no-op")
-        if reproduction_apply["applied_count"] != 4:
+        if reproduction_apply["applied_count"] != expected_migration_count:
             raise RlsValidationError("reproduction database did not apply all migrations")
 
         security_a = security_catalog(root, database_a)
@@ -2598,7 +2599,7 @@ def run_live_validation(binary: Path, json_output: Path) -> dict[str, Any]:
             "MIG-001",
             "migration",
             True,
-            "fresh 0001-0004 apply, four-migration no-op replay, and "
+            "fresh ordered migration apply, complete no-op replay, and "
             "second-database security digest matched",
         )
         print("LIVE PROGRESS: migrations and security reproduction passed", file=sys.stderr, flush=True)

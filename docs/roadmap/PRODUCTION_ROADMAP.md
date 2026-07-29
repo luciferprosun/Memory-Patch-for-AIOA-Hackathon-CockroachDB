@@ -21,7 +21,8 @@
 - `Step 3`: `COMPLETE` — CockroachDB `v26.2.4`; live local spike: `34 PASS / 0 FAIL / 2 DEFER`.
 - `Step 4`: `COMPLETE` — CockroachDB `v26.2.4`; 3 deterministyczne migracje, 29 tabel i live schema validation PASS.
 - `Step 5`: `COMPLETE` — 4 role `NOLOGIN`, 27 tabel z RLS i FORCE RLS, 50 polityk oraz live isolation validation `95 PASS / 0 FAIL`.
-- Dokładny następny krok: `Step 6 — Persistence Adapters, Idempotency and Transaction Retry Foundation 1A`.
+- `Step 6`: `COMPLETE` — typed persistence boundary, retry wyłącznie dla `40001`, durable idempotency/resume, migracja `0005`, 28 tabel z RLS i FORCE RLS oraz pełna walidacja live PASS.
+- Dokładny następny krok: `Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A`.
 
 ## Zasada prowadzenia prac
 
@@ -98,8 +99,9 @@ Udowodnić możliwości docelowej wersji CockroachDB i wdrożyć trwały, wielod
   Role SQL, tenant context, RLS, `FORCE ROW LEVEL SECURITY`, brak `BYPASSRLS`, negatywne testy cross-tenant i cross-user.
   Zamknięcie: CockroachDB `v26.2.4`, cztery role `NOLOGIN` bez `BYPASSRLS`, transakcyjny trusted context, 27 tabel chronionych przez RLS i FORCE RLS, 50 polityk oraz live validation `95 PASS / 0 FAIL`. [Model izolacji](../architecture/COCKROACHDB_TENANT_ROLES_SESSION_CONTEXT_AND_RLS_1A.md), [live evidence](../evidence/cockroachdb-v26-2/step5-rls-validation.json), [rekord zamknięcia](../audits/STEP_5_TENANT_RLS_CLOSURE_1A.md).
 
-- [ ] **Step 6 — Persistence Adapters, Idempotency and Transaction Retry Foundation 1A**
+- [x] **Step 6 — Persistence Adapters, Idempotency and Transaction Retry Foundation 1A**
   Adapter CockroachDB, krótkie transakcje, idempotency keys, obsługa `40001`, immutable evidence IDs, resume states i brak transakcji otwartych podczas wywołań modeli lub AWS.
+  Zamknięcie: CockroachDB `v26.2.4`, typed DB-API boundary bez nieprzypiętej zależności, pełny `SERIALIZABLE` retry tylko dla `40001`, 10 prób z backoffem do 1 sekundy, durable compare-and-set idempotency/resume, neutralny composite external-reference prewire, migracja `0005`, RLS/FORCE RLS oraz pełna walidacja live PASS. [Model persistence](../architecture/COCKROACHDB_PERSISTENCE_IDEMPOTENCY_RETRY_FOUNDATION_1A.md), [live evidence](../evidence/cockroachdb-v26-2/step6-persistence-validation.json), [rekord zamknięcia](../audits/STEP_6_PERSISTENCE_IDEMPOTENCY_RETRY_CLOSURE_1A.md).
 
 ### Gate fazy 2
 

@@ -1,0 +1,156 @@
+{
+  "binary_identity": {
+    "binary_sha256": "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf",
+    "build_commit": "80586181eb50e380e2cc982f61841eaf38af9982",
+    "build_tag": "v26.2.4",
+    "platform": "linux amd64 (x86_64-pc-linux-gnu)"
+  },
+  "cleanup": {
+    "databases_removed": true,
+    "disposable_and_fixed_roles_removed": true,
+    "force_kill_used": false,
+    "owned_pid_exited": true,
+    "ports_closed": true,
+    "temporary_store_removed": true
+  },
+  "connection_strategy": {
+    "available_driver_modules": {
+      "asyncpg": false,
+      "pg8000": false,
+      "psycopg": false,
+      "psycopg2": false
+    },
+    "production_connection_factory_wired": false,
+    "strategy": "TYPED_DBAPI_PROTOCOL_NO_DRIVER_WIRING",
+    "unit_transport": "DETERMINISTIC_FAKE_DBAPI",
+    "validation_transport": "PINNED_COCKROACH_CLI_NOT_PRODUCTION_DBAPI"
+  },
+  "external_reference_identity": {
+    "dimensions": [
+      "tenant_id",
+      "origin_kind",
+      "origin_system",
+      "origin_version",
+      "adapter_version",
+      "artifact_kind",
+      "external_ref"
+    ],
+    "exact_duplicate_deduplicated": true,
+    "grants_authority": false,
+    "partial_tuple_sqlstate": "23514",
+    "tenant_scoped": true
+  },
+  "idempotency_and_resume": {
+    "compare_and_set": true,
+    "completed_requires_result_digest": true,
+    "conflicting_binding_fails_closed": true,
+    "failed_final_resumable": false,
+    "interrupted_is_success": false,
+    "status_vocabulary": [
+      "PENDING",
+      "IN_PROGRESS",
+      "COMPLETED",
+      "INTERRUPTED",
+      "FAILED_FINAL"
+    ]
+  },
+  "immutable_write_semantics": {
+    "audit_event": "PASS",
+    "evidence_item": "PASS",
+    "kernel_run": "PASS",
+    "source_snapshot": "PASS",
+    "uniqueness_conflict_sqlstate": "23505"
+  },
+  "insecure_local_transport": {
+    "limitations": "Validates SQL principals, trusted context, migration, idempotency constraints, RLS, and FORCE RLS. It does not validate production certificates, authentication, pooling, SSO, secret storage, or distributed contention frequency.",
+    "loopback_only": true,
+    "used": true
+  },
+  "live": {
+    "catalog": {
+      "schema_digest": "b6ef78272002f52de4d6e19d5b63344e6b79d05d6dfa8464e3763d1c697489d6",
+      "security_digest": "49b4bca5b10f6a0a5e612784900e56fdb2aa84cc8a352a6113ce328c5cb6f3a1",
+      "table_count": 31
+    },
+    "cluster_version": "26.2",
+    "probe_summary": {
+      "category_counts": {
+        "authority": 3,
+        "external_reference": 7,
+        "idempotency": 4,
+        "immutable": 7,
+        "migration": 5,
+        "rls": 8,
+        "runtime": 2,
+        "state": 4
+      },
+      "fail_count": 0,
+      "pass_count": 40,
+      "probe_count": 40
+    },
+    "server_version": "CockroachDB CCL v26.2.4 (x86_64-pc-linux-gnu, built 2026/07/14 16:50:57, go1.25.5)",
+    "step6_security": {
+      "policy_count": 3,
+      "protected_table_count": 1,
+      "runtime_table_grant_count": 3,
+      "trigger_count": 1,
+      "unique_index_count": 3
+    }
+  },
+  "migration": {
+    "first_apply_count": 5,
+    "identities": [
+      "0001_step4_identity_and_hat_scopes",
+      "0002_step4_knowledge_lineage_and_retrieval",
+      "0003_step4_kernel_memory_and_audit_evidence",
+      "0004_step5_tenant_roles_session_context_rls",
+      "0005_step6_persistence_idempotency_retry_foundation"
+    ],
+    "no_op_applied_count": 0,
+    "no_op_skipped_count": 5,
+    "reproduction_apply_count": 5
+  },
+  "natural_contention": {
+    "client_visible_40001_frequency_proven": false,
+    "synthetic_retry_signal_only": true
+  },
+  "nvidia_prewire": {
+    "framework_neutral_composite_identity_only": true,
+    "nvidia_database_objects": 0,
+    "nvidia_dependencies": 0,
+    "nvidia_runtime_implemented": false
+  },
+  "required_probe_coverage": {
+    "deterministic_unit_count": 47,
+    "fail_count": 0,
+    "live_conformance_count": 13,
+    "pass_count": 60,
+    "probe_count": 60,
+    "step6_unit_test_count": 46
+  },
+  "retry": {
+    "cleanup_before_backoff": true,
+    "full_callback_replay": true,
+    "maximum_attempts": 10,
+    "maximum_backoff_seconds": 1.0,
+    "non_40001_retried": false,
+    "retryable_sqlstates": [
+      "40001"
+    ]
+  },
+  "rls_and_authority": {
+    "cross_tenant_insert_sqlstate": "42501",
+    "cross_tenant_select_rows": 0,
+    "cross_tenant_update_rows": 0,
+    "fixed_role_bypassrls_count": 0,
+    "force_rls_enabled": true,
+    "model_hat_critic_external_agent_roles": 0,
+    "owner_rows_without_context": 0,
+    "public_table_grants": 0,
+    "runtime_delete_sqlstate": "42501",
+    "same_tenant_cross_user_select_rows": 0,
+    "same_tenant_cross_user_update_rows": 0,
+    "tenant_only_private_rows": 0
+  },
+  "status": "PASS"
+}

@@ -10,8 +10,10 @@ Importing historical reports does not mean that a final CockroachDB
 implementation already exists. The repository now contains the domain-neutral
 Step 1 kernel contract foundation and the live-tested CockroachDB v26.2.4
 capability baseline, plus the Step 4 tenant-ready logical schema and the Step
-5 SQL-enforced tenant/user isolation boundary. Persistence adapters and
-production integration remain future roadmap work.
+5 SQL-enforced tenant/user isolation boundary. Step 6 adds the typed,
+retry-safe persistence, durable idempotency/resume, and immutable-write
+foundation. Production driver wiring and later integrations remain future
+roadmap work.
 
 The historical provenance import intentionally excludes raw German-law
 datasets, raw UNIX corpus records, retrieval-index data, application code and
@@ -35,6 +37,10 @@ SHA-256 provenance.
 - [ADR-012: CockroachDB tenant roles, transaction context and forced RLS](adr/ADR-012-cockroachdb-tenant-roles-session-context-rls.md)
 - [Step 5 live RLS validation evidence](evidence/cockroachdb-v26-2/step5-rls-validation.json)
 - [Step 5 closure record](audits/STEP_5_TENANT_RLS_CLOSURE_1A.md)
+- [CockroachDB persistence, idempotency, and retry foundation 1A](architecture/COCKROACHDB_PERSISTENCE_IDEMPOTENCY_RETRY_FOUNDATION_1A.md)
+- [ADR-013: CockroachDB persistence, idempotency, and retry boundary](adr/ADR-013-cockroachdb-persistence-idempotency-retry-boundary.md)
+- [Step 6 live persistence validation evidence](evidence/cockroachdb-v26-2/step6-persistence-validation.json)
+- [Step 6 closure record](audits/STEP_6_PERSISTENCE_IDEMPOTENCY_RETRY_CLOSURE_1A.md)
 - [Knowledge Kernel Contract Baseline 1A](architecture/KNOWLEDGE_KERNEL_CONTRACT_BASELINE_1A.md)
 - [Personal Memory HATs 1A](architecture/PERSONAL_MEMORY_HATS_1A.md)
 - [Memory Trust and Precedence 1A](architecture/MEMORY_TRUST_AND_PRECEDENCE_1A.md)

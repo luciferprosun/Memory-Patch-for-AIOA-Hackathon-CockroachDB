@@ -58,7 +58,7 @@ class SecurityManifestCoverageTests(unittest.TestCase):
     def test_offline_security_validation_passes(self) -> None:
         result = rls_validation.offline_validate()
         self.assertEqual(result["status"], "PASS")
-        self.assertEqual(result["migration_count"], 4)
+        self.assertEqual(result["migration_count"], 5)
         self.assertEqual(result["step4_table_count"], 29)
         self.assertEqual(result["protected_table_count"], 27)
         self.assertEqual(result["policy_count"], 50)
@@ -415,12 +415,11 @@ class MigrationSecurityDefinitionTests(unittest.TestCase):
             r"(?i)\b(Nachweisgesetz|German\s+law|German-law|employment\s+law)\b",
         )
 
-    def test_step5_does_not_implement_retry_idempotency_or_adapter(self) -> None:
+    def test_step5_migration_does_not_implement_retry_or_idempotency(self) -> None:
         self.assertNotRegex(
             STEP5_SQL,
             r"(?i)\b(40001|retry loop|idempotency key|persistence adapter)\b",
         )
-        self.assertFalse((ROOT / "src" / "aioa_memory_kernel" / "persistence").exists())
 
 
 class MigrationApplicationSafetyTests(unittest.TestCase):
@@ -431,7 +430,11 @@ class MigrationApplicationSafetyTests(unittest.TestCase):
         self.assertEqual(len(migrations.split_step5_database_phases(database_sql)), 9)
 
     def test_step5_record_is_written_only_after_phases_and_catalog_check(self) -> None:
-        migration = migrations.load_migrations()[-1]
+        migration = next(
+            item
+            for item in migrations.load_migrations()
+            if item.migration_id == migrations.STEP5_MIGRATION_ID
+        )
         states = [
             {},
             {migration.migration_id: migration.sha256},
@@ -463,7 +466,11 @@ class MigrationApplicationSafetyTests(unittest.TestCase):
         self.assertIn("INSERT INTO memory_patch.schema_migrations", statements[-1])
 
     def test_failed_database_phase_is_not_recorded(self) -> None:
-        migration = migrations.load_migrations()[-1]
+        migration = next(
+            item
+            for item in migrations.load_migrations()
+            if item.migration_id == migrations.STEP5_MIGRATION_ID
+        )
         client = mock.Mock()
         client.execute.side_effect = [
             "",
@@ -481,7 +488,11 @@ class MigrationApplicationSafetyTests(unittest.TestCase):
         )
 
     def test_failed_catalog_check_is_not_recorded(self) -> None:
-        migration = migrations.load_migrations()[-1]
+        migration = next(
+            item
+            for item in migrations.load_migrations()
+            if item.migration_id == migrations.STEP5_MIGRATION_ID
+        )
         client = mock.Mock()
         client.execute.return_value = ""
         with (
@@ -803,7 +814,7 @@ class Step5DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(relative, index)
 
-    def test_roadmap_closes_step5_and_names_only_step6_next(self) -> None:
+    def test_roadmap_preserves_step5_and_names_step7_next(self) -> None:
         roadmap = (
             ROOT / "docs" / "roadmap" / "PRODUCTION_ROADMAP.md"
         ).read_text(encoding="utf-8")
@@ -812,11 +823,15 @@ class Step5DocumentationTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "Dokładny następny krok: `Step 6 — Persistence Adapters, Idempotency and Transaction Retry Foundation 1A`",
+            "- [x] **Step 6 — Persistence Adapters, Idempotency and Transaction Retry Foundation 1A**",
             roadmap,
         )
         self.assertIn(
-            "- [ ] **Step 6 — Persistence Adapters, Idempotency and Transaction Retry Foundation 1A**",
+            "Dokładny następny krok: `Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A`",
+            roadmap,
+        )
+        self.assertIn(
+            "- [ ] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**",
             roadmap,
         )
 

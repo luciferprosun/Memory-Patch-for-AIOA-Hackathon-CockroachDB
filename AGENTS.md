@@ -56,8 +56,10 @@ At roadmap adoption:
   `ba825353d1a3df2e455f60061477cfa87cab08f9`.
 - Step 5 implementation and live validation are complete in its intended
   closure commit; the operator closure report records that commit SHA.
-- The exact next implementation task is Step 6, Persistence Adapters,
-  Idempotency and Transaction Retry Foundation 1A.
+- Step 6 implementation and live validation are complete in its intended
+  closure commit; the operator closure report records that commit SHA.
+- The exact next implementation task is Step 7, S3 Snapshot Authority and
+  Object Lock Adapter 1A.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

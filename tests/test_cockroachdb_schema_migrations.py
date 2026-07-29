@@ -65,11 +65,12 @@ class OfflineManifestTests(unittest.TestCase):
         result = migrations.offline_validate()
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["target_version"], "v26.2.4")
-        self.assertEqual(result["migration_count"], 4)
+        self.assertEqual(result["migration_count"], 5)
         self.assertEqual(result["step4_table_count"], 29)
-        self.assertEqual(result["schema_table_count"], 30)
-        self.assertEqual(result["protected_table_count"], 27)
-        self.assertEqual(result["identity_guard_trigger_count"], 2)
+        self.assertEqual(result["schema_table_count"], 31)
+        self.assertEqual(result["protected_table_count"], 28)
+        self.assertEqual(result["identity_guard_trigger_count"], 3)
+        self.assertEqual(result["persistence_table_count"], 1)
 
     def test_migration_order_and_ids_are_stable(self) -> None:
         loaded = migrations.load_migrations()
@@ -82,6 +83,7 @@ class OfflineManifestTests(unittest.TestCase):
                 "0002_step4_knowledge_lineage_and_retrieval",
                 "0003_step4_kernel_memory_and_audit_evidence",
                 "0004_step5_tenant_roles_session_context_rls",
+                "0005_step6_persistence_idempotency_retry_foundation",
             ],
         )
 
@@ -555,7 +557,7 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
         ):
             result = migrations.apply_migrations(client, "mp_step5_noop")
         self.assertEqual(result["applied_count"], 0)
-        self.assertEqual(result["skipped_count"], 4)
+        self.assertEqual(result["skipped_count"], 5)
         client.execute.assert_not_called()
 
     def test_applied_checksum_mismatch_fails_closed(self) -> None:
@@ -616,7 +618,7 @@ class DocumentationContractTests(unittest.TestCase):
         for table in migrations.load_schema_manifest()["required_tables"]:
             self.assertIn(f"`memory_patch.{table}`", architecture)
 
-    def test_roadmap_closes_step5_and_leaves_step6_open(self) -> None:
+    def test_roadmap_closes_step6_and_leaves_step7_open(self) -> None:
         roadmap = (
             ROOT / "docs" / "roadmap" / "PRODUCTION_ROADMAP.md"
         ).read_text(encoding="utf-8")
@@ -629,11 +631,15 @@ class DocumentationContractTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "- [ ] **Step 6 — Persistence Adapters, Idempotency and Transaction Retry Foundation 1A**",
+            "- [x] **Step 6 — Persistence Adapters, Idempotency and Transaction Retry Foundation 1A**",
             roadmap,
         )
         self.assertIn(
-            "Dokładny następny krok: `Step 6 — Persistence Adapters, Idempotency and Transaction Retry Foundation 1A`",
+            "- [ ] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**",
+            roadmap,
+        )
+        self.assertIn(
+            "Dokładny następny krok: `Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A`",
             roadmap,
         )
 
