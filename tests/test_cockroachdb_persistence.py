@@ -974,10 +974,10 @@ class PersistenceStaticValidationTests(unittest.TestCase):
             + "\n"
         ).encode()
         self.assertEqual(path.read_bytes(), canonical)
-        self.assertEqual(len(value["migrations"]), 5)
+        self.assertEqual(len(value["migrations"]), 6)
         self.assertEqual(
             value["migrations"][-1]["migration_id"],
-            "0005_step6_persistence_idempotency_retry_foundation",
+            "0006_step9_source_registry_provenance_publication_states",
         )
 
     def test_transaction_module_has_no_external_business_imports(self) -> None:
@@ -1048,8 +1048,15 @@ class PersistenceStaticValidationTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "Dokładny następny krok: `Step 7 — S3 Snapshot Authority "
-            "and Object Lock Adapter 1A`",
+            "Step 7: DEFERRED BY USER — NOT COMPLETE",
+            roadmap,
+        )
+        self.assertIn(
+            "Step 9: COMPLETE AND PUSHED at actual closure commit",
+            roadmap,
+        )
+        self.assertIn(
+            "Step 10: NOT STARTED",
             roadmap,
         )
 

@@ -12,8 +12,11 @@ Step 1 kernel contract foundation and the live-tested CockroachDB v26.2.4
 capability baseline, plus the Step 4 tenant-ready logical schema and the Step
 5 SQL-enforced tenant/user isolation boundary. Step 6 adds the typed,
 retry-safe persistence, durable idempotency/resume, and immutable-write
-foundation. Production driver wiring and later integrations remain future
-roadmap work.
+foundation. Step 9 adds a live-validated typed source registry, deterministic
+provenance DAG, publication eligibility, append-only publication events, and
+optimistic state transitions. Steps 7 and 8 are explicitly deferred and
+incomplete. Step 10 is not started and remains dependent on Step 7.
+Production driver wiring and later integrations remain future roadmap work.
 
 The historical provenance import intentionally excludes raw German-law
 datasets, raw UNIX corpus records, retrieval-index data, application code and
@@ -41,6 +44,11 @@ SHA-256 provenance.
 - [ADR-013: CockroachDB persistence, idempotency, and retry boundary](adr/ADR-013-cockroachdb-persistence-idempotency-retry-boundary.md)
 - [Step 6 live persistence validation evidence](evidence/cockroachdb-v26-2/step6-persistence-validation.json)
 - [Step 6 closure record](audits/STEP_6_PERSISTENCE_IDEMPOTENCY_RETRY_CLOSURE_1A.md)
+- [Source registry, provenance, and publication states 1A](architecture/SOURCE_REGISTRY_PROVENANCE_PUBLICATION_STATES_1A.md)
+- [ADR-014: Source registry, provenance, and publication boundary](adr/ADR-014-source-registry-provenance-publication-boundary.md)
+- [Steps 7 and 8 explicit deferral record](audits/STEP_7_STEP_8_EXPLICIT_DEFERRAL_2026_07_29.md)
+- [Step 9 live source-registry validation evidence](evidence/cockroachdb-v26-2/step9-source-registry-validation.json)
+- [Step 9 closure record](audits/STEP_9_SOURCE_REGISTRY_PROVENANCE_PUBLICATION_CLOSURE_1A.md)
 - [Knowledge Kernel Contract Baseline 1A](architecture/KNOWLEDGE_KERNEL_CONTRACT_BASELINE_1A.md)
 - [Personal Memory HATs 1A](architecture/PERSONAL_MEMORY_HATS_1A.md)
 - [Memory Trust and Precedence 1A](architecture/MEMORY_TRUST_AND_PRECEDENCE_1A.md)

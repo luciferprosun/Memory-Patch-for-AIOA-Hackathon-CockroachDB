@@ -58,7 +58,7 @@ class SecurityManifestCoverageTests(unittest.TestCase):
     def test_offline_security_validation_passes(self) -> None:
         result = rls_validation.offline_validate()
         self.assertEqual(result["status"], "PASS")
-        self.assertEqual(result["migration_count"], 5)
+        self.assertEqual(result["migration_count"], 6)
         self.assertEqual(result["step4_table_count"], 29)
         self.assertEqual(result["protected_table_count"], 27)
         self.assertEqual(result["policy_count"], 50)
@@ -814,7 +814,7 @@ class Step5DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(relative, index)
 
-    def test_roadmap_preserves_step5_and_names_step7_next(self) -> None:
+    def test_roadmap_preserves_step5_and_records_step7_deferral(self) -> None:
         roadmap = (
             ROOT / "docs" / "roadmap" / "PRODUCTION_ROADMAP.md"
         ).read_text(encoding="utf-8")
@@ -827,13 +827,14 @@ class Step5DocumentationTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "Dokładny następny krok: `Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A`",
+            "Step 7: DEFERRED BY USER — NOT COMPLETE",
             roadmap,
         )
         self.assertIn(
             "- [ ] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**",
             roadmap,
         )
+        self.assertIn("Step 10: NOT STARTED", roadmap)
 
 
 if __name__ == "__main__":

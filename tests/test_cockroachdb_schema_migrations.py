@@ -65,12 +65,13 @@ class OfflineManifestTests(unittest.TestCase):
         result = migrations.offline_validate()
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["target_version"], "v26.2.4")
-        self.assertEqual(result["migration_count"], 5)
+        self.assertEqual(result["migration_count"], 6)
         self.assertEqual(result["step4_table_count"], 29)
-        self.assertEqual(result["schema_table_count"], 31)
-        self.assertEqual(result["protected_table_count"], 28)
-        self.assertEqual(result["identity_guard_trigger_count"], 3)
+        self.assertEqual(result["schema_table_count"], 34)
+        self.assertEqual(result["protected_table_count"], 31)
+        self.assertEqual(result["identity_guard_trigger_count"], 4)
         self.assertEqual(result["persistence_table_count"], 1)
+        self.assertEqual(result["source_registry_table_count"], 3)
 
     def test_migration_order_and_ids_are_stable(self) -> None:
         loaded = migrations.load_migrations()
@@ -84,6 +85,7 @@ class OfflineManifestTests(unittest.TestCase):
                 "0003_step4_kernel_memory_and_audit_evidence",
                 "0004_step5_tenant_roles_session_context_rls",
                 "0005_step6_persistence_idempotency_retry_foundation",
+                "0006_step9_source_registry_provenance_publication_states",
             ],
         )
 
@@ -109,6 +111,7 @@ class OfflineManifestTests(unittest.TestCase):
             migrations.MIGRATION_MANIFEST_PATH,
             migrations.SCHEMA_MANIFEST_PATH,
             migrations.SECURITY_MANIFEST_PATH,
+            migrations.SOURCE_REGISTRY_MANIFEST_PATH,
         ):
             value = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(path.read_bytes(), migrations.canonical_json_bytes(value))
@@ -557,7 +560,7 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
         ):
             result = migrations.apply_migrations(client, "mp_step5_noop")
         self.assertEqual(result["applied_count"], 0)
-        self.assertEqual(result["skipped_count"], 5)
+        self.assertEqual(result["skipped_count"], 6)
         client.execute.assert_not_called()
 
     def test_applied_checksum_mismatch_fails_closed(self) -> None:
@@ -618,7 +621,7 @@ class DocumentationContractTests(unittest.TestCase):
         for table in migrations.load_schema_manifest()["required_tables"]:
             self.assertIn(f"`memory_patch.{table}`", architecture)
 
-    def test_roadmap_closes_step6_and_leaves_step7_open(self) -> None:
+    def test_roadmap_closes_step6_and_records_step7_deferral(self) -> None:
         roadmap = (
             ROOT / "docs" / "roadmap" / "PRODUCTION_ROADMAP.md"
         ).read_text(encoding="utf-8")
@@ -639,7 +642,15 @@ class DocumentationContractTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "Dokładny następny krok: `Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A`",
+            "Step 7: DEFERRED BY USER — NOT COMPLETE",
+            roadmap,
+        )
+        self.assertIn(
+            "Step 9: COMPLETE AND PUSHED at actual closure commit",
+            roadmap,
+        )
+        self.assertIn(
+            "Step 10: NOT STARTED",
             roadmap,
         )
 

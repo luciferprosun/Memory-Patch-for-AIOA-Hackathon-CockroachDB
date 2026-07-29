@@ -1,0 +1,129 @@
+{
+  "archive_identity": {
+    "archive_sha256": "3c7de055c07f9101eb0f71b3f5e6b489b0fcf449d3d5a55bfe61eff4f935ce8f",
+    "gzip_integrity": true,
+    "repeated_archive_hash_checks": 10,
+    "safe_member_paths": true
+  },
+  "binary_identity": {
+    "binary_sha256": "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf",
+    "build_tag": "v26.2.4",
+    "platform": "x86_64-pc-linux-gnu",
+    "post_shutdown_identity_matched": true,
+    "repeated_binary_hash_checks": 10,
+    "repeated_copy_pair_hash_checks": 5,
+    "version_execution_count": 3
+  },
+  "cleanup": {
+    "databases_removed": true,
+    "disposable_and_fixed_roles_removed": true,
+    "force_kill_used": false,
+    "owned_process_exited": true,
+    "panic_detected": false,
+    "ports_closed": true,
+    "temporary_store_removed": true
+  },
+  "cloud_api_calls": 0,
+  "fixture": {
+    "real_content": false,
+    "source_count": 5,
+    "synthetic_only": true,
+    "tenant_count": 2,
+    "user_count": 3
+  },
+  "idempotency_and_transactions": {
+    "atomic_wrong_link_rollback": true,
+    "durable_step6_reuse": true,
+    "live_probe_count": 6,
+    "maximum_attempts": 10,
+    "retryable_sqlstates": [
+      "40001"
+    ],
+    "stale_compare_and_set_changed_rows": 0
+  },
+  "insecure_local_transport": {
+    "limitations": "Validates SQL identity, transaction context, migrations, RLS, FORCE RLS, provenance, publication transitions, and denial semantics. It does not validate production certificates, end-user authentication, or a distributed deployment.",
+    "loopback_only": true,
+    "single_node": true,
+    "used": true
+  },
+  "live": {
+    "category_counts": {
+      "authority": 4,
+      "context": 2,
+      "cross_tenant": 3,
+      "cross_user": 2,
+      "eligibility": 2,
+      "force_rls": 1,
+      "idempotency": 6,
+      "identity": 2,
+      "migration": 4,
+      "positive": 5,
+      "privilege": 1,
+      "provenance": 1,
+      "provenance_negative": 3,
+      "publication": 4,
+      "publication_negative": 7,
+      "roles": 1
+    },
+    "cluster_version": "26.2",
+    "fail_count": 0,
+    "pass_count": 48,
+    "probe_count": 48,
+    "schema_security_digest": "60796a86a85fe0ad8b3e6bf612c2a45ab9fb379596a091fd58abbb6772cde0b7",
+    "security_digest": "5943da10368467f0fc82e76bcfceec2f767dfdab6a2bc77442dea476f8137a44"
+  },
+  "migration": {
+    "first_apply_count": 6,
+    "migration_0006_sha256": "921f5e1bb16142c082b1e91fbbaae729af3aad6f62fd0a5a0a15cda5f3fa5347",
+    "no_op_applied_count": 0,
+    "no_op_skipped_count": 6,
+    "reproduction_apply_count": 6,
+    "reproduction_digest_matched": true
+  },
+  "policy": {
+    "policy_version": "source-publication-eligibility-1a",
+    "publication_actor_types": [
+      "HUMAN_REVIEWER",
+      "MIGRATION_SERVICE",
+      "TRUSTED_APPLICATION"
+    ],
+    "source_registry_table_count": 3
+  },
+  "provenance": {
+    "cycle_rejected": true,
+    "deterministic_full_lineage_digest": true,
+    "exact_replay_idempotent": true,
+    "self_edge_rejected": true
+  },
+  "publication": {
+    "actor_identity_digest_bound": true,
+    "append_only_event_chain_verified": true,
+    "direct_registered_to_published_rejected": true,
+    "forbidden_actor_types_rejected": [
+      "CRITIC",
+      "HAT",
+      "MODEL"
+    ],
+    "tamper_and_delete_rejected": true,
+    "terminal_pointer_verified": true
+  },
+  "rls_and_authority": {
+    "cross_tenant_denied": true,
+    "force_rls_enabled": true,
+    "model_hat_critic_publication_authority": false,
+    "publication_grants_approval_authority": false,
+    "publication_grants_commit_authority": false,
+    "publication_grants_execution_authority": false,
+    "runtime_bypassrls": false,
+    "runtime_delete_granted": false,
+    "same_tenant_cross_user_private_denied": true
+  },
+  "status": "PASS",
+  "validation": {
+    "focused_source_registry_test_count": 74,
+    "full_repository_regression_test_count": 516,
+    "restored_step9_file_checks_passed": 18,
+    "validation_mode": "DISPOSABLE_LOOPBACK_SINGLE_NODE"
+  }
+}

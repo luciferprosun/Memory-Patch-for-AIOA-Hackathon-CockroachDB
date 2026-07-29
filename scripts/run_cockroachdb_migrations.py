@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate and apply the Memory Patch CockroachDB Step 4–6 migrations.
+"""Validate and apply the Memory Patch CockroachDB Step 4–6 and 9 migrations.
 
 Ordinary repository tests import this module without opening a socket or
 starting a process. Live actions require ``--allow-live`` and an exact pinned
@@ -43,15 +43,21 @@ PERSISTENCE_MANIFEST_PATH = (
     / "cockroachdb"
     / "persistence-security-1a.json"
 )
+SOURCE_REGISTRY_MANIFEST_PATH = (
+    REPOSITORY_ROOT
+    / "config"
+    / "source-registry"
+    / "source-registry-policy-1a.json"
+)
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "3.0.0"
+RUNNER_VERSION = "4.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
 START_TIMEOUT_SECONDS = 45.0
-DISPOSABLE_DATABASE_PREFIXES = ("mp_step5_", "mp_step6_")
+DISPOSABLE_DATABASE_PREFIXES = ("mp_step5_", "mp_step6_", "mp_step9_")
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
@@ -72,6 +78,15 @@ STEP5_MIGRATION_SHA256 = (
     "6a8968dab3aa063b2d6f34bb31ecd26039e50f2f9351d961140c3a739106fbcd"
 )
 STEP6_MIGRATION_ID = "0005_step6_persistence_idempotency_retry_foundation"
+STEP6_MIGRATION_SHA256 = (
+    "c6ad8cfe2b56b4bb59c6e604ae9f6281242e1baed135b94feaea6087f1651173"
+)
+STEP9_MIGRATION_ID = (
+    "0006_step9_source_registry_provenance_publication_states"
+)
+STEP9_MIGRATION_SHA256 = (
+    "921f5e1bb16142c082b1e91fbbaae729af3aad6f62fd0a5a0a15cda5f3fa5347"
+)
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
 STEP5_CLUSTER_ROLE_END = "-- STEP5_CLUSTER_ROLE_DDL_END"
 STEP5_DATABASE_PHASE_MARKERS = tuple(
@@ -194,6 +209,47 @@ STEP6_FORBIDDEN_MIGRATION_PATTERNS: tuple[
         "machine-specific path",
         re.compile(r"(?:/home/|/Users/|[A-Za-z]:\\\\)"),
     ),
+)
+
+STEP9_FORBIDDEN_MIGRATION_PATTERNS: tuple[
+    tuple[str, re.Pattern[str]], ...
+] = (
+    ("role creation", re.compile(r"\bCREATE\s+ROLE\b", re.IGNORECASE)),
+    (
+        "positive BYPASSRLS grant",
+        re.compile(r"(?<!NO)\bBYPASSRLS\b", re.IGNORECASE),
+    ),
+    ("cascade deletion", re.compile(r"\bON\s+DELETE\s+CASCADE\b", re.IGNORECASE)),
+    (
+        "runtime DELETE grant",
+        re.compile(
+            r"^\s*GRANT\b[^;]*\bDELETE\b",
+            re.IGNORECASE | re.DOTALL | re.MULTILINE,
+        ),
+    ),
+    (
+        "authority-bearing database object",
+        re.compile(
+            r"\b(?:approval_authority|commit_authority|execution_authority|"
+            r"control_write_authority)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "cloud or NVIDIA integration",
+        re.compile(
+            r"\b(?:Amazon|AWS|S3|Object\s+Lock|NVIDIA|NOOA|OpenShell)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "domain-specific registry rule",
+        re.compile(
+            r"\b(?:Nachweisgesetz|German\s+law|German-law|employment\s+law)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    ("machine-specific path", re.compile(r"(?:/home/|/Users/|[A-Za-z]:\\\\)")),
 )
 
 SECRET_PATTERN = re.compile(
@@ -388,6 +444,7 @@ class LocalRuntime:
 
     def stop_and_remove(self) -> dict[str, Any]:
         errors: list[str] = []
+        panic_detected = False
         pid = self.process.pid if self.process is not None else None
         if self.process is not None and self.process.poll() is None:
             self.process.send_signal(signal.SIGTERM)
@@ -403,6 +460,27 @@ class LocalRuntime:
         if self.log_handle is not None:
             self.log_handle.close()
             self.log_handle = None
+        if self.runtime_dir is not None:
+            log_path = self.runtime_dir / "server.log"
+            if log_path.is_file():
+                try:
+                    with log_path.open(
+                        "r",
+                        encoding="utf-8",
+                        errors="replace",
+                    ) as log:
+                        panic_detected = any(
+                            re.search(
+                                r"(?i)(?:^|\s)(?:panic:|fatal error:)",
+                                line,
+                            )
+                            is not None
+                            for line in log
+                        )
+                except OSError:
+                    errors.append("owned runtime log could not be inspected")
+        if panic_detected:
+            errors.append("owned CockroachDB log contained a panic marker")
         ports_closed = all(
             port is None or not can_connect("127.0.0.1", port)
             for port in (self.rpc_port, self.sql_port, self.http_port)
@@ -428,6 +506,7 @@ class LocalRuntime:
         return {
             "cleanup_errors": errors,
             "force_kill_used": self.force_kill_used,
+            "panic_detected": panic_detected,
             "pid_exited": self.process is None or self.process.poll() is not None,
             "ports_closed": ports_closed,
             "runtime_duration_seconds": duration,
@@ -556,6 +635,50 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
             re.IGNORECASE | re.DOTALL,
         ):
             raise MigrationError("external_ref cannot be globally unique alone")
+    elif migration_id == STEP9_MIGRATION_ID:
+        forbidden_patterns = STEP9_FORBIDDEN_MIGRATION_PATTERNS
+        required_fragments = (
+            "CREATE TABLE memory_patch.source_registry_entries",
+            "CREATE TABLE memory_patch.source_provenance_edges",
+            "CREATE TABLE memory_patch.source_publication_events",
+            "guard_source_registry_publication_update",
+            "source_registry_entries_s9_publication_guard",
+            "OWNER TO mp_schema_owner",
+            "GRANT SELECT, INSERT, UPDATE",
+            "ENABLE ROW LEVEL SECURITY",
+            "FORCE ROW LEVEL SECURITY",
+            "CREATE POLICY source_registry_entries_s9_select",
+            "CREATE POLICY source_registry_entries_s9_insert",
+            "CREATE POLICY source_registry_entries_s9_update",
+            "CREATE POLICY source_provenance_edges_s9_select",
+            "CREATE POLICY source_provenance_edges_s9_insert",
+            "CREATE POLICY source_publication_events_s9_select",
+            "CREATE POLICY source_publication_events_s9_insert",
+            "source-publication-eligibility-1a",
+            "TO mp_app_runtime",
+        )
+        for fragment in required_fragments:
+            if fragment not in sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required registry fragment: {fragment}"
+                )
+        if re.search(r"\bTO\s+PUBLIC\b", sql, re.IGNORECASE):
+            raise MigrationError("Step 9 policy or grant targets PUBLIC")
+        if re.search(
+            r"\bUSING\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 9 contains an allow-all RLS policy")
+        if len(
+            re.findall(
+                r"^CREATE TABLE memory_patch\.(?:source_registry_entries|"
+                r"source_provenance_edges|source_publication_events)\b",
+                sql,
+                re.MULTILINE,
+            )
+        ) != 3:
+            raise MigrationError("Step 9 table set is not exact")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -565,9 +688,9 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 3:
-        raise MigrationError("migration manifest schema_version must be 3")
-    if manifest.get("manifest_id") != "memory-patch-step6-persistence-1a":
+    if manifest.get("schema_version") != 4:
+        raise MigrationError("migration manifest schema_version must be 4")
+    if manifest.get("manifest_id") != "memory-patch-step9-source-registry-1a":
         raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
         raise MigrationError("migration manifest runner_version mismatch")
@@ -577,7 +700,8 @@ def load_migrations() -> list[Migration]:
         raise MigrationError("migration manifest target version mismatch")
     if manifest.get("transaction_policy") != (
         "STEP4_ONE_TRANSACTION_STEP5_NINE_IDEMPOTENT_DATABASE_PHASES_"
-        "WITH_NONATOMIC_CLUSTER_ROLE_DDL_STEP6_ONE_TRANSACTION"
+        "WITH_NONATOMIC_CLUSTER_ROLE_DDL_STEP6_ONE_TRANSACTION_"
+        "STEP9_ONE_TRANSACTION"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -628,6 +752,16 @@ def load_migrations() -> list[Migration]:
             and checksum != STEP5_MIGRATION_SHA256
         ):
             raise MigrationError("immutable Step 5 checksum changed")
+        if (
+            migration_id == STEP6_MIGRATION_ID
+            and checksum != STEP6_MIGRATION_SHA256
+        ):
+            raise MigrationError("immutable Step 6 checksum changed")
+        if (
+            migration_id == STEP9_MIGRATION_ID
+            and checksum != STEP9_MIGRATION_SHA256
+        ):
+            raise MigrationError("Step 9 checksum differs from the audited migration")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -641,10 +775,12 @@ def load_migrations() -> list[Migration]:
         *STEP4_MIGRATION_HASHES,
         STEP5_MIGRATION_ID,
         STEP6_MIGRATION_ID,
+        STEP9_MIGRATION_ID,
     ]
     if identifiers != expected_identifiers:
         raise MigrationError(
-            "migration chain is not the exact Step 4 -> Step 5 -> Step 6 chain"
+            "migration chain is not the exact Step 4 -> Step 5 -> Step 6 -> "
+            "Step 9 chain"
         )
     return migrations
 
@@ -917,12 +1053,153 @@ def load_persistence_manifest() -> dict[str, Any]:
     return manifest
 
 
+def load_source_registry_manifest() -> dict[str, Any]:
+    manifest = load_json(SOURCE_REGISTRY_MANIFEST_PATH)
+    if manifest.get("schema_version") != 1:
+        raise MigrationError("source registry manifest schema_version must be 1")
+    if (
+        manifest.get("manifest_id")
+        != "memory-patch-step9-source-registry-policy-1a"
+    ):
+        raise MigrationError("source registry manifest identity mismatch")
+    if manifest.get("target_cockroachdb_version") != PINNED_VERSION:
+        raise MigrationError("source registry manifest version pin mismatch")
+    if (
+        manifest.get("policy_version")
+        != "source-publication-eligibility-1a"
+    ):
+        raise MigrationError("source publication policy version is not exact")
+    if (
+        manifest.get("genesis_marker") != "SOURCE_PUBLICATION_GENESIS_1A"
+        or manifest.get("genesis_digest")
+        != "6d6e54df2447ab416012f2afbf0cdf857d2055a3ef05a3d9023b8561b20c9693"
+    ):
+        raise MigrationError("source publication genesis identity differs")
+    if manifest.get("fixed_roles") != [
+        "mp_app_runtime",
+        "mp_request_context_setter",
+        "mp_schema_owner",
+        "mp_security_owner",
+    ]:
+        raise MigrationError("source registry fixed role set differs")
+    expected_vocabularies = {
+        "authority_levels": [
+            "OFFICIAL_PRIMARY",
+            "AUTHORITATIVE_SECONDARY",
+            "INFORMATIONAL_SECONDARY",
+            "USER_SUPPLIED",
+            "DERIVED",
+            "UNKNOWN",
+        ],
+        "license_statuses": [
+            "PUBLIC_DOMAIN",
+            "CONFIRMED_PERMISSIVE",
+            "CONFIRMED_RESTRICTED",
+            "PRIVATE_AUTHORIZED",
+            "UNKNOWN",
+            "PROHIBITED",
+        ],
+        "access_classes": [
+            "PUBLIC",
+            "TENANT_RESTRICTED",
+            "USER_PRIVATE",
+        ],
+        "redaction_states": [
+            "NOT_REQUIRED",
+            "PENDING",
+            "VERIFIED",
+            "REJECTED",
+        ],
+        "publication_actor_types": [
+            "TRUSTED_APPLICATION",
+            "HUMAN_REVIEWER",
+            "MIGRATION_SERVICE",
+        ],
+        "publication_states": [
+            "REGISTERED",
+            "REVIEW_REQUIRED",
+            "ELIGIBLE",
+            "PUBLISHED",
+            "QUARANTINED",
+            "WITHDRAWN",
+            "REJECTED",
+        ],
+    }
+    for field, expected in expected_vocabularies.items():
+        if manifest.get(field) != expected:
+            raise MigrationError(f"source registry {field} vocabulary differs")
+    if manifest.get("transitions") != {
+        "REGISTERED": ["REVIEW_REQUIRED", "QUARANTINED", "REJECTED"],
+        "REVIEW_REQUIRED": ["ELIGIBLE", "QUARANTINED", "REJECTED"],
+        "ELIGIBLE": ["PUBLISHED", "REVIEW_REQUIRED", "QUARANTINED"],
+        "PUBLISHED": ["WITHDRAWN", "QUARANTINED"],
+        "QUARANTINED": ["REVIEW_REQUIRED", "REJECTED"],
+        "WITHDRAWN": ["REVIEW_REQUIRED"],
+        "REJECTED": [],
+    }:
+        raise MigrationError("source publication transition graph differs")
+    tables = manifest.get("tables")
+    if (
+        not isinstance(tables, list)
+        or [row.get("table") for row in tables if isinstance(row, dict)]
+        != [
+            "source_registry_entries",
+            "source_provenance_edges",
+            "source_publication_events",
+        ]
+    ):
+        raise MigrationError("source registry table classification is not exact")
+    expected_privileges = {
+        "source_registry_entries": ["INSERT", "SELECT", "UPDATE"],
+        "source_provenance_edges": ["INSERT", "SELECT"],
+        "source_publication_events": ["INSERT", "SELECT"],
+    }
+    expected_policies = {
+        "source_registry_entries": (
+            "source_registry_entries_s9_select",
+            "source_registry_entries_s9_insert",
+            "source_registry_entries_s9_update",
+        ),
+        "source_provenance_edges": (
+            "source_provenance_edges_s9_select",
+            "source_provenance_edges_s9_insert",
+            None,
+        ),
+        "source_publication_events": (
+            "source_publication_events_s9_select",
+            "source_publication_events_s9_insert",
+            None,
+        ),
+    }
+    for table in tables:
+        name = table["table"]
+        if (
+            table.get("tenant_column") != "tenant_id"
+            or table.get("owner_role") != "mp_schema_owner"
+            or table.get("rls_enabled") is not True
+            or table.get("force_rls") is not True
+            or table.get("delete_policy") is not None
+            or table.get("runtime_privileges") != expected_privileges[name]
+            or (
+                table.get("select_policy"),
+                table.get("insert_policy"),
+                table.get("update_policy"),
+            )
+            != expected_policies[name]
+            or not isinstance(table.get("immutable_columns"), list)
+            or table["immutable_columns"] != sorted(table["immutable_columns"])
+        ):
+            raise MigrationError(f"unsafe source registry table decision: {name}")
+    return manifest
+
+
 def offline_validate() -> dict[str, Any]:
     pin = load_version_pin()
     migrations = load_migrations()
     schema_manifest = load_schema_manifest()
     security_manifest = load_security_manifest()
     persistence_manifest = load_persistence_manifest()
+    source_registry_manifest = load_source_registry_manifest()
     step4_sql = "\n".join(
         migration.sql
         for migration in migrations
@@ -937,6 +1214,11 @@ def offline_validate() -> dict[str, Any]:
         migration.sql
         for migration in migrations
         if migration.migration_id == STEP6_MIGRATION_ID
+    )
+    step9_sql = next(
+        migration.sql
+        for migration in migrations
+        if migration.migration_id == STEP9_MIGRATION_ID
     )
     historical_sql = step4_sql + "\n" + step5_sql
     step4_tables = sorted(
@@ -972,8 +1254,25 @@ def offline_validate() -> dict[str, Any]:
     )
     if persistence_tables != expected_persistence_tables:
         raise MigrationError("persistence tables differ from migration SQL")
+    source_registry_tables = sorted(
+        re.findall(
+            r"^CREATE TABLE memory_patch\.([a-z0-9_]+)",
+            step9_sql,
+            re.MULTILINE,
+        )
+    )
+    expected_source_registry_tables = sorted(
+        row["table"] for row in source_registry_manifest["tables"]
+    )
+    if source_registry_tables != expected_source_registry_tables:
+        raise MigrationError("source registry tables differ from migration SQL")
     created_tables = sorted(
-        [*step4_tables, *security_tables, *persistence_tables]
+        [
+            *step4_tables,
+            *security_tables,
+            *persistence_tables,
+            *source_registry_tables,
+        ]
     )
     created_indexes = sorted(
         re.findall(
@@ -1112,15 +1411,62 @@ def offline_validate() -> dict[str, Any]:
         or "guard_persistence_operation_identity" not in step6_sql
     ):
         raise MigrationError("Step 6 immutable identity guard is missing")
+    step9_enabled = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"ENABLE ROW LEVEL SECURITY;",
+            step9_sql,
+        )
+    )
+    step9_forced = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"FORCE ROW LEVEL SECURITY;",
+            step9_sql,
+        )
+    )
+    expected_step9_protected = set(expected_source_registry_tables)
+    if step9_enabled != expected_step9_protected:
+        raise MigrationError("Step 9 RLS coverage is incomplete")
+    if step9_forced != expected_step9_protected:
+        raise MigrationError("Step 9 FORCE RLS coverage is incomplete")
+    for table in source_registry_manifest["tables"]:
+        for command in ("select", "insert", "update"):
+            policy = table[f"{command}_policy"]
+            if policy is None:
+                continue
+            pattern = re.compile(
+                rf"CREATE POLICY {re.escape(policy)}\s+"
+                rf"ON memory_patch\.{re.escape(table['table'])}\s+"
+                rf"FOR {command.upper()}\s+TO mp_app_runtime",
+                re.MULTILINE,
+            )
+            if pattern.search(step9_sql) is None:
+                raise MigrationError(f"Step 9 policy is missing: {policy}")
+    if "guard_source_registry_publication_update" not in step9_sql:
+        raise MigrationError("Step 9 publication consistency guard is missing")
+    if re.search(r"\bTO\s+PUBLIC\b", step9_sql, re.IGNORECASE):
+        raise MigrationError("Step 9 policy or grant targets PUBLIC")
+    if re.search(
+        r"\bUSING\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+        step9_sql,
+        re.IGNORECASE,
+    ):
+        raise MigrationError("Step 9 contains an allow-all policy")
     return {
         "migration_count": len(migrations),
         "migration_ids": [migration.migration_id for migration in migrations],
         "schema_table_count": len(created_tables),
         "security_internal_table_count": len(security_tables),
         "persistence_table_count": len(persistence_tables),
+        "source_registry_table_count": len(source_registry_tables),
         "step4_table_count": len(step4_tables),
-        "protected_table_count": len(protected) + len(persistence_tables),
-        "identity_guard_trigger_count": len(guard_triggers) + 1,
+        "protected_table_count": (
+            len(protected)
+            + len(persistence_tables)
+            + len(source_registry_tables)
+        ),
+        "identity_guard_trigger_count": len(guard_triggers) + 2,
         "explicit_index_count": len(created_indexes) + len(persistence_indexes),
         "status": "PASS",
         "target_version": pin["exact_version"],
@@ -1144,7 +1490,8 @@ def assert_disposable_database(database: str) -> None:
     validate_database_identifier(database)
     if not database.startswith(DISPOSABLE_DATABASE_PREFIXES):
         raise MigrationError(
-            "destructive cleanup requires an mp_step5_ or mp_step6_ database"
+            "destructive cleanup requires an mp_step5_, mp_step6_, or "
+            "mp_step9_ database"
         )
 
 
@@ -1733,6 +2080,140 @@ def assert_step6_security_catalog(
     }
 
 
+def assert_step9_security_catalog(
+    client: SqlClient,
+    database: str,
+) -> dict[str, Any]:
+    manifest = load_source_registry_manifest()
+    table_names = [row["table"] for row in manifest["tables"]]
+    quoted_tables = ", ".join(sql_literal(name) for name in table_names)
+    table_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT c.relname AS table_name, c.relrowsecurity, "
+            "c.relforcerowsecurity, owner.rolname AS owner_role "
+            "FROM pg_catalog.pg_class AS c "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = c.relnamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = c.relowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            f"AND c.relname IN ({quoted_tables}) "
+            "AND c.relkind = 'r' ORDER BY c.relname",
+        )
+    )
+    expected_tables = [
+        {
+            "table_name": name,
+            "relrowsecurity": "t",
+            "relforcerowsecurity": "t",
+            "owner_role": "mp_schema_owner",
+        }
+        for name in sorted(table_names)
+    ]
+    if table_rows != expected_tables:
+        raise MigrationError("Step 9 table ownership or RLS state differs")
+    policy_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT tablename, policyname, cmd, roles, qual, with_check "
+            "FROM pg_catalog.pg_policies "
+            "WHERE schemaname = 'memory_patch' "
+            f"AND tablename IN ({quoted_tables}) "
+            "ORDER BY tablename, policyname",
+        )
+    )
+    expected_policies = {
+        (
+            row["table"],
+            row[f"{command}_policy"],
+            command.upper(),
+        )
+        for row in manifest["tables"]
+        for command in ("select", "insert", "update")
+        if row[f"{command}_policy"] is not None
+    }
+    actual_policies = {
+        (row["tablename"], row["policyname"], row["cmd"].upper())
+        for row in policy_rows
+    }
+    if actual_policies != expected_policies:
+        raise MigrationError("Step 9 live policy set differs from manifest")
+    for row in policy_rows:
+        if "mp_app_runtime" not in row["roles"]:
+            raise MigrationError("Step 9 policy lacks runtime role")
+        command = row["cmd"].upper()
+        if command == "SELECT" and not row["qual"]:
+            raise MigrationError("Step 9 SELECT policy lacks USING")
+        if command == "INSERT" and not row["with_check"]:
+            raise MigrationError("Step 9 INSERT policy lacks WITH CHECK")
+        if command == "UPDATE" and (
+            not row["qual"] or not row["with_check"]
+        ):
+            raise MigrationError("Step 9 UPDATE policy lacks USING/WITH CHECK")
+    grant_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT table_name, privilege_type "
+            "FROM information_schema.table_privileges "
+            "WHERE table_schema = 'memory_patch' "
+            "AND grantee = 'mp_app_runtime' "
+            f"AND table_name IN ({quoted_tables}) "
+            "ORDER BY table_name, privilege_type",
+        )
+    )
+    expected_grants = sorted(
+        (row["table"], privilege)
+        for row in manifest["tables"]
+        for privilege in row["runtime_privileges"]
+    )
+    actual_grants = [
+        (row["table_name"], row["privilege_type"]) for row in grant_rows
+    ]
+    if actual_grants != expected_grants:
+        raise MigrationError("Step 9 runtime grants are not least privilege")
+    trigger_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT trigger.tgname AS trigger_name, "
+            "target.relname AS table_name, "
+            "procedure.proname AS function_name "
+            "FROM pg_catalog.pg_trigger AS trigger "
+            "JOIN pg_catalog.pg_class AS target "
+            "ON target.oid = trigger.tgrelid "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = target.relnamespace "
+            "JOIN pg_catalog.pg_proc AS procedure "
+            "ON procedure.oid = trigger.tgfoid "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND target.relname = 'source_registry_entries' "
+            "AND NOT trigger.tgisinternal",
+        )
+    )
+    if trigger_rows != [
+        {
+            "trigger_name": "source_registry_entries_s9_publication_guard",
+            "table_name": "source_registry_entries",
+            "function_name": "guard_source_registry_publication_update",
+        }
+    ]:
+        raise MigrationError("Step 9 publication consistency trigger differs")
+    digest_input = {
+        "grants": grant_rows,
+        "policies": policy_rows,
+        "tables": table_rows,
+        "triggers": trigger_rows,
+    }
+    return {
+        "policy_count": len(policy_rows),
+        "protected_table_count": len(table_rows),
+        "runtime_table_grant_count": len(grant_rows),
+        "security_digest": hashlib.sha256(
+            canonical_json_bytes(digest_input)
+        ).hexdigest(),
+        "trigger_count": len(trigger_rows),
+    }
+
+
 def apply_migrations(
     client: SqlClient,
     database: str,
@@ -1790,6 +2271,14 @@ def apply_migrations(
                         f"{phase_number} failed: {exc}"
                     ) from exc
             assert_step5_security_catalog(client, database)
+            database_sql = ""
+        elif migration.migration_id == STEP9_MIGRATION_ID:
+            client.execute(
+                database,
+                "BEGIN;\n" + database_sql + "\nCOMMIT;",
+                timeout=timeout,
+            )
+            assert_step9_security_catalog(client, database)
             database_sql = ""
         migration_record_sql = (
             "INSERT INTO memory_patch.schema_migrations "
@@ -1884,6 +2373,7 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
     schema_manifest = load_schema_manifest()
     security_manifest = load_security_manifest()
     persistence_manifest = load_persistence_manifest()
+    source_registry_manifest = load_source_registry_manifest()
     expected_tables = sorted(
         [
             *schema_manifest["required_tables"],
@@ -1892,11 +2382,12 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
                 for row in security_manifest["security_internal_tables"]
             ],
             *[row["table"] for row in persistence_manifest["tables"]],
+            *[row["table"] for row in source_registry_manifest["tables"]],
         ]
     )
     if catalog["tables"] != expected_tables:
         raise MigrationError(
-            "live catalog table set differs from Step 4–6 manifests"
+            "live catalog table set differs from Step 4–6/9 manifests"
         )
     indexes = set(catalog["explicit_indexes"])
     required_persistence_indexes = {
@@ -2382,7 +2873,7 @@ def run_live_validation(binary: Path) -> dict[str, Any]:
     offline = offline_validate()
     migration_count = offline["migration_count"]
     binary_identity = verify_binary_identity(binary)
-    run_id = "mp_step6_" + uuid.uuid4().hex[:12]
+    run_id = "mp_step9_" + uuid.uuid4().hex[:12]
     database_a = run_id + "_a"
     database_b = run_id + "_b"
     runtime = LocalRuntime(binary=binary, run_id=run_id)
@@ -2423,6 +2914,13 @@ def run_live_validation(binary: Path) -> dict[str, Any]:
         if catalog_a["schema_digest"] != catalog_b["schema_digest"]:
             raise MigrationError("fresh database schema reproduction digest differs")
         probes = seed_and_probe(client, database_a, run_id)
+        step9_security_a = assert_step9_security_catalog(client, database_a)
+        step9_security_b = assert_step9_security_catalog(client, database_b)
+        if (
+            step9_security_a["security_digest"]
+            != step9_security_b["security_digest"]
+        ):
+            raise MigrationError("Step 9 security reproduction digest differs")
         if len(applied_migrations(client, database_a)) != migration_count:
             raise MigrationError("invalid data probes changed migration bookkeeping")
         live_result = {
@@ -2444,6 +2942,7 @@ def run_live_validation(binary: Path) -> dict[str, Any]:
                 "protected_table_count": offline["protected_table_count"],
             },
             "server_version": server_version.splitlines()[0],
+            "step9_security": step9_security_a,
             "status": "PASS",
         }
     finally:

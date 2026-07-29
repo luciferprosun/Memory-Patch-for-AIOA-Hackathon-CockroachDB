@@ -11,7 +11,10 @@
 > SHA-256 przekazanego pliku źródłowego:
 > `b7d7dc62361a32a449074fcc35a065b502087bbee0cd3461deb99a65d711db6a`.
 
-## Zweryfikowany checkpoint przy przyjęciu roadmapy
+## Zweryfikowane checkpointy roadmapy — historyczne i bieżące
+
+Poniższy stan łączy checkpoint przy przyjęciu roadmapy z późniejszymi,
+audytowanymi zamknięciami i decyzjami użytkownika:
 
 - `Step 0A`: `COMPLETE AND PUSHED` — commit `b3d555ec230a894b541e3570347fcf086511df2a`.
 - `Step 0B`: `COMPLETE AND PUSHED` — commit `870145c78d9e6bf02e318bdca2327eb808f381b7`.
@@ -22,7 +25,23 @@
 - `Step 4`: `COMPLETE` — CockroachDB `v26.2.4`; 3 deterministyczne migracje, 29 tabel i live schema validation PASS.
 - `Step 5`: `COMPLETE` — 4 role `NOLOGIN`, 27 tabel z RLS i FORCE RLS, 50 polityk oraz live isolation validation `95 PASS / 0 FAIL`.
 - `Step 6`: `COMPLETE` — typed persistence boundary, retry wyłącznie dla `40001`, durable idempotency/resume, migracja `0005`, 28 tabel z RLS i FORCE RLS oraz pełna walidacja live PASS.
-- Dokładny następny krok: `Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A`.
+- `Step 7: DEFERRED BY USER — NOT COMPLETE`.
+  AWS STS identity resolution succeeded previously, but S3 API activation
+  remained unavailable with NotSignedUp. No S3 bucket or Object Lock
+  implementation was completed.
+- `Step 8: DEFERRED BY USER — NOT COMPLETE`.
+  Step 8 remained outside the bounded deadline path. Step 0B exists, but the
+  Step 8 production runtime adapter was not implemented.
+- `Step 9: COMPLETE AND PUSHED at actual closure commit`.
+  Source registry, whole-DAG provenance, publication eligibility, append-only
+  events, RLS/FORCE RLS and live validation are closed by the intended Step 9
+  commit once it is reachable on `origin/main`.
+- Nominal canonical next step:
+  `Step 10 — Idempotent S3–CockroachDB Ingestion Saga 1A`.
+- `Step 10: NOT STARTED`.
+- Step 10 remains operationally dependent on deferred Step 7. Execution
+  requires a later explicit audited roadmap decision; it was not started by
+  Step 9 closure.
 
 ## Zasada prowadzenia prac
 
@@ -121,15 +140,30 @@ Zbudować bezpieczne, idempotentne przyjmowanie źródeł: CockroachDB jako auto
 
 - [ ] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**
   Versioning, Object Lock Governance dla development/hackathon, `s3_version_id`, SHA-256, content length, retention metadata, prywatne i globalne klasy snapshotów, bez twierdzenia o cross-system ACID.
+  `Step 7: DEFERRED BY USER — NOT COMPLETE`.
+  AWS STS identity resolution succeeded previously, but S3 API activation remained unavailable with NotSignedUp. No S3 bucket or Object Lock implementation was completed.
+  [Jawny rekord odroczenia](../audits/STEP_7_STEP_8_EXPLICIT_DEFERRAL_2026_07_29.md).
 
 - [ ] **Step 8 — External Volume Runtime Adapter and Fail-Closed Policy 1A**
   Integracja przygotowanego `LSC_DATA`: identity check, marker, read/write, free space, operation-specific failure policy i zakaz fallbacku dużych zapisów na dysk systemowy.
+  `Step 8: DEFERRED BY USER — NOT COMPLETE`.
+  Step 8 remained outside the bounded deadline path. Step 0B exists, but the Step 8 production runtime adapter was not implemented.
+  [Jawny rekord odroczenia](../audits/STEP_7_STEP_8_EXPLICIT_DEFERRAL_2026_07_29.md).
 
-- [ ] **Step 9 — Source Registry, Provenance and Publication States 1A**
+- [x] **Step 9 — Source Registry, Provenance and Publication States 1A**
   Rejestr źródeł, authority level, licencja/status, jurysdykcje lub inne scope dimensions, parser version, transformation version, hash lineage i publication eligibility.
+  `Step 9: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie: typed registration, deterministyczny scope i pełny provenance DAG, publication eligibility, append-only event chain, optimistic compare-and-set, Step 6 durable idempotency, RLS/FORCE RLS, 74 focused tests, `48 PASS / 0 FAIL` live probes i pełny regression PASS.
+  [Architektura](../architecture/SOURCE_REGISTRY_PROVENANCE_PUBLICATION_STATES_1A.md),
+  [ADR-014](../adr/ADR-014-source-registry-provenance-publication-boundary.md),
+  [live evidence](../evidence/cockroachdb-v26-2/step9-source-registry-validation.json),
+  [rekord zamknięcia](../audits/STEP_9_SOURCE_REGISTRY_PROVENANCE_PUBLICATION_CLOSURE_1A.md).
 
 - [ ] **Step 10 — Idempotent S3–CockroachDB Ingestion Saga 1A**
   Stany: `REGISTERED → ACQUIRED_LOCAL → HASH_VERIFIED → SNAPSHOT_UPLOAD_PENDING → SNAPSHOT_UPLOADED → SNAPSHOT_LOCK_VERIFIED → PARSED → VALIDATED → PUBLISHED`, z retry, reconciliation, quarantine i cleanup orphanów.
+  `Step 10: NOT STARTED`.
+  Step 10 remains operationally dependent on deferred Step 7. Nie uruchomiono
+  go w ramach zamknięcia Step 9.
 
 - [ ] **Step 11 — Generic Parsing, Normalization and Chunking Pipeline 1A**
   Neutralne parser contracts, dokumenty, sekcje, char ranges, chunk IDs, deterministic chunking, prompt-injection flags, quarantine i testowe źródła syntetyczne.

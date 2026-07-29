@@ -1,0 +1,220 @@
+{
+  "access_classes": [
+    "PUBLIC",
+    "TENANT_RESTRICTED",
+    "USER_PRIVATE"
+  ],
+  "authority_levels": [
+    "OFFICIAL_PRIMARY",
+    "AUTHORITATIVE_SECONDARY",
+    "INFORMATIONAL_SECONDARY",
+    "USER_SUPPLIED",
+    "DERIVED",
+    "UNKNOWN"
+  ],
+  "fixed_roles": [
+    "mp_app_runtime",
+    "mp_request_context_setter",
+    "mp_schema_owner",
+    "mp_security_owner"
+  ],
+  "genesis_digest": "6d6e54df2447ab416012f2afbf0cdf857d2055a3ef05a3d9023b8561b20c9693",
+  "genesis_marker": "SOURCE_PUBLICATION_GENESIS_1A",
+  "license_statuses": [
+    "PUBLIC_DOMAIN",
+    "CONFIRMED_PERMISSIVE",
+    "CONFIRMED_RESTRICTED",
+    "PRIVATE_AUTHORIZED",
+    "UNKNOWN",
+    "PROHIBITED"
+  ],
+  "manifest_id": "memory-patch-step9-source-registry-policy-1a",
+  "policy_version": "source-publication-eligibility-1a",
+  "publication_actor_types": [
+    "TRUSTED_APPLICATION",
+    "HUMAN_REVIEWER",
+    "MIGRATION_SERVICE"
+  ],
+  "publication_states": [
+    "REGISTERED",
+    "REVIEW_REQUIRED",
+    "ELIGIBLE",
+    "PUBLISHED",
+    "QUARANTINED",
+    "WITHDRAWN",
+    "REJECTED"
+  ],
+  "redaction_states": [
+    "NOT_REQUIRED",
+    "PENDING",
+    "VERIFIED",
+    "REJECTED"
+  ],
+  "schema_version": 1,
+  "tables": [
+    {
+      "access_class": "TENANT_SHARED_OR_USER_PRIVATE_MUTABLE_PUBLICATION_POINTER",
+      "delete_policy": null,
+      "force_rls": true,
+      "immutable_columns": [
+        "access_class",
+        "adapter_version",
+        "artifact_byte_length",
+        "artifact_created_at",
+        "artifact_digest",
+        "artifact_kind",
+        "artifact_media_type",
+        "authority_basis",
+        "authority_level",
+        "created_at",
+        "exact_source_bytes",
+        "external_ref",
+        "hat_scope_id",
+        "knowledge_version_id",
+        "license_identifier",
+        "license_reference",
+        "license_status",
+        "model_generated",
+        "observed_at",
+        "origin_kind",
+        "origin_system",
+        "origin_version",
+        "owner_user_id",
+        "parser_contract_version",
+        "parser_name",
+        "parser_version",
+        "personal_memory_space_id",
+        "redaction_state",
+        "registry_digest",
+        "schema_version",
+        "scope_digest",
+        "scope_dimensions",
+        "snapshot_id",
+        "source_id",
+        "source_kind",
+        "source_reference",
+        "target_scope",
+        "tenant_id",
+        "transformation_contract_version",
+        "transformation_name",
+        "transformation_version"
+      ],
+      "insert_policy": "source_registry_entries_s9_insert",
+      "owner_role": "mp_schema_owner",
+      "rls_enabled": true,
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "select_policy": "source_registry_entries_s9_select",
+      "table": "source_registry_entries",
+      "tenant_column": "tenant_id",
+      "update_policy": "source_registry_entries_s9_update",
+      "user_owner_column": "owner_user_id",
+      "user_owner_resolution": "Exact composite source and HAT-scope lineage; USER_PRIVATE requires owner_user_id and personal_memory_space_id."
+    },
+    {
+      "access_class": "TENANT_SHARED_OR_USER_PRIVATE_APPEND_ONLY_PROVENANCE",
+      "delete_policy": null,
+      "force_rls": true,
+      "immutable_columns": [
+        "child_artifact_digest",
+        "created_at",
+        "edge_digest",
+        "edge_id",
+        "edge_kind",
+        "hat_scope_id",
+        "metadata",
+        "parent_artifact_digest",
+        "parser_contract_version",
+        "parser_name",
+        "parser_version",
+        "source_id",
+        "tenant_id",
+        "transformation_contract_version",
+        "transformation_name",
+        "transformation_version"
+      ],
+      "insert_policy": "source_provenance_edges_s9_insert",
+      "owner_role": "mp_schema_owner",
+      "rls_enabled": true,
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "source_provenance_edges_s9_select",
+      "table": "source_provenance_edges",
+      "tenant_column": "tenant_id",
+      "update_policy": null,
+      "user_owner_column": null,
+      "user_owner_resolution": "Registry source_id and hat_scope_id resolve through the existing forced-RLS HAT scope."
+    },
+    {
+      "access_class": "TENANT_SHARED_OR_USER_PRIVATE_APPEND_ONLY_PUBLICATION_EVENT",
+      "delete_policy": null,
+      "force_rls": true,
+      "immutable_columns": [
+        "actor_reference",
+        "actor_type",
+        "created_at",
+        "eligibility_decision_digest",
+        "event_digest",
+        "event_id",
+        "from_state",
+        "hat_scope_id",
+        "policy_version",
+        "previous_event_digest",
+        "reason_codes",
+        "reviewer_reference",
+        "sequence_number",
+        "source_id",
+        "tenant_id",
+        "to_state"
+      ],
+      "insert_policy": "source_publication_events_s9_insert",
+      "owner_role": "mp_schema_owner",
+      "rls_enabled": true,
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "source_publication_events_s9_select",
+      "table": "source_publication_events",
+      "tenant_column": "tenant_id",
+      "update_policy": null,
+      "user_owner_column": null,
+      "user_owner_resolution": "Registry source_id and hat_scope_id resolve through the existing forced-RLS HAT scope."
+    }
+  ],
+  "target_cockroachdb_version": "v26.2.4",
+  "transitions": {
+    "ELIGIBLE": [
+      "PUBLISHED",
+      "REVIEW_REQUIRED",
+      "QUARANTINED"
+    ],
+    "PUBLISHED": [
+      "WITHDRAWN",
+      "QUARANTINED"
+    ],
+    "QUARANTINED": [
+      "REVIEW_REQUIRED",
+      "REJECTED"
+    ],
+    "REGISTERED": [
+      "REVIEW_REQUIRED",
+      "QUARANTINED",
+      "REJECTED"
+    ],
+    "REJECTED": [],
+    "REVIEW_REQUIRED": [
+      "ELIGIBLE",
+      "QUARANTINED",
+      "REJECTED"
+    ],
+    "WITHDRAWN": [
+      "REVIEW_REQUIRED"
+    ]
+  }
+}

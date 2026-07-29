@@ -169,8 +169,10 @@ def offline_validate() -> dict[str, Any]:
     digest = digest_canonical_request({"a": 1, "b": 2})
     if digest != digest_canonical_request({"b": 2, "a": 1}):
         raise PersistenceValidationError("canonical request digest is unstable")
-    if migration["migration_count"] != 5:
-        raise PersistenceValidationError("Step 6 migration chain is incomplete")
+    if migration["migration_count"] != 6:
+        raise PersistenceValidationError(
+            "Step 6 baseline plus the forward Step 9 migration is incomplete"
+        )
     table = persistence["tables"][0]
     if (
         table["table"] != "persistence_operations"
@@ -1196,20 +1198,20 @@ def run_live_validation(binary: Path, json_output: Path) -> dict[str, Any]:
         recorder.check(
             "LIVE-MIG-001",
             "migration",
-            first_apply["applied_count"] == 5,
+            first_apply["applied_count"] == 6,
             f"fresh applied={first_apply['applied_count']}",
         )
         recorder.check(
             "LIVE-MIG-002",
             "migration",
             no_op_apply["applied_count"] == 0
-            and no_op_apply["skipped_count"] == 5,
-            "five-migration replay is a complete no-op",
+            and no_op_apply["skipped_count"] == 6,
+            "six-migration replay is a complete no-op",
         )
         recorder.check(
             "LIVE-MIG-003",
             "migration",
-            reproduction_apply["applied_count"] == 5,
+            reproduction_apply["applied_count"] == 6,
             "second fresh database applied all migrations",
         )
         catalog_a = migrations.schema_catalog(root, database_a)

@@ -37,9 +37,9 @@ Stop safely if the branch is wrong, unrelated worktree changes exist, an
 unexpected Git operation is active, or the task's required starting commit
 does not match.
 
-## Current verified implementation savepoint
+## Verified implementation checkpoints
 
-At roadmap adoption:
+At roadmap adoption and in subsequent audited closure records:
 
 - Step 0A is complete and pushed at
   `b3d555ec230a894b541e3570347fcf086511df2a`.
@@ -58,8 +58,13 @@ At roadmap adoption:
   closure commit; the operator closure report records that commit SHA.
 - Step 6 implementation and live validation are complete in its intended
   closure commit; the operator closure report records that commit SHA.
-- The exact next implementation task is Step 7, S3 Snapshot Authority and
-  Object Lock Adapter 1A.
+- `Step 7: DEFERRED BY USER — NOT COMPLETE`.
+- `Step 8: DEFERRED BY USER — NOT COMPLETE`.
+- Step 9 implementation and live validation are complete in its intended
+  closure commit. It is completion evidence only after that commit is
+  reachable on `origin/main`; the operator closure report records its SHA.
+- `Step 10: NOT STARTED`. It is the nominal canonical next task and remains
+  operationally dependent on deferred Step 7.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this
