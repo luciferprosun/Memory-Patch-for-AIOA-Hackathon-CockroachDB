@@ -58,13 +58,18 @@ At roadmap adoption and in subsequent audited closure records:
   closure commit; the operator closure report records that commit SHA.
 - Step 6 implementation and live validation are complete in its intended
   closure commit; the operator closure report records that commit SHA.
-- `Step 7: DEFERRED BY USER — NOT COMPLETE`.
+- Step 7 implementation, CloudFormation deployment, Object Lock validation,
+  and exact-version read-back are complete in its intended closure commit.
+  Step 7 was completed after Step 9 because it had previously been explicitly
+  deferred. It is completion evidence only after that commit is reachable on
+  `origin/main`.
 - `Step 8: DEFERRED BY USER — NOT COMPLETE`.
 - Step 9 implementation and live validation are complete in its intended
   closure commit. It is completion evidence only after that commit is
   reachable on `origin/main`; the operator closure report records its SHA.
-- `Step 10: NOT STARTED`. It is the nominal canonical next task and remains
-  operationally dependent on deferred Step 7.
+- `Step 10: NOT STARTED`. Step 7 completion does not authorize Step 10.
+- Step 8 remains the next unopened production audit, but it is still deferred
+  and was not started by Step 7.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

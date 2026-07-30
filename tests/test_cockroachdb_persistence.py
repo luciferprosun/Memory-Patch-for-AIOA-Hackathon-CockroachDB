@@ -1048,7 +1048,7 @@ class PersistenceStaticValidationTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "Step 7: DEFERRED BY USER — NOT COMPLETE",
+            "Step 7: COMPLETE AND PUSHED at actual closure commit",
             roadmap,
         )
         self.assertIn(

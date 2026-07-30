@@ -621,7 +621,7 @@ class DocumentationContractTests(unittest.TestCase):
         for table in migrations.load_schema_manifest()["required_tables"]:
             self.assertIn(f"`memory_patch.{table}`", architecture)
 
-    def test_roadmap_closes_step6_and_records_step7_deferral(self) -> None:
+    def test_roadmap_closes_step6_and_records_step7_closure(self) -> None:
         roadmap = (
             ROOT / "docs" / "roadmap" / "PRODUCTION_ROADMAP.md"
         ).read_text(encoding="utf-8")
@@ -638,11 +638,11 @@ class DocumentationContractTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "- [ ] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**",
+            "- [x] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**",
             roadmap,
         )
         self.assertIn(
-            "Step 7: DEFERRED BY USER — NOT COMPLETE",
+            "Step 7: COMPLETE AND PUSHED at actual closure commit",
             roadmap,
         )
         self.assertIn(

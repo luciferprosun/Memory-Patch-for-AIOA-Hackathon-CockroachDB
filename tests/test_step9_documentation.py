@@ -98,15 +98,15 @@ class Step9DocumentationTests(unittest.TestCase):
     def test_roadmap_records_exact_step7_through_step10_state(self) -> None:
         roadmap = ROADMAP.read_text(encoding="utf-8")
         for required in (
-            "- [ ] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**",
-            "Step 7: DEFERRED BY USER — NOT COMPLETE",
+            "- [x] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**",
+            "Step 7: COMPLETE AND PUSHED at actual closure commit",
             "- [ ] **Step 8 — External Volume Runtime Adapter and Fail-Closed Policy 1A**",
             "Step 8: DEFERRED BY USER — NOT COMPLETE",
             "- [x] **Step 9 — Source Registry, Provenance and Publication States 1A**",
             "Step 9: COMPLETE AND PUSHED at actual closure commit",
             "- [ ] **Step 10 — Idempotent S3–CockroachDB Ingestion Saga 1A**",
             "Step 10: NOT STARTED",
-            "Step 10 remains operationally dependent on deferred Step 7.",
+            "The Step 7 dependency of Step 10 is satisfied",
         ):
             self.assertIn(required, roadmap)
 
@@ -273,16 +273,17 @@ class Step9DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(required, normalized)
 
-    def test_agents_checkpoint_no_longer_names_step7_as_exact_next(self) -> None:
+    def test_agents_checkpoint_records_late_step7_closure(self) -> None:
         text = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertNotIn(
             "The exact next implementation task is Step 7",
             text,
         )
         for required in (
-            "Step 7: DEFERRED BY USER — NOT COMPLETE",
+            "Step 7 was completed after Step 9",
             "Step 8: DEFERRED BY USER — NOT COMPLETE",
             "Step 10: NOT STARTED",
+            "Step 8 remains the next unopened production audit",
         ):
             self.assertIn(required, text)
 

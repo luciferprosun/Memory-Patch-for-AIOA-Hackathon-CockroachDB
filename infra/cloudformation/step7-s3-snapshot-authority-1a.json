@@ -1,0 +1,179 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Memory Patch Step 7 global locked snapshot storage only",
+  "Outputs": {
+    "BucketName": {
+      "Description": "Bucket name for typed Step 7 adapter configuration",
+      "Value": {
+        "Ref": "SnapshotBucket"
+      }
+    },
+    "BucketRegion": {
+      "Description": "AWS Region for typed Step 7 adapter configuration",
+      "Value": {
+        "Ref": "AWS::Region"
+      }
+    },
+    "DeploymentIdentifier": {
+      "Description": "CloudFormation stack name for deployment audit correlation",
+      "Value": {
+        "Ref": "AWS::StackName"
+      }
+    },
+    "ObjectKeyPrefix": {
+      "Description": "Deterministic object key prefix",
+      "Value": {
+        "Ref": "ObjectKeyPrefix"
+      }
+    },
+    "ObjectLockMode": {
+      "Description": "Expected Object Lock mode for typed adapter validation",
+      "Value": "GOVERNANCE"
+    },
+    "RetentionDays": {
+      "Description": "Expected bounded default retention in days",
+      "Value": {
+        "Ref": "RetentionDays"
+      }
+    }
+  },
+  "Parameters": {
+    "BucketName": {
+      "AllowedPattern": "^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$",
+      "ConstraintDescription": "Use a valid globally unique S3 bucket name",
+      "Description": "Globally unique dedicated Step 7 snapshot bucket name",
+      "MaxLength": 63,
+      "MinLength": 3,
+      "Type": "String"
+    },
+    "ObjectKeyPrefix": {
+      "AllowedPattern": "^[a-zA-Z0-9!_.*'()-]+(?:/[a-zA-Z0-9!_.*'()-]+)*$",
+      "Default": "memory-patch/snapshots/v1",
+      "Description": "Deterministic relative prefix consumed by the adapter",
+      "MaxLength": 512,
+      "MinLength": 1,
+      "Type": "String"
+    },
+    "RetentionDays": {
+      "Default": 7,
+      "Description": "Bounded development and hackathon retention period",
+      "MaxValue": 30,
+      "MinValue": 1,
+      "Type": "Number"
+    }
+  },
+  "Resources": {
+    "SnapshotBucket": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "BucketEncryption": {
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
+        },
+        "BucketName": {
+          "Ref": "BucketName"
+        },
+        "BucketNamespace": "global",
+        "ObjectLockConfiguration": {
+          "ObjectLockEnabled": "Enabled",
+          "Rule": {
+            "DefaultRetention": {
+              "Days": {
+                "Ref": "RetentionDays"
+              },
+              "Mode": "GOVERNANCE"
+            }
+          }
+        },
+        "ObjectLockEnabled": true,
+        "OwnershipControls": {
+          "Rules": [
+            {
+              "ObjectOwnership": "BucketOwnerEnforced"
+            }
+          ]
+        },
+        "PublicAccessBlockConfiguration": {
+          "BlockPublicAcls": true,
+          "BlockPublicPolicy": true,
+          "IgnorePublicAcls": true,
+          "RestrictPublicBuckets": true
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "memory-patch"
+          },
+          {
+            "Key": "ProductionStep",
+            "Value": "7"
+          },
+          {
+            "Key": "StorageClass",
+            "Value": "global-locked-snapshot"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cloudformation"
+          }
+        ],
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        }
+      },
+      "Type": "AWS::S3::Bucket",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "SnapshotBucketPolicy": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "Bucket": {
+          "Ref": "SnapshotBucket"
+        },
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "s3:*",
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              },
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SnapshotBucket",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Sub": "${SnapshotBucket.Arn}/*"
+                }
+              ],
+              "Sid": "DenyNonTlsRequests"
+            },
+            {
+              "Action": "s3:BypassGovernanceRetention",
+              "Effect": "Deny",
+              "Principal": "*",
+              "Resource": {
+                "Fn::Sub": "${SnapshotBucket.Arn}/*"
+              },
+              "Sid": "DenyGovernanceRetentionBypass"
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      },
+      "Type": "AWS::S3::BucketPolicy",
+      "UpdateReplacePolicy": "Retain"
+    }
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "authority_boundary": {
+    "s3_authority_status": "STORAGE_EVIDENCE_ONLY",
+    "semantic_authority": "LOCAL_MEMORY_PATCH_ONLY"
+  },
+  "aws_identity": {
+    "caller_type": "ASSUMED_ROLE",
+    "permission_set_context": "LuciferSOL",
+    "profile": "aoia-admin",
+    "region": "eu-central-1",
+    "root_principal": false,
+    "temporary_role_session": true
+  },
+  "bucket": {
+    "bucket_reference": "s3-bucket-sha256:3717c93f5e7cc6c83577ae8440d5795a71bcb37132cdb0e120028d605c9e6231",
+    "default_retention_days": 7,
+    "default_retention_mode": "GOVERNANCE",
+    "encryption": "AES256",
+    "object_lock_enabled": true,
+    "ownership": "BucketOwnerEnforced",
+    "public": false,
+    "public_access_block": {
+      "block_public_acls": true,
+      "block_public_policy": true,
+      "ignore_public_acls": true,
+      "restrict_public_buckets": true
+    },
+    "region": "eu-central-1",
+    "versioning": "Enabled"
+  },
+  "change_set": {
+    "actions": [
+      {
+        "action": "Add",
+        "logical_resource_id": "SnapshotBucket",
+        "replacement": null,
+        "resource_type": "AWS::S3::Bucket"
+      },
+      {
+        "action": "Add",
+        "logical_resource_id": "SnapshotBucketPolicy",
+        "replacement": null,
+        "resource_type": "AWS::S3::BucketPolicy"
+      }
+    ],
+    "capabilities": [],
+    "early_validation_error_count": 0,
+    "execution_approved": true,
+    "pre_execution_status": "CREATE_COMPLETE"
+  },
+  "iac": {
+    "bootstrap_required": false,
+    "mechanism": "CloudFormation",
+    "resource_count": 2,
+    "template_sha256": "6bf7623b344cf0626674fcee4cd9dd5f75b013c99f27138f7825f5ac7c8e76ec"
+  },
+  "repository": {
+    "authorized_starting_head": "3f105fcd165fbc7a26b50fd6a0f95e9ece90aa13",
+    "branch": "main",
+    "previous_obsolete_baseline": "cc5c9f5a1e145ffdadfe9ef8347f087f8f663812",
+    "step7_completed_after_step9": true,
+    "step9_closure_sha256": "9e5422405c9b8d37ddfadcc13a28baf15638255460815e9a8def20fe6f6f7a87",
+    "step9_evidence_sha256": "0405c5d227a519c666a94837ef466199e90add90c7d2428028a559cb1815b6e9",
+    "step9_migration_sha256": "921f5e1bb16142c082b1e91fbbaae729af3aad6f62fd0a5a0a15cda5f3fa5347"
+  },
+  "schema_version": "1.0.0",
+  "scope": {
+    "aoia_core_modified": false,
+    "demo_ui_modified": false,
+    "hat_runtime_started": false,
+    "step10_started": false,
+    "step8_started": false,
+    "step9_preserved": true
+  },
+  "stack": {
+    "name": "memory-patch-step7-s3-1a",
+    "region": "eu-central-1",
+    "status": "CREATE_COMPLETE"
+  },
+  "step": "Step 7 - S3 Snapshot Authority and Object Lock Adapter 1A",
+  "synthetic_snapshot": {
+    "checksum_sha256_base64": "0b7dYnUHLQHMkyr3pX2CaDfie5x9EDm7VY1AOav4Gfw=",
+    "content_length": 88,
+    "content_sha256": "d1bedd6275072d01cc932af7a57d826837e27b9c7d1039bb558d4039abf819fc",
+    "exact_version_read": true,
+    "metadata_verified": true,
+    "object_key": "memory-patch/snapshots/v1/global/v1/validation/d1bedd6275072d01cc932af7a57d826837e27b9c7d1039bb558d4039abf819fc.json",
+    "read_back_sha256_verified": true,
+    "retain_until": "2026-08-06T05:20:51Z",
+    "retention_mode": "GOVERNANCE",
+    "version_id": "3NcUzZmEVFeR1pZZ_psPg3O8N.BwZWMn"
+  },
+  "validation": {
+    "compile_import": "PASS",
+    "diff_check": "PASS",
+    "full_suite": "587/587",
+    "related_regressions": "209/209",
+    "secret_scan": "PASS",
+    "step7_targeted": "71/71",
+    "template_validate": "PASS"
+  }
+}

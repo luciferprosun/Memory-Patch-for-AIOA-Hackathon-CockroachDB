@@ -25,10 +25,11 @@ audytowanymi zamknięciami i decyzjami użytkownika:
 - `Step 4`: `COMPLETE` — CockroachDB `v26.2.4`; 3 deterministyczne migracje, 29 tabel i live schema validation PASS.
 - `Step 5`: `COMPLETE` — 4 role `NOLOGIN`, 27 tabel z RLS i FORCE RLS, 50 polityk oraz live isolation validation `95 PASS / 0 FAIL`.
 - `Step 6`: `COMPLETE` — typed persistence boundary, retry wyłącznie dla `40001`, durable idempotency/resume, migracja `0005`, 28 tabel z RLS i FORCE RLS oraz pełna walidacja live PASS.
-- `Step 7: DEFERRED BY USER — NOT COMPLETE`.
-  AWS STS identity resolution succeeded previously, but S3 API activation
-  remained unavailable with NotSignedUp. No S3 bucket or Object Lock
-  implementation was completed.
+- `Step 7: COMPLETE AND PUSHED at actual closure commit`.
+  Step 7 was resumed and completed after Step 9 because it had previously
+  been explicitly deferred. The closure adds the deterministic S3 snapshot
+  adapter, one retained CloudFormation bucket with Object Lock, and live
+  exact-version checksum/retention verification.
 - `Step 8: DEFERRED BY USER — NOT COMPLETE`.
   Step 8 remained outside the bounded deadline path. Step 0B exists, but the
   Step 8 production runtime adapter was not implemented.
@@ -36,12 +37,11 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   Source registry, whole-DAG provenance, publication eligibility, append-only
   events, RLS/FORCE RLS and live validation are closed by the intended Step 9
   commit once it is reachable on `origin/main`.
-- Nominal canonical next step:
-  `Step 10 — Idempotent S3–CockroachDB Ingestion Saga 1A`.
+- Next unopened production audit:
+  `Step 8 — External Volume Runtime Adapter and Fail-Closed Policy 1A`.
 - `Step 10: NOT STARTED`.
-- Step 10 remains operationally dependent on deferred Step 7. Execution
-  requires a later explicit audited roadmap decision; it was not started by
-  Step 9 closure.
+- The Step 7 dependency of Step 10 is satisfied, but no Step 10 authorization
+  or implementation was supplied. Step 10 was not started.
 
 ## Zasada prowadzenia prac
 
@@ -138,11 +138,18 @@ Udowodnić możliwości docelowej wersji CockroachDB i wdrożyć trwały, wielod
 
 Zbudować bezpieczne, idempotentne przyjmowanie źródeł: CockroachDB jako autorytet stanu, S3 jako dokładne wersje bajtów, USB jako dane pochodne i cache.
 
-- [ ] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**
+- [x] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**
   Versioning, Object Lock Governance dla development/hackathon, `s3_version_id`, SHA-256, content length, retention metadata, prywatne i globalne klasy snapshotów, bez twierdzenia o cross-system ACID.
-  `Step 7: DEFERRED BY USER — NOT COMPLETE`.
-  AWS STS identity resolution succeeded previously, but S3 API activation remained unavailable with NotSignedUp. No S3 bucket or Object Lock implementation was completed.
-  [Jawny rekord odroczenia](../audits/STEP_7_STEP_8_EXPLICIT_DEFERRAL_2026_07_29.md).
+  `Step 7: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie wykonano historycznie po Step 9, ponieważ Step 7 był wcześniej
+  jawnie odroczony. Globalny adapter wymusza deterministyczną tożsamość,
+  checksum, exact version, Object Lock i storage-only evidence. Prywatna klasa
+  pozostaje oddzielona i jest odrzucana przez globalny locked adapter.
+  [Architektura](../architecture/S3_SNAPSHOT_AUTHORITY_OBJECT_LOCK_ADAPTER_1A.md),
+  [ADR-015](../adr/ADR-015-s3-snapshot-object-lock-and-cloudformation-boundary.md),
+  [live evidence](../evidence/aws-s3/step7-s3-snapshot-validation.json),
+  [rekord zamknięcia](../audits/STEP_7_S3_SNAPSHOT_AUTHORITY_OBJECT_LOCK_CLOSURE_1A.md),
+  [historyczny rekord odroczenia](../audits/STEP_7_STEP_8_EXPLICIT_DEFERRAL_2026_07_29.md).
 
 - [ ] **Step 8 — External Volume Runtime Adapter and Fail-Closed Policy 1A**
   Integracja przygotowanego `LSC_DATA`: identity check, marker, read/write, free space, operation-specific failure policy i zakaz fallbacku dużych zapisów na dysk systemowy.
@@ -162,8 +169,8 @@ Zbudować bezpieczne, idempotentne przyjmowanie źródeł: CockroachDB jako auto
 - [ ] **Step 10 — Idempotent S3–CockroachDB Ingestion Saga 1A**
   Stany: `REGISTERED → ACQUIRED_LOCAL → HASH_VERIFIED → SNAPSHOT_UPLOAD_PENDING → SNAPSHOT_UPLOADED → SNAPSHOT_LOCK_VERIFIED → PARSED → VALIDATED → PUBLISHED`, z retry, reconciliation, quarantine i cleanup orphanów.
   `Step 10: NOT STARTED`.
-  Step 10 remains operationally dependent on deferred Step 7. Nie uruchomiono
-  go w ramach zamknięcia Step 9.
+  Zależność od Step 7 jest spełniona, ale Step 10 nie otrzymał autoryzacji i
+  nie został uruchomiony przez późniejsze zamknięcie Step 7.
 
 - [ ] **Step 11 — Generic Parsing, Normalization and Chunking Pipeline 1A**
   Neutralne parser contracts, dokumenty, sekcje, char ranges, chunk IDs, deterministic chunking, prompt-injection flags, quarantine i testowe źródła syntetyczne.
