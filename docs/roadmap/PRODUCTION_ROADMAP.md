@@ -30,18 +30,17 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   been explicitly deferred. The closure adds the deterministic S3 snapshot
   adapter, one retained CloudFormation bucket with Object Lock, and live
   exact-version checksum/retention verification.
-- `Step 8: DEFERRED BY USER — NOT COMPLETE`.
-  Step 8 remained outside the bounded deadline path. Step 0B exists, but the
-  Step 8 production runtime adapter was not implemented.
+- `Step 8: COMPLETE AND PUSHED at actual closure commit`.
+  The recovered implementation adds fresh external-volume identity checks,
+  operation-specific fail-closed behavior, bounded exact reads, atomic
+  no-overwrite writes, and one approved exact-byte live validation.
 - `Step 9: COMPLETE AND PUSHED at actual closure commit`.
   Source registry, whole-DAG provenance, publication eligibility, append-only
   events, RLS/FORCE RLS and live validation are closed by the intended Step 9
   commit once it is reachable on `origin/main`.
-- Next unopened production audit:
-  `Step 8 — External Volume Runtime Adapter and Fail-Closed Policy 1A`.
 - `Step 10: NOT STARTED`.
-- The Step 7 dependency of Step 10 is satisfied, but no Step 10 authorization
-  or implementation was supplied. Step 10 was not started.
+- Step 10 remains the next unopened production audit. Completed storage
+  prerequisites do not supply Step 10 authorization, and it was not started.
 
 ## Zasada prowadzenia prac
 
@@ -151,11 +150,19 @@ Zbudować bezpieczne, idempotentne przyjmowanie źródeł: CockroachDB jako auto
   [rekord zamknięcia](../audits/STEP_7_S3_SNAPSHOT_AUTHORITY_OBJECT_LOCK_CLOSURE_1A.md),
   [historyczny rekord odroczenia](../audits/STEP_7_STEP_8_EXPLICIT_DEFERRAL_2026_07_29.md).
 
-- [ ] **Step 8 — External Volume Runtime Adapter and Fail-Closed Policy 1A**
+- [x] **Step 8 — External Volume Runtime Adapter and Fail-Closed Policy 1A**
   Integracja przygotowanego `LSC_DATA`: identity check, marker, read/write, free space, operation-specific failure policy i zakaz fallbacku dużych zapisów na dysk systemowy.
-  `Step 8: DEFERRED BY USER — NOT COMPLETE`.
-  Step 8 remained outside the bounded deadline path. Step 0B exists, but the Step 8 production runtime adapter was not implemented.
-  [Jawny rekord odroczenia](../audits/STEP_7_STEP_8_EXPLICIT_DEFERRAL_2026_07_29.md).
+  `Step 8: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie: typed runtime adapter, świeża weryfikacja mount/device/marker,
+  operation-specific fail-closed policy, pełny zakaz fallbacku na dysk
+  systemowy, ochrona przed symlinkami i special files, bounded exact reads,
+  atomowy no-overwrite write oraz jedna zatwierdzona walidacja live 88 bajtów
+  z exact read-back.
+  [Architektura](../architecture/EXTERNAL_VOLUME_RUNTIME_ADAPTER_FAIL_CLOSED_POLICY_1A.md),
+  [ADR-016](../adr/ADR-016-external-volume-runtime-fail-closed-boundary.md),
+  [live evidence](../evidence/external-volume/step8-external-volume-validation.json),
+  [rekord zamknięcia](../audits/STEP_8_EXTERNAL_VOLUME_RUNTIME_INTEGRATION_CLOSURE_1A.md),
+  [historyczny rekord odroczenia](../audits/STEP_7_STEP_8_EXPLICIT_DEFERRAL_2026_07_29.md).
 
 - [x] **Step 9 — Source Registry, Provenance and Publication States 1A**
   Rejestr źródeł, authority level, licencja/status, jurysdykcje lub inne scope dimensions, parser version, transformation version, hash lineage i publication eligibility.
@@ -170,7 +177,7 @@ Zbudować bezpieczne, idempotentne przyjmowanie źródeł: CockroachDB jako auto
   Stany: `REGISTERED → ACQUIRED_LOCAL → HASH_VERIFIED → SNAPSHOT_UPLOAD_PENDING → SNAPSHOT_UPLOADED → SNAPSHOT_LOCK_VERIFIED → PARSED → VALIDATED → PUBLISHED`, z retry, reconciliation, quarantine i cleanup orphanów.
   `Step 10: NOT STARTED`.
   Zależność od Step 7 jest spełniona, ale Step 10 nie otrzymał autoryzacji i
-  nie został uruchomiony przez późniejsze zamknięcie Step 7.
+  nie został uruchomiony przez późniejsze zamknięcia Steps 7 i 8.
 
 - [ ] **Step 11 — Generic Parsing, Normalization and Chunking Pipeline 1A**
   Neutralne parser contracts, dokumenty, sekcje, char ranges, chunk IDs, deterministic chunking, prompt-injection flags, quarantine i testowe źródła syntetyczne.

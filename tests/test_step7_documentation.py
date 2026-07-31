@@ -263,9 +263,16 @@ class Step7DocumentationTests(unittest.TestCase):
             "- [x] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**",
             roadmap,
         )
-        self.assertIn("Step 8: DEFERRED BY USER", roadmap)
+        self.assertIn(
+            "Step 8: COMPLETE AND PUSHED at actual closure commit",
+            roadmap,
+        )
         self.assertIn("Step 10: NOT STARTED", roadmap)
         self.assertIn("Step 7 was completed after Step 9", agents)
+        self.assertIn(
+            "Step 8 external-volume runtime integration",
+            agents,
+        )
         self.assertIn("Step 8 remains the next unopened production audit", closure)
 
     def test_new_documents_contain_no_secret_or_account_identifier(self) -> None:

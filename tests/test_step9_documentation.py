@@ -100,13 +100,13 @@ class Step9DocumentationTests(unittest.TestCase):
         for required in (
             "- [x] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**",
             "Step 7: COMPLETE AND PUSHED at actual closure commit",
-            "- [ ] **Step 8 — External Volume Runtime Adapter and Fail-Closed Policy 1A**",
-            "Step 8: DEFERRED BY USER — NOT COMPLETE",
+            "- [x] **Step 8 — External Volume Runtime Adapter and Fail-Closed Policy 1A**",
+            "Step 8: COMPLETE AND PUSHED at actual closure commit",
             "- [x] **Step 9 — Source Registry, Provenance and Publication States 1A**",
             "Step 9: COMPLETE AND PUSHED at actual closure commit",
             "- [ ] **Step 10 — Idempotent S3–CockroachDB Ingestion Saga 1A**",
             "Step 10: NOT STARTED",
-            "The Step 7 dependency of Step 10 is satisfied",
+            "prerequisites do not supply Step 10 authorization",
         ):
             self.assertIn(required, roadmap)
 
@@ -281,9 +281,9 @@ class Step9DocumentationTests(unittest.TestCase):
         )
         for required in (
             "Step 7 was completed after Step 9",
-            "Step 8: DEFERRED BY USER — NOT COMPLETE",
+            "Step 8 external-volume runtime integration",
             "Step 10: NOT STARTED",
-            "Step 8 remains the next unopened production audit",
+            "Completion of Steps 7 and 8 does not authorize or",
         ):
             self.assertIn(required, text)
 

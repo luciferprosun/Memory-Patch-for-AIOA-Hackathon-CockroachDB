@@ -63,13 +63,14 @@ At roadmap adoption and in subsequent audited closure records:
   Step 7 was completed after Step 9 because it had previously been explicitly
   deferred. It is completion evidence only after that commit is reachable on
   `origin/main`.
-- `Step 8: DEFERRED BY USER — NOT COMPLETE`.
+- Step 8 external-volume runtime integration, fail-closed policy, and approved
+  exact-byte live validation are complete in its intended closure commit. It
+  is completion evidence only after that commit is reachable on `origin/main`.
 - Step 9 implementation and live validation are complete in its intended
   closure commit. It is completion evidence only after that commit is
   reachable on `origin/main`; the operator closure report records its SHA.
-- `Step 10: NOT STARTED`. Step 7 completion does not authorize Step 10.
-- Step 8 remains the next unopened production audit, but it is still deferred
-  and was not started by Step 7.
+- `Step 10: NOT STARTED`. Completion of Steps 7 and 8 does not authorize or
+  start Step 10.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

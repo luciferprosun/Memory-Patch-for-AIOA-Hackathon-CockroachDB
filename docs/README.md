@@ -14,8 +14,10 @@ capability baseline, plus the Step 4 tenant-ready logical schema and the Step
 retry-safe persistence, durable idempotency/resume, and immutable-write
 foundation. Step 9 adds a live-validated typed source registry, deterministic
 provenance DAG, publication eligibility, append-only publication events, and
-optimistic state transitions. Steps 7 and 8 are explicitly deferred and
-incomplete. Step 10 is not started and remains dependent on Step 7.
+optimistic state transitions. Step 7 adds live-validated immutable S3 snapshot
+storage, and Step 8 adds a live-validated fail-closed external-volume runtime
+boundary. Step 10 is not started; completed storage prerequisites do not
+authorize it.
 Production driver wiring and later integrations remain future roadmap work.
 
 The historical provenance import intentionally excludes raw German-law
@@ -50,6 +52,11 @@ SHA-256 provenance.
 - [Step 7 live S3 validation evidence](evidence/aws-s3/step7-s3-snapshot-validation.json)
 - [Step 7 closure record](audits/STEP_7_S3_SNAPSHOT_AUTHORITY_OBJECT_LOCK_CLOSURE_1A.md)
 - [Step 8 readiness handoff from Step 7](operations/STEP_8_READINESS_HANDOFF_FROM_STEP_7_1A.md)
+- [External-volume runtime adapter and fail-closed policy 1A](architecture/EXTERNAL_VOLUME_RUNTIME_ADAPTER_FAIL_CLOSED_POLICY_1A.md)
+- [ADR-016: External-volume runtime fail-closed boundary](adr/ADR-016-external-volume-runtime-fail-closed-boundary.md)
+- [Step 8 external-volume live validation](operations/STEP_8_EXTERNAL_VOLUME_LIVE_VALIDATION_1A.md)
+- [Step 8 live external-volume evidence](evidence/external-volume/step8-external-volume-validation.json)
+- [Step 8 closure record](audits/STEP_8_EXTERNAL_VOLUME_RUNTIME_INTEGRATION_CLOSURE_1A.md)
 - [Source registry, provenance, and publication states 1A](architecture/SOURCE_REGISTRY_PROVENANCE_PUBLICATION_STATES_1A.md)
 - [ADR-014: Source registry, provenance, and publication boundary](adr/ADR-014-source-registry-provenance-publication-boundary.md)
 - [Steps 7 and 8 explicit deferral record](audits/STEP_7_STEP_8_EXPLICIT_DEFERRAL_2026_07_29.md)

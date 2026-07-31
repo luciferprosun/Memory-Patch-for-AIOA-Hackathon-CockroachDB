@@ -1,0 +1,78 @@
+{
+  "approval": {
+    "exact_plan_approved": true,
+    "live_write_count": 1,
+    "new_write_authorized": true
+  },
+  "authority_boundary": {
+    "semantic_authority": "LOCAL_MEMORY_PATCH_ONLY",
+    "storage_authority_status": "STORAGE_EVIDENCE_ONLY"
+  },
+  "live": {
+    "atomic_no_replace": true,
+    "content_length": 88,
+    "content_sha256": "d1bedd6275072d01cc932af7a57d826837e27b9c7d1039bb558d4039abf819fc",
+    "directory_fsync_completed": true,
+    "exact_read_back": true,
+    "file_fsync_completed": true,
+    "incomplete_atomic_artifact_count": 0,
+    "operation": "APPLICATION_SNAPSHOT_STAGING",
+    "relative_path": "snapshots/application/step8-validation-d1bedd6275072d01cc932af7a57d826837e27b9c7d1039bb558d4039abf819fc.json",
+    "single_validation_artifact": true,
+    "step7_fixture_bytes_equal": true,
+    "system_drive_fallback_allowed": false,
+    "target_link_count": 1,
+    "target_mode": "0600",
+    "target_regular_file": true,
+    "target_state_after": "COMPLETE_VALIDATION_ARTIFACT"
+  },
+  "recovery": {
+    "classification": "B_UNCOMMITTED_STEP8_WORK_SURVIVED",
+    "interrupted_git_operation": false,
+    "live_write_prior_to_recovery": false,
+    "surviving_step8_work_preserved": true
+  },
+  "repository": {
+    "authorized_starting_head": "2cb5e5dbe214b1c84cd0a951ad97cc08a4bb345f",
+    "branch": "main",
+    "head_equal_to_origin_main_at_recovery": true,
+    "remote_reference": "github:luciferprosun/Memory-Patch-for-AIOA-Hackathon-CockroachDB"
+  },
+  "schema_version": "1.0.0",
+  "scope": {
+    "aoia_core_modified": false,
+    "aws_called": false,
+    "cockroachdb_started": false,
+    "demo_ui_modified": false,
+    "hat_runtime_started": false,
+    "step10_started": false,
+    "step7_preserved": true,
+    "step9_preserved": true
+  },
+  "status": "PASS",
+  "step": "Step 8 - External Volume Runtime Adapter and Fail-Closed Policy 1A",
+  "validation": {
+    "compile_import": "PASS",
+    "contract_validator": "PASS",
+    "diff_check": "PASS",
+    "external_volume_preflight": "PASS",
+    "full_suite": "633/633",
+    "related_regressions": "201/201",
+    "secret_and_local_identity_scan": "PASS",
+    "step8_targeted": "46/46",
+    "toolchain_verification": "PASS"
+  },
+  "volume": {
+    "capacity_reserve_bytes": 21474836480,
+    "device_reference": "external-volume-sha256:1bb3c26846f6aca5196a2980679f50fa8e1c241225c0e25971efcc998ecd102b",
+    "device_transport": "mmc",
+    "filesystem_type": "ext4",
+    "marker_identity_verified": true,
+    "marker_sha256": "3cd367f4533d4cdd0fb8bcf2777bb39bb57a515ec5e83b0cd4739ce4923894f4",
+    "mount_identity_verified": true,
+    "required_mount_options_verified": true,
+    "root_filesystem_distinct": true,
+    "storage_class": "EXTERNAL_DERIVED",
+    "writable_verified": true
+  }
+}

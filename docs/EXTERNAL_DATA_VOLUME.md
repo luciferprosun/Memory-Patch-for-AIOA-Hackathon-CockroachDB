@@ -52,6 +52,10 @@ AIOA_EXTERNAL_DATA_ROOT="${AIOA_EXTERNAL_MOUNTPOINT}/AIOA_DATA/Memory-Patch-for-
 AIOA_EXTERNAL_DEVICE_UUID="verified-filesystem-uuid"
 AIOA_EXTERNAL_DEVICE_LABEL="verified-filesystem-label"
 AIOA_EXTERNAL_FILESYSTEM_TYPE="ext4"
+AIOA_EXTERNAL_DEVICE_TRANSPORT="verified-transport"
+AIOA_EXTERNAL_MINIMUM_FREE_BYTES="21474836480"
+AIOA_EXTERNAL_RESERVE_PERCENT="10"
+AIOA_EXTERNAL_MAXIMUM_ATOMIC_WRITE_BYTES="67108864"
 ```
 
 The local file may contain a machine-specific absolute path and UUID because
@@ -283,6 +287,30 @@ read-only, has the wrong UUID, or has a conflicting marker, future application
 components must raise a clear storage-unavailable error. They must not create
 replacement corpora, embeddings, indexes, snapshots, downloads, or large
 caches on the internal system drive.
+
+## Step 8 runtime boundary
+
+Step 8 supplies that application boundary in
+`aioa_memory_kernel.storage.ExternalVolumeRuntimeAdapter`. It reparses the
+private configuration without executing shell syntax, uses the concrete Linux
+probe only at runtime, and freshly verifies mount, block device, UUID, label,
+transport, filesystem, options, root-device separation, marker, tree, access,
+and space before every operation.
+
+Paths are operation-bound, relative, and non-following. Optional cache
+operations may be disabled, but they receive no internal fallback path.
+Required operations fail closed. Exact writes use a bounded no-overwrite
+atomic protocol and preserve any interrupted target-bound staging artifact for
+audit.
+
+Run the no-write preflight and follow the mandatory live-write gate in
+[`STEP_8_EXTERNAL_VOLUME_LIVE_VALIDATION_1A.md`](operations/STEP_8_EXTERNAL_VOLUME_LIVE_VALIDATION_1A.md).
+The full design is
+[`EXTERNAL_VOLUME_RUNTIME_ADAPTER_FAIL_CLOSED_POLICY_1A.md`](architecture/EXTERNAL_VOLUME_RUNTIME_ADAPTER_FAIL_CLOSED_POLICY_1A.md).
+The completed sanitized result is recorded in
+[`step8-external-volume-validation.json`](evidence/external-volume/step8-external-volume-validation.json)
+and
+[`STEP_8_EXTERNAL_VOLUME_RUNTIME_INTEGRATION_CLOSURE_1A.md`](audits/STEP_8_EXTERNAL_VOLUME_RUNTIME_INTEGRATION_CLOSURE_1A.md).
 
 ## Git boundary
 

@@ -1,12 +1,21 @@
-"""S3 snapshot persistence and verification without semantic authority.
+"""S3 and external-volume storage without semantic authority.
 
 This package never creates an AWS client, authenticates, contacts AWS, grants
-approval, changes publication state, deletes objects, or bypasses retention at
-import time or through its public API.
+approval, changes publication state, selects a system-drive fallback, stores
+credentials, deletes durable objects, or bypasses retention at import time or
+through its public API.
 """
 
 from .config import S3SnapshotConfig
 from .errors import (
+    ExternalVolumeConfigurationError,
+    ExternalVolumeConflictError,
+    ExternalVolumeError,
+    ExternalVolumeIdentityError,
+    ExternalVolumeIntegrityError,
+    ExternalVolumeOperationDisabledError,
+    ExternalVolumeUnavailableError,
+    ExternalVolumeUnsafePathError,
     SnapshotAccessDeniedError,
     SnapshotCapabilityError,
     SnapshotConfigurationError,
@@ -17,6 +26,27 @@ from .errors import (
     SnapshotServiceUnavailableError,
     SnapshotSessionError,
     SnapshotStorageError,
+)
+from .external_volume import (
+    DEFAULT_MAXIMUM_ATOMIC_WRITE_BYTES,
+    DEFAULT_MINIMUM_FREE_BYTES,
+    EXTERNAL_VOLUME_CREATION_HEAD,
+    EXTERNAL_VOLUME_EXPECTED_REMOTE,
+    EXTERNAL_VOLUME_MARKER_NAME,
+    EXTERNAL_VOLUME_PROJECT_ID,
+    EXTERNAL_VOLUME_RELATIVE_ROOT,
+    EXTERNAL_VOLUME_SCHEMA_VERSION,
+    EXTERNAL_VOLUME_STORAGE_ONLY,
+    ExternalMountIdentity,
+    ExternalVolumeConfig,
+    ExternalVolumeFailurePolicy,
+    ExternalVolumeOperation,
+    ExternalVolumeOperationPolicy,
+    ExternalVolumeProbe,
+    ExternalVolumeRuntimeAdapter,
+    ExternalVolumeStatus,
+    ExternalVolumeWriteEvidence,
+    load_external_volume_environment,
 )
 from .models import (
     EXACT_BYTES_SERIALIZATION_VERSION,
@@ -31,6 +61,7 @@ from .models import (
     SnapshotStorageEvidence,
 )
 from .protocols import (
+    ExternalVolumeRuntimeProtocol,
     S3ClientProtocol,
     SnapshotStorageProtocol,
     StreamingBodyProtocol,
@@ -39,12 +70,39 @@ from .s3 import S3SnapshotAdapter
 
 
 __all__ = [
+    "DEFAULT_MAXIMUM_ATOMIC_WRITE_BYTES",
+    "DEFAULT_MINIMUM_FREE_BYTES",
+    "EXTERNAL_VOLUME_CREATION_HEAD",
+    "EXTERNAL_VOLUME_EXPECTED_REMOTE",
+    "EXTERNAL_VOLUME_MARKER_NAME",
+    "EXTERNAL_VOLUME_PROJECT_ID",
+    "EXTERNAL_VOLUME_RELATIVE_ROOT",
+    "EXTERNAL_VOLUME_SCHEMA_VERSION",
+    "EXTERNAL_VOLUME_STORAGE_ONLY",
     "MAX_SNAPSHOT_BYTES",
     "EXACT_BYTES_SERIALIZATION_VERSION",
     "SNAPSHOT_SCHEMA_VERSION",
     "SNAPSHOT_SERIALIZATION_VERSION",
     "STORAGE_EVIDENCE_ONLY",
     "BucketCapabilities",
+    "ExternalMountIdentity",
+    "ExternalVolumeConfig",
+    "ExternalVolumeConfigurationError",
+    "ExternalVolumeConflictError",
+    "ExternalVolumeError",
+    "ExternalVolumeFailurePolicy",
+    "ExternalVolumeIdentityError",
+    "ExternalVolumeIntegrityError",
+    "ExternalVolumeOperation",
+    "ExternalVolumeOperationDisabledError",
+    "ExternalVolumeOperationPolicy",
+    "ExternalVolumeProbe",
+    "ExternalVolumeRuntimeAdapter",
+    "ExternalVolumeRuntimeProtocol",
+    "ExternalVolumeStatus",
+    "ExternalVolumeUnavailableError",
+    "ExternalVolumeUnsafePathError",
+    "ExternalVolumeWriteEvidence",
     "RetrievedSnapshot",
     "S3ClientProtocol",
     "S3ObjectLockMode",
@@ -64,4 +122,5 @@ __all__ = [
     "SnapshotStorageEvidence",
     "SnapshotStorageProtocol",
     "StreamingBodyProtocol",
+    "load_external_volume_environment",
 ]
