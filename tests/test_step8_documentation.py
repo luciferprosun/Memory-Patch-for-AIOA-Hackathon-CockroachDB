@@ -310,7 +310,7 @@ class Step8DocumentationTests(unittest.TestCase):
         )
         self.assertIn("Step 10 durable ingestion orchestration", agents)
         self.assertIn("Step 11 deterministic parsing", agents)
-        self.assertIn("`Step 12: NOT STARTED`", agents)
+        self.assertIn("`Step 13: NOT STARTED`", agents)
         self.assertIn("Step 10: NOT STARTED", closure)
 
 

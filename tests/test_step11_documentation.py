@@ -136,17 +136,17 @@ class Step11DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(value, text)
 
-    def test_canonical_roadmap_closes_step11_and_leaves_step12_open(self) -> None:
+    def test_canonical_roadmap_preserves_step11_after_step12_closure(self) -> None:
         text = ROADMAP.read_text(encoding="utf-8")
         self.assertIn("[x] **Step 11", text)
-        self.assertIn("[ ] **Step 12", text)
-        self.assertIn("Step 12: NOT STARTED", text)
+        self.assertIn("[x] **Step 12", text)
+        self.assertIn("Step 13: NOT STARTED", text)
 
-    def test_repository_indexes_publish_step11_without_starting_step12(self) -> None:
-        self.assertIn("Step 12: NOT STARTED", AGENTS.read_text(encoding="utf-8"))
+    def test_repository_indexes_preserve_step11_after_step12(self) -> None:
+        self.assertIn("Step 13: NOT STARTED", AGENTS.read_text(encoding="utf-8"))
         readme = README.read_text(encoding="utf-8")
         self.assertIn("Step 11 closure record", readme)
-        self.assertIn("Step 12 remains not started", readme)
+        self.assertIn("Step 12 closure record", readme)
 
 
 if __name__ == "__main__":

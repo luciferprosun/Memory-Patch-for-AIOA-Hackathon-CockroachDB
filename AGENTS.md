@@ -78,7 +78,11 @@ At roadmap adoption and in subsequent audited closure records:
   zero-external-write live validation are complete in its intended closure
   commit. It is completion evidence only after that commit is reachable on
   `origin/main`.
-- `Step 12: NOT STARTED`. Step 11 completion does not authorize or start it.
+- Step 12 trusted HAT registry, strict manifest validation, migration `0009`,
+  explicit system-installed catalog, capability gate, and controlled disposable
+  validation are complete in its intended closure commit. It is completion
+  evidence only after that commit is reachable on `origin/main`.
+- `Step 13: NOT STARTED`. Step 12 completion does not authorize or start it.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

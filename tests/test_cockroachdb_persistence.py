@@ -1026,10 +1026,10 @@ class PersistenceStaticValidationTests(unittest.TestCase):
             + "\n"
         ).encode()
         self.assertEqual(path.read_bytes(), canonical)
-        self.assertEqual(len(value["migrations"]), 8)
+        self.assertEqual(len(value["migrations"]), 9)
         self.assertEqual(
             value["migrations"][-1]["migration_id"],
-            "0008_step11_generic_parsing_pipeline",
+            "0009_step12_hat_registry_runtime_boundary",
         )
 
     def test_transaction_module_has_no_external_business_imports(self) -> None:
@@ -1112,7 +1112,7 @@ class PersistenceStaticValidationTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn("Step 11: COMPLETE AND PUSHED at actual closure commit", roadmap)
-        self.assertIn("Step 12: NOT STARTED", roadmap)
+        self.assertIn("Step 13: NOT STARTED", roadmap)
 
     def test_step6_evidence_is_canonical_sanitized_and_consistent(self) -> None:
         path = (

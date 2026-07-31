@@ -65,7 +65,7 @@ PARSING_PIPELINE_MANIFEST_PATH = (
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "6.0.0"
+RUNNER_VERSION = "7.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
@@ -81,6 +81,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step9_",
     "mp_step10_",
     "mp_step11_",
+    "mp_step12_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
@@ -121,6 +122,10 @@ STEP10_MIGRATION_SHA256 = (
 STEP11_MIGRATION_ID = "0008_step11_generic_parsing_pipeline"
 STEP11_MIGRATION_SHA256 = (
     "2b4d269d98b69bdc19137b3e92f741eae344ff705cc0ed86636b950ffe0d0b61"
+)
+STEP12_MIGRATION_ID = "0009_step12_hat_registry_runtime_boundary"
+STEP12_MIGRATION_SHA256 = (
+    "d4437055e913d5d4874c4d0b1b1985a4d93a0ec0606d905b04e43c38534204f7"
 )
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
 STEP5_CLUSTER_ROLE_END = "-- STEP5_CLUSTER_ROLE_DDL_END"
@@ -1207,6 +1212,21 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
             )
         ) != 3:
             raise MigrationError("Step 11 table set is not exact")
+    elif migration_id == STEP12_MIGRATION_ID:
+        forbidden_patterns = ()
+        for fragment in (
+            "CREATE TABLE memory_patch.hat_runtime_bindings",
+            "CREATE TABLE memory_patch.hat_registry_entries",
+            "CREATE TABLE memory_patch.hat_registry_events",
+            "installation_class = 'SYSTEM_INSTALLED'",
+            "events are append-only",
+            "REVOKE ALL",
+            "GRANT SELECT",
+        ):
+            if fragment not in sql:
+                raise MigrationError(f"{migration_id} lacks required registry fragment: {fragment}")
+        if "BYPASSRLS" in sql or "CREATE ROLE" in sql or "GRANT DELETE" in sql:
+            raise MigrationError("Step 12 weakens global registry security")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -1216,11 +1236,11 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 6:
-        raise MigrationError("migration manifest schema_version must be 6")
+    if manifest.get("schema_version") != 7:
+        raise MigrationError("migration manifest schema_version must be 7")
     if (
         manifest.get("manifest_id")
-        != "memory-patch-step11-generic-parsing-pipeline-1a"
+        != "memory-patch-step12-hat-registry-runtime-boundary-1a"
     ):
         raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
@@ -1233,7 +1253,7 @@ def load_migrations() -> list[Migration]:
         "STEP4_ONE_TRANSACTION_STEP5_NINE_IDEMPOTENT_DATABASE_PHASES_"
         "WITH_NONATOMIC_CLUSTER_ROLE_DDL_STEP6_ONE_TRANSACTION_"
         "STEP9_ONE_TRANSACTION_STEP10_ONE_TRANSACTION_"
-        "STEP11_ONE_TRANSACTION"
+        "STEP11_ONE_TRANSACTION_STEP12_ONE_TRANSACTION"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -1304,6 +1324,8 @@ def load_migrations() -> list[Migration]:
             and checksum != STEP11_MIGRATION_SHA256
         ):
             raise MigrationError("Step 11 checksum differs from the audited migration")
+        if migration_id == STEP12_MIGRATION_ID and checksum != STEP12_MIGRATION_SHA256:
+            raise MigrationError("Step 12 checksum differs from the audited migration")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -1320,11 +1342,12 @@ def load_migrations() -> list[Migration]:
         STEP9_MIGRATION_ID,
         STEP10_MIGRATION_ID,
         STEP11_MIGRATION_ID,
+        STEP12_MIGRATION_ID,
     ]
     if identifiers != expected_identifiers:
         raise MigrationError(
             "migration chain is not the exact Step 4 -> Step 5 -> Step 6 -> "
-            "Step 9 -> Step 10 -> Step 11 chain"
+            "Step 9 -> Step 10 -> Step 11 -> Step 12 chain"
         )
     return migrations
 
@@ -3403,6 +3426,13 @@ def apply_migrations(
             )
             assert_step11_security_catalog(client, database)
             database_sql = ""
+        elif migration.migration_id == STEP12_MIGRATION_ID:
+            client.execute(
+                database,
+                "BEGIN;\n" + database_sql + "\nCOMMIT;",
+                timeout=timeout,
+            )
+            database_sql = ""
         migration_record_sql = (
             "INSERT INTO memory_patch.schema_migrations "
             "(migration_id, checksum_sha256, applied_at, runner_version) VALUES ("
@@ -3510,11 +3540,14 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
             *[row["table"] for row in source_registry_manifest["tables"]],
             *[row["table"] for row in ingestion_saga_manifest["tables"]],
             *[row["table"] for row in parsing_pipeline_manifest["tables"]],
+            "hat_registry_entries",
+            "hat_registry_events",
+            "hat_runtime_bindings",
         ]
     )
     if catalog["tables"] != expected_tables:
         raise MigrationError(
-            "live catalog table set differs from Step 4–6/9–11 manifests"
+            "live catalog table set differs from Step 4–6/9–12 manifests"
         )
     indexes = set(catalog["explicit_indexes"])
     required_persistence_indexes = {

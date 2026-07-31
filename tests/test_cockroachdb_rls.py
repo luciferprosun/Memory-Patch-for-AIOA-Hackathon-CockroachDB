@@ -58,7 +58,7 @@ class SecurityManifestCoverageTests(unittest.TestCase):
     def test_offline_security_validation_passes(self) -> None:
         result = rls_validation.offline_validate()
         self.assertEqual(result["status"], "PASS")
-        self.assertEqual(result["migration_count"], 8)
+        self.assertEqual(result["migration_count"], 9)
         self.assertEqual(result["step4_table_count"], 29)
         self.assertEqual(result["protected_table_count"], 27)
         self.assertEqual(result["policy_count"], 50)
@@ -839,7 +839,7 @@ class Step5DocumentationTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn("Step 11: COMPLETE AND PUSHED at actual closure commit", roadmap)
-        self.assertIn("Step 12: NOT STARTED", roadmap)
+        self.assertIn("Step 13: NOT STARTED", roadmap)
 
 
 if __name__ == "__main__":

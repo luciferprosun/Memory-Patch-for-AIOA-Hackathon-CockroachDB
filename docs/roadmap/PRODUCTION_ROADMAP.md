@@ -48,9 +48,8 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   security findings, migration `0008`, real Step 10 parser/validator ports,
   and zero-external-write live validation are closed by the intended Step 11
   commit once it is reachable on `origin/main`.
-- `Step 12: NOT STARTED`.
-- Step 12 remains the next unopened production step. Step 11 completion does
-  not authorize or start it.
+- `Step 12: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 13: NOT STARTED`. Step 13 remains the next unopened production step.
 
 ## Zasada prowadzenia prac
 
@@ -235,8 +234,18 @@ Jedno prawdziwe, neutralne źródło można:
 
 Zaimplementować neutralną platformę HAT-ów, a następnie podłączyć pełną bibliotekę niemieckiego prawa jako pierwszy realny HAT — bez hardcodowania pytania demonstracyjnego.
 
-- [ ] **Step 12 — HAT Registry, Manifest Validation and Runtime Boundary 1A**
+- [x] **Step 12 — HAT Registry, Manifest Validation and Runtime Boundary 1A**
   Rejestr HAT-ów, kompatybilność wersji, scope dimensions, required capabilities, source policies, no-execution enforcement i bezpieczne ładowanie tylko zatwierdzonych manifestów.
+  `Step 12: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie: strict local JSON, typed `HatManifest`, SemVer Kernel API gate,
+  capability vocabulary, zero-authority enforcement, migracja `0009`,
+  append-only registry events, trusted operator receipts, jawny system-installed
+  catalog i fixed runtime capability gate bez dynamicznego ładowania.
+  [Architektura](../architecture/HAT_REGISTRY_MANIFEST_RUNTIME_BOUNDARY_1A.md),
+  [ADR-019](../adr/ADR-019-trusted-hat-registry-runtime-boundary.md),
+  [runbook](../operations/STEP_12_HAT_REGISTRY_LIVE_VALIDATION_1A.md),
+  [live evidence](../evidence/hats/step12-hat-registry-validation.json),
+  [rekord zamknięcia](../audits/STEP_12_HAT_REGISTRY_MANIFEST_RUNTIME_BOUNDARY_CLOSURE_1A.md).
 
 - [ ] **Step 13 — German Law HAT Package and Source Authority Policy 1A**
   Manifest German Law HAT, domeny, języki, jurysdykcje, hierarchia źródeł urzędowych i wtórnych, polityka temporalna, parser adapters i contract tests.
