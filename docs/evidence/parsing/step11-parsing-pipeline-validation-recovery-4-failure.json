@@ -1,0 +1,100 @@
+{
+  "cleanup": {
+    "cleanup_errors": [],
+    "drain_command_completed": true,
+    "drain_completion_marker": true,
+    "drain_elapsed_seconds": 24.043,
+    "drain_output_sha256": "f212602417055007c318e72d18396853fa57c66fd985ee15837daa3766369406",
+    "drain_shutdown_requested": true,
+    "force_kill_used": false,
+    "graceful_shutdown_requested": true,
+    "node_identity": {
+      "node_id": "1",
+      "rpc_binding": "127.0.0.1:<owned-rpc-port>",
+      "sql_binding": "127.0.0.1:<owned-sql-port>"
+    },
+    "owned_child_processes_reaped": true,
+    "owned_pid_recorded": true,
+    "panic_detected": false,
+    "pid_exited": true,
+    "ports_closed": true,
+    "process_exit_accepted": true,
+    "process_exit_code": 1,
+    "runtime_duration_seconds": 586.059,
+    "runtime_log_evidence": {
+      "byte_length": 51041,
+      "drain_rpc_exit_observed": true,
+      "graceful_drain_request_observed": true,
+      "graceful_shutdown_completed": true,
+      "panic_detected": false,
+      "sha256": "62c9bb48bbf3b58563d27a8d02a7c05ae4a30a021981064e77b5cb4a70234540"
+    },
+    "runtime_preserved_for_diagnostics": false,
+    "shutdown_budget": {
+      "calculation": "ceil(sum(server.shutdown.*)) + scheduling cushion",
+      "grace_seconds": 40,
+      "phase_total_seconds": 25.0,
+      "scheduling_cushion_seconds": 15,
+      "settings": {
+        "server.shutdown.connections.timeout": "0s",
+        "server.shutdown.initial_wait": "0s",
+        "server.shutdown.jobs.timeout": "10s",
+        "server.shutdown.lease_transfer_iteration.timeout": "5s",
+        "server.shutdown.transactions.timeout": "10s"
+      },
+      "test_only_cap_seconds": 120
+    },
+    "shutdown_method": "NODE_DRAIN_SELF_ON_RPC_WITH_SHUTDOWN",
+    "sigterm_sent_to_exact_pid": false,
+    "temporary_store_removed": true
+  },
+  "cleanup_failures": [],
+  "evidence_digest": "589da56a055d0d05895af3fc5a371cb028c8eb3531690dcbf58e3a7f051a8b81",
+  "external_volume_write_attempts": null,
+  "failure_chain": [
+    {
+      "operation_kind": "SOURCE_REGISTER",
+      "sanitized_code": "COCKROACH_CLI_TRANSACTION_FAILED",
+      "sqlstate": "23503",
+      "type": "PersistenceTransactionError"
+    }
+  ],
+  "failure_detail_sha256": "b7406a5025a413cb07528578c862323092280cb62c82ecc9c6acd6acb9e7fb2f",
+  "failure_phase": "SEED_SYNTHETIC_SCOPE",
+  "failure_progress": {
+    "status": "NO_SAGA_ROW"
+  },
+  "failure_type": "PersistenceTransactionError",
+  "first_root_cause": "COCKROACH_CLI_TRANSACTION_FAILED",
+  "plan_digest": "839bb2f9305c4ba913a15f4685fc22890597b460f19a852dc8f7b4dd73427833",
+  "previous_attempts": [
+    {
+      "evidence_digest": "9d03766e0a67ff1d52ef5b6b477908b013233f7160599f8a24cf216ede307e25",
+      "file_sha256": "fb1b46920c915768efc5825cc246245ec89fd8afd6842a78db153ad97b12310a",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "9ef51c38696a6860a99f97379912717550afdb75af2a7af4ac789a564abf59ee",
+      "file_sha256": "f2a9d6bb506e2a4335ccec132a2f17603c38a5952b40e3ec329a9ee44756b54a",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "60dc79dcffdd9bf8f5d562d14028a02d1cf3269092daaa27f168a6a807307bee",
+      "file_sha256": "11cc54e82149d574f341854ba8195a301e8e2dc47ef7db5cb4ae39516d56853e",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-2-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "ac94030b7a795738cd2bb9502eb32b22029b1c71f1ddcf1791c4af67c7d41e77",
+      "file_sha256": "71ed9554359e6a158c9e770c70563ae40adae4d5bee863b46874d094eb814168",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-3-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    }
+  ],
+  "s3_put_attempts": null,
+  "schema_version": "1.0.0",
+  "status": "FAILED_SAFELY",
+  "step": "Step 11 - Generic Parsing, Normalization and Chunking Pipeline 1A"
+}

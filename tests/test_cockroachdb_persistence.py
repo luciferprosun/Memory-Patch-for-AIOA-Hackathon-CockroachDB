@@ -54,9 +54,15 @@ USER_A2 = "user-step6-a2"
 
 
 class DatabaseSignal(Exception):
-    def __init__(self, sqlstate: str | None) -> None:
+    def __init__(
+        self,
+        sqlstate: str | None,
+        *,
+        sanitized_code: str | None = None,
+    ) -> None:
         super().__init__("sensitive driver detail must not escape")
         self.sqlstate = sqlstate
+        self.sanitized_code = sanitized_code
 
 
 class FakeCursor:
@@ -358,6 +364,14 @@ class TransactionRetryTests(unittest.TestCase):
                     runner.run(self.context, callback)
                 self.assertEqual(factory.calls, 1)
                 self.assertEqual(caught.exception.sqlstate, state)
+                self.assertEqual(
+                    caught.exception.sanitized_code,
+                    (
+                        f"SQLSTATE_{state}"
+                        if state is not None
+                        else "UNCLASSIFIED_DATABASE_FAILURE"
+                    ),
+                )
 
     def test_driver_error_text_is_not_exposed(self) -> None:
         events: list[str] = []
@@ -371,6 +385,44 @@ class TransactionRetryTests(unittest.TestCase):
                 lambda transaction: transaction.execute("WORK"),
             )
         self.assertNotIn("sensitive", str(caught.exception))
+
+    def test_bounded_driver_code_is_preserved_without_driver_text(self) -> None:
+        runner = SerializableTransactionRunner(
+            SequenceFactory([None], []),
+            sleep=lambda _: None,
+        )
+        with self.assertRaises(PersistenceTransactionError) as caught:
+            runner.run(
+                self.context,
+                lambda transaction: (_ for _ in ()).throw(
+                    DatabaseSignal(
+                        None,
+                        sanitized_code="COCKROACH_CLI_STATEMENT_TIMEOUT",
+                    )
+                ),
+            )
+        self.assertEqual(
+            caught.exception.sanitized_code,
+            "COCKROACH_CLI_STATEMENT_TIMEOUT",
+        )
+        self.assertNotIn("sensitive", str(caught.exception))
+
+    def test_untrusted_driver_code_is_not_preserved(self) -> None:
+        runner = SerializableTransactionRunner(
+            SequenceFactory([None], []),
+            sleep=lambda _: None,
+        )
+        with self.assertRaises(PersistenceTransactionError) as caught:
+            runner.run(
+                self.context,
+                lambda transaction: (_ for _ in ()).throw(
+                    DatabaseSignal(None, sanitized_code="unsafe detail /tmp/value")
+                ),
+            )
+        self.assertEqual(
+            caught.exception.sanitized_code,
+            "UNCLASSIFIED_DATABASE_FAILURE",
+        )
 
     def test_external_call_guard_fails_inside_transaction(self) -> None:
         runner = SerializableTransactionRunner(
@@ -974,10 +1026,10 @@ class PersistenceStaticValidationTests(unittest.TestCase):
             + "\n"
         ).encode()
         self.assertEqual(path.read_bytes(), canonical)
-        self.assertEqual(len(value["migrations"]), 7)
+        self.assertEqual(len(value["migrations"]), 8)
         self.assertEqual(
             value["migrations"][-1]["migration_id"],
-            "0007_step10_idempotent_ingestion_saga",
+            "0008_step11_generic_parsing_pipeline",
         )
 
     def test_transaction_module_has_no_external_business_imports(self) -> None:
@@ -1059,7 +1111,8 @@ class PersistenceStaticValidationTests(unittest.TestCase):
             "Step 10: COMPLETE AND PUSHED at actual closure commit",
             roadmap,
         )
-        self.assertIn("Step 11: NOT STARTED", roadmap)
+        self.assertIn("Step 11: COMPLETE AND PUSHED at actual closure commit", roadmap)
+        self.assertIn("Step 12: NOT STARTED", roadmap)
 
     def test_step6_evidence_is_canonical_sanitized_and_consistent(self) -> None:
         path = (

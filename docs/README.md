@@ -18,7 +18,9 @@ optimistic state transitions. Step 7 adds live-validated immutable S3 snapshot
 storage, and Step 8 adds a live-validated fail-closed external-volume runtime
 boundary. Step 10 adds the live-recovered durable S3-CockroachDB ingestion
 saga while preserving those storage and Step 9 publication boundaries. Step
-11 parsing, normalization, and chunking remains not started.
+11 adds deterministic plain-text and JSON parsing, Unicode NFC normalization,
+sectioning, model-neutral chunking, static security findings, durable parsed
+artifacts, and real Step 10 parser/validator ports. Step 12 remains not started.
 Production driver wiring and later integrations remain future roadmap work.
 
 The historical provenance import intentionally excludes raw German-law
@@ -69,6 +71,11 @@ SHA-256 provenance.
 - [Step 10 failed first-attempt evidence](evidence/ingestion/step10-ingestion-saga-validation-failure.json)
 - [Step 10 successful recovery evidence](evidence/ingestion/step10-ingestion-saga-validation.json)
 - [Step 10 closure record](audits/STEP_10_IDEMPOTENT_S3_COCKROACHDB_INGESTION_SAGA_CLOSURE_1A.md)
+- [Generic parsing, normalization and chunking pipeline 1A](architecture/GENERIC_PARSING_NORMALIZATION_CHUNKING_PIPELINE_1A.md)
+- [ADR-018: Generic parsing, normalization and chunking boundary](adr/ADR-018-generic-parsing-normalization-chunking-boundary.md)
+- [Step 11 zero-external-write live-validation runbook](operations/STEP_11_PARSING_PIPELINE_LIVE_VALIDATION_1A.md)
+- [Step 11 successful live evidence](evidence/parsing/step11-parsing-pipeline-validation.json)
+- [Step 11 closure record](audits/STEP_11_GENERIC_PARSING_NORMALIZATION_CHUNKING_PIPELINE_CLOSURE_1A.md)
 - [Knowledge Kernel Contract Baseline 1A](architecture/KNOWLEDGE_KERNEL_CONTRACT_BASELINE_1A.md)
 - [Personal Memory HATs 1A](architecture/PERSONAL_MEMORY_HATS_1A.md)
 - [Memory Trust and Precedence 1A](architecture/MEMORY_TRUST_AND_PRECEDENCE_1A.md)

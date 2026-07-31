@@ -73,7 +73,12 @@ At roadmap adoption and in subsequent audited closure records:
   evidence recovery, and graceful disposable-runtime validation are complete
   in its intended closure commit. It is completion evidence only after that
   commit is reachable on `origin/main`.
-- `Step 11: NOT STARTED`. Step 10 completion does not authorize or start it.
+- Step 11 deterministic parsing, Unicode NFC normalization, structural
+  validation, migration `0008`, real Step 10 parser/validator ports, and
+  zero-external-write live validation are complete in its intended closure
+  commit. It is completion evidence only after that commit is reachable on
+  `origin/main`.
+- `Step 12: NOT STARTED`. Step 11 completion does not authorize or start it.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

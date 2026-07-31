@@ -43,8 +43,13 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   integration, exact existing-evidence recovery, and graceful disposable
   CockroachDB shutdown are closed by the intended Step 10 commit once it is
   reachable on `origin/main`.
-- `Step 11: NOT STARTED`.
-- Step 11 remains the next unopened production step. Step 10 completion does
+- `Step 11: COMPLETE AND PUSHED at actual closure commit`.
+  Deterministic text/JSON parsing, NFC normalization, sectioning, chunking,
+  security findings, migration `0008`, real Step 10 parser/validator ports,
+  and zero-external-write live validation are closed by the intended Step 11
+  commit once it is reachable on `origin/main`.
+- `Step 12: NOT STARTED`.
+- Step 12 remains the next unopened production step. Step 11 completion does
   not authorize or start it.
 
 ## Zasada prowadzenia prac
@@ -194,8 +199,19 @@ Zbudować bezpieczne, idempotentne przyjmowanie źródeł: CockroachDB jako auto
   [recovery evidence](../evidence/ingestion/step10-ingestion-saga-validation.json),
   [rekord zamknięcia](../audits/STEP_10_IDEMPOTENT_S3_COCKROACHDB_INGESTION_SAGA_CLOSURE_1A.md).
 
-- [ ] **Step 11 — Generic Parsing, Normalization and Chunking Pipeline 1A**
+- [x] **Step 11 — Generic Parsing, Normalization and Chunking Pipeline 1A**
   Neutralne parser contracts, dokumenty, sekcje, char ranges, chunk IDs, deterministic chunking, prompt-injection flags, quarantine i testowe źródła syntetyczne.
+  `Step 11: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie: dokładny dispatch `text/plain` i `application/json`, strict UTF-8,
+  Unicode NFC, deterministyczne sekcje i chunki, statyczne security findings,
+  migracja `0008`, RLS/FORCE RLS, realne porty Step 10 z
+  `synthetic_validation_boundary=false`, oraz live reconciliation z zerem
+  nowych zapisów S3 i external-volume.
+  [Architektura](../architecture/GENERIC_PARSING_NORMALIZATION_CHUNKING_PIPELINE_1A.md),
+  [ADR-018](../adr/ADR-018-generic-parsing-normalization-chunking-boundary.md),
+  [runbook](../operations/STEP_11_PARSING_PIPELINE_LIVE_VALIDATION_1A.md),
+  [live evidence](../evidence/parsing/step11-parsing-pipeline-validation.json),
+  [rekord zamknięcia](../audits/STEP_11_GENERIC_PARSING_NORMALIZATION_CHUNKING_PIPELINE_CLOSURE_1A.md).
 
 ### Gate fazy 3
 

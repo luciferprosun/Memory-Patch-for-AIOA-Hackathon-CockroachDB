@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate and apply the Memory Patch CockroachDB Step 4–6, 9, and 10 migrations.
+"""Validate and apply the Memory Patch CockroachDB Step 4–6 and 9–11 migrations.
 
 Ordinary repository tests import this module without opening a socket or
 starting a process. Live actions require ``--allow-live`` and an exact pinned
@@ -56,16 +56,23 @@ INGESTION_SAGA_MANIFEST_PATH = (
     / "cockroachdb"
     / "ingestion-saga-security-1a.json"
 )
+PARSING_PIPELINE_MANIFEST_PATH = (
+    REPOSITORY_ROOT
+    / "config"
+    / "cockroachdb"
+    / "parsing-pipeline-security-1a.json"
+)
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "5.0.0"
+RUNNER_VERSION = "6.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
+MAX_SQL_COMMAND_TIMEOUT_SECONDS = 300.0
 START_TIMEOUT_SECONDS = 45.0
 SHUTDOWN_SCHEDULING_CUSHION_SECONDS = 15
-MIN_GRACEFUL_SHUTDOWN_SECONDS = 30
+MIN_GRACEFUL_SHUTDOWN_SECONDS = 60
 MAX_GRACEFUL_SHUTDOWN_SECONDS = 120
 SHUTDOWN_COMMAND_CUSHION_SECONDS = 15
 DISPOSABLE_DATABASE_PREFIXES = (
@@ -73,6 +80,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step6_",
     "mp_step9_",
     "mp_step10_",
+    "mp_step11_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
@@ -109,6 +117,10 @@ STEP9_MIGRATION_SHA256 = (
 STEP10_MIGRATION_ID = "0007_step10_idempotent_ingestion_saga"
 STEP10_MIGRATION_SHA256 = (
     "9a2f62428d6ed088f5f282b21836d40f4ec632e989df9e3935861c2e4daec122"
+)
+STEP11_MIGRATION_ID = "0008_step11_generic_parsing_pipeline"
+STEP11_MIGRATION_SHA256 = (
+    "2b4d269d98b69bdc19137b3e92f741eae344ff705cc0ed86636b950ffe0d0b61"
 )
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
 STEP5_CLUSTER_ROLE_END = "-- STEP5_CLUSTER_ROLE_DDL_END"
@@ -317,6 +329,44 @@ STEP10_FORBIDDEN_MIGRATION_PATTERNS: tuple[
     ("machine-specific path", re.compile(r"(?:/home/|/Users/|[A-Za-z]:\\\\)")),
 )
 
+STEP11_FORBIDDEN_MIGRATION_PATTERNS: tuple[
+    tuple[str, re.Pattern[str]], ...
+] = (
+    ("role creation", re.compile(r"\bCREATE\s+ROLE\b", re.IGNORECASE)),
+    (
+        "positive BYPASSRLS grant",
+        re.compile(r"(?<!NO)\bBYPASSRLS\b", re.IGNORECASE),
+    ),
+    ("cascade deletion", re.compile(r"\bON\s+DELETE\s+CASCADE\b", re.IGNORECASE)),
+    (
+        "runtime DELETE grant",
+        re.compile(
+            r"^\s*GRANT\b[^;]*\bDELETE\b",
+            re.IGNORECASE | re.DOTALL | re.MULTILINE,
+        ),
+    ),
+    (
+        "destructive data statement",
+        re.compile(r"^\s*(?:DELETE\s+FROM|TRUNCATE|DROP\s+TABLE)\b", re.MULTILINE),
+    ),
+    (
+        "retrieval population",
+        re.compile(r"\bINSERT\s+INTO\s+memory_patch\.chunk_search_documents\b", re.IGNORECASE),
+    ),
+    (
+        "vector or embedding object",
+        re.compile(r"\b(?:VECTOR|EMBEDDING|EMBEDDINGS)\b", re.IGNORECASE),
+    ),
+    (
+        "domain-specific parsing rule",
+        re.compile(
+            r"\b(?:Nachweisgesetz|German\s+law|German-law|employment\s+law)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    ("machine-specific path", re.compile(r"(?:/home/|/Users/|[A-Za-z]:\\\\)")),
+)
+
 SECRET_PATTERN = re.compile(
     r"(?i)(?:api[_-]?key|client[_-]?secret|password|passwd|bearer\s+|"
     r"authorization:|BEGIN\s+.*PRIVATE\s+KEY|sk-[A-Za-z0-9]|"
@@ -480,8 +530,11 @@ def derive_graceful_shutdown_budget(
         )
     grace_seconds = max(MIN_GRACEFUL_SHUTDOWN_SECONDS, calculated)
     return {
-        "calculation": "ceil(sum(server.shutdown.*)) + scheduling cushion",
+        "calculation": (
+            "max(test minimum, ceil(sum(server.shutdown.*)) + scheduling cushion)"
+        ),
         "grace_seconds": grace_seconds,
+        "minimum_grace_seconds": MIN_GRACEFUL_SHUTDOWN_SECONDS,
         "phase_total_seconds": phase_total,
         "scheduling_cushion_seconds": SHUTDOWN_SCHEDULING_CUSHION_SECONDS,
         "settings": dict(sorted(normalized.items())),
@@ -1112,6 +1165,48 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
             )
         ) != 4:
             raise MigrationError("Step 10 table set is not exact")
+    elif migration_id == STEP11_MIGRATION_ID:
+        forbidden_patterns = STEP11_FORBIDDEN_MIGRATION_PATTERNS
+        required_fragments = (
+            "CREATE TABLE memory_patch.parsed_documents",
+            "CREATE TABLE memory_patch.parsed_sections",
+            "CREATE TABLE memory_patch.parse_security_findings",
+            "OWNER TO mp_schema_owner",
+            "GRANT SELECT, INSERT",
+            "ENABLE ROW LEVEL SECURITY",
+            "FORCE ROW LEVEL SECURITY",
+            "CREATE POLICY parsed_documents_s11_select",
+            "CREATE POLICY parsed_documents_s11_insert",
+            "CREATE POLICY parsed_sections_s11_select",
+            "CREATE POLICY parsed_sections_s11_insert",
+            "CREATE POLICY parse_security_findings_s11_select",
+            "CREATE POLICY parse_security_findings_s11_insert",
+            "NORMALIZED_UNICODE_CODE_POINTS_NFC",
+            "ON DELETE RESTRICT",
+            "TO mp_app_runtime",
+        )
+        for fragment in required_fragments:
+            if fragment not in sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required parsing fragment: {fragment}"
+                )
+        if re.search(r"\bTO\s+PUBLIC\b", sql, re.IGNORECASE):
+            raise MigrationError("Step 11 policy or grant targets PUBLIC")
+        if re.search(
+            r"\bUSING\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 11 contains an allow-all RLS policy")
+        if len(
+            re.findall(
+                r"^CREATE TABLE memory_patch\.(?:parsed_documents|"
+                r"parsed_sections|parse_security_findings)\b",
+                sql,
+                re.MULTILINE,
+            )
+        ) != 3:
+            raise MigrationError("Step 11 table set is not exact")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -1121,9 +1216,12 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 5:
-        raise MigrationError("migration manifest schema_version must be 5")
-    if manifest.get("manifest_id") != "memory-patch-step10-ingestion-saga-1a":
+    if manifest.get("schema_version") != 6:
+        raise MigrationError("migration manifest schema_version must be 6")
+    if (
+        manifest.get("manifest_id")
+        != "memory-patch-step11-generic-parsing-pipeline-1a"
+    ):
         raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
         raise MigrationError("migration manifest runner_version mismatch")
@@ -1134,7 +1232,8 @@ def load_migrations() -> list[Migration]:
     if manifest.get("transaction_policy") != (
         "STEP4_ONE_TRANSACTION_STEP5_NINE_IDEMPOTENT_DATABASE_PHASES_"
         "WITH_NONATOMIC_CLUSTER_ROLE_DDL_STEP6_ONE_TRANSACTION_"
-        "STEP9_ONE_TRANSACTION_STEP10_ONE_TRANSACTION"
+        "STEP9_ONE_TRANSACTION_STEP10_ONE_TRANSACTION_"
+        "STEP11_ONE_TRANSACTION"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -1200,6 +1299,11 @@ def load_migrations() -> list[Migration]:
             and checksum != STEP10_MIGRATION_SHA256
         ):
             raise MigrationError("Step 10 checksum differs from the audited migration")
+        if (
+            migration_id == STEP11_MIGRATION_ID
+            and checksum != STEP11_MIGRATION_SHA256
+        ):
+            raise MigrationError("Step 11 checksum differs from the audited migration")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -1215,11 +1319,12 @@ def load_migrations() -> list[Migration]:
         STEP6_MIGRATION_ID,
         STEP9_MIGRATION_ID,
         STEP10_MIGRATION_ID,
+        STEP11_MIGRATION_ID,
     ]
     if identifiers != expected_identifiers:
         raise MigrationError(
             "migration chain is not the exact Step 4 -> Step 5 -> Step 6 -> "
-            "Step 9 -> Step 10 chain"
+            "Step 9 -> Step 10 -> Step 11 chain"
         )
     return migrations
 
@@ -1723,6 +1828,65 @@ def load_ingestion_saga_manifest() -> dict[str, Any]:
     return manifest
 
 
+def load_parsing_pipeline_manifest() -> dict[str, Any]:
+    manifest = load_json(PARSING_PIPELINE_MANIFEST_PATH)
+    if manifest.get("schema_version") != 1:
+        raise MigrationError("parsing pipeline manifest schema_version must be 1")
+    if (
+        manifest.get("manifest_id")
+        != "memory-patch-step11-parsing-pipeline-security-1a"
+    ):
+        raise MigrationError("parsing pipeline manifest identity mismatch")
+    if manifest.get("target_cockroachdb_version") != PINNED_VERSION:
+        raise MigrationError("parsing pipeline manifest version pin mismatch")
+    if manifest.get("fixed_roles") != [
+        "mp_app_runtime",
+        "mp_request_context_setter",
+        "mp_schema_owner",
+        "mp_security_owner",
+    ]:
+        raise MigrationError("parsing pipeline fixed role set differs")
+    if manifest.get("offset_basis") != "NORMALIZED_UNICODE_CODE_POINTS_NFC":
+        raise MigrationError("parsing pipeline offset basis differs")
+    if manifest.get("runtime_delete") is not False:
+        raise MigrationError("parsing pipeline must prohibit runtime DELETE")
+    tables = manifest.get("tables")
+    if not isinstance(tables, list) or [
+        row.get("table") for row in tables if isinstance(row, dict)
+    ] != [
+        "parse_security_findings",
+        "parsed_documents",
+        "parsed_sections",
+    ]:
+        raise MigrationError("parsing pipeline table manifest differs")
+    expected_policies = {
+        "parse_security_findings": (
+            "parse_security_findings_s11_select",
+            "parse_security_findings_s11_insert",
+        ),
+        "parsed_documents": (
+            "parsed_documents_s11_select",
+            "parsed_documents_s11_insert",
+        ),
+        "parsed_sections": (
+            "parsed_sections_s11_select",
+            "parsed_sections_s11_insert",
+        ),
+    }
+    for row in tables:
+        name = row["table"]
+        if (
+            row.get("owner_role") != "mp_schema_owner"
+            or row.get("force_rls") is not True
+            or row.get("runtime_privileges") != ["INSERT", "SELECT"]
+            or (row.get("select_policy"), row.get("insert_policy"))
+            != expected_policies[name]
+            or row.get("update_policy") is not None
+        ):
+            raise MigrationError(f"unsafe parsing pipeline table decision: {name}")
+    return manifest
+
+
 def offline_validate() -> dict[str, Any]:
     pin = load_version_pin()
     migrations = load_migrations()
@@ -1731,6 +1895,7 @@ def offline_validate() -> dict[str, Any]:
     persistence_manifest = load_persistence_manifest()
     source_registry_manifest = load_source_registry_manifest()
     ingestion_saga_manifest = load_ingestion_saga_manifest()
+    parsing_pipeline_manifest = load_parsing_pipeline_manifest()
     step4_sql = "\n".join(
         migration.sql
         for migration in migrations
@@ -1755,6 +1920,11 @@ def offline_validate() -> dict[str, Any]:
         migration.sql
         for migration in migrations
         if migration.migration_id == STEP10_MIGRATION_ID
+    )
+    step11_sql = next(
+        migration.sql
+        for migration in migrations
+        if migration.migration_id == STEP11_MIGRATION_ID
     )
     historical_sql = step4_sql + "\n" + step5_sql
     step4_tables = sorted(
@@ -1814,6 +1984,18 @@ def offline_validate() -> dict[str, Any]:
     )
     if ingestion_saga_tables != expected_ingestion_saga_tables:
         raise MigrationError("ingestion saga tables differ from migration SQL")
+    parsing_pipeline_tables = sorted(
+        re.findall(
+            r"^CREATE TABLE memory_patch\.([a-z0-9_]+)",
+            step11_sql,
+            re.MULTILINE,
+        )
+    )
+    expected_parsing_pipeline_tables = sorted(
+        row["table"] for row in parsing_pipeline_manifest["tables"]
+    )
+    if parsing_pipeline_tables != expected_parsing_pipeline_tables:
+        raise MigrationError("parsing pipeline tables differ from migration SQL")
     created_tables = sorted(
         [
             *step4_tables,
@@ -1821,6 +2003,7 @@ def offline_validate() -> dict[str, Any]:
             *persistence_tables,
             *source_registry_tables,
             *ingestion_saga_tables,
+            *parsing_pipeline_tables,
         ]
     )
     created_indexes = sorted(
@@ -1845,6 +2028,19 @@ def offline_validate() -> dict[str, Any]:
         "persistence_operations_shared_idempotency_uq",
     ]:
         raise MigrationError("persistence index boundary is not exact")
+    parsing_indexes = sorted(
+        re.findall(
+            r"^CREATE (?:UNIQUE |INVERTED )?INDEX ([a-z0-9_]+)",
+            step11_sql,
+            re.MULTILINE,
+        )
+    )
+    if parsing_indexes != [
+        "parse_security_findings_review_idx",
+        "parsed_documents_scope_idx",
+        "parsed_sections_document_ordinal_idx",
+    ]:
+        raise MigrationError("parsing pipeline index boundary is not exact")
     required_entities = {
         "tenants",
         "users",
@@ -2060,6 +2256,52 @@ def offline_validate() -> dict[str, Any]:
         re.IGNORECASE | re.MULTILINE,
     ):
         raise MigrationError("Step 10 contains destructive cleanup SQL")
+    step11_enabled = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"ENABLE ROW LEVEL SECURITY;",
+            step11_sql,
+        )
+    )
+    step11_forced = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"FORCE ROW LEVEL SECURITY;",
+            step11_sql,
+        )
+    )
+    expected_step11_protected = set(expected_parsing_pipeline_tables)
+    if step11_enabled != expected_step11_protected:
+        raise MigrationError("Step 11 RLS coverage is incomplete")
+    if step11_forced != expected_step11_protected:
+        raise MigrationError("Step 11 FORCE RLS coverage is incomplete")
+    for table in parsing_pipeline_manifest["tables"]:
+        for command in ("select", "insert", "update"):
+            policy = table[f"{command}_policy"]
+            if policy is None:
+                continue
+            pattern = re.compile(
+                rf"CREATE POLICY {re.escape(policy)}\s+"
+                rf"ON memory_patch\.{re.escape(table['table'])}\s+"
+                rf"FOR {command.upper()}\s+TO mp_app_runtime",
+                re.MULTILINE,
+            )
+            if pattern.search(step11_sql) is None:
+                raise MigrationError(f"Step 11 policy is missing: {policy}")
+    if re.search(r"\bTO\s+PUBLIC\b", step11_sql, re.IGNORECASE):
+        raise MigrationError("Step 11 policy or grant targets PUBLIC")
+    if re.search(
+        r"\bUSING\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+        step11_sql,
+        re.IGNORECASE,
+    ):
+        raise MigrationError("Step 11 contains an allow-all policy")
+    if re.search(
+        r"^\s*(?:DELETE\s+FROM|TRUNCATE|DROP\s+TABLE)\b",
+        step11_sql,
+        re.IGNORECASE | re.MULTILINE,
+    ):
+        raise MigrationError("Step 11 contains destructive cleanup SQL")
     return {
         "migration_count": len(migrations),
         "migration_ids": [migration.migration_id for migration in migrations],
@@ -2068,17 +2310,21 @@ def offline_validate() -> dict[str, Any]:
         "persistence_table_count": len(persistence_tables),
         "source_registry_table_count": len(source_registry_tables),
         "ingestion_saga_table_count": len(ingestion_saga_tables),
+        "parsing_pipeline_table_count": len(parsing_pipeline_tables),
         "step4_table_count": len(step4_tables),
         "protected_table_count": (
             len(protected)
             + len(persistence_tables)
             + len(source_registry_tables)
             + len(ingestion_saga_tables)
+            + len(parsing_pipeline_tables)
         ),
         "identity_guard_trigger_count": (
             len(guard_triggers) + 2 + len(step10_triggers)
         ),
-        "explicit_index_count": len(created_indexes) + len(persistence_indexes),
+        "explicit_index_count": (
+            len(created_indexes) + len(persistence_indexes) + len(parsing_indexes)
+        ),
         "status": "PASS",
         "target_version": pin["exact_version"],
         "vector_boundary": "DEFERRED_NO_CANONICAL_DIMENSION",
@@ -2088,8 +2334,8 @@ def offline_validate() -> dict[str, Any]:
 def validate_timeout(timeout: float) -> None:
     if isinstance(timeout, bool) or not isinstance(timeout, (int, float)):
         raise MigrationError("timeout must be numeric")
-    if timeout <= 0 or timeout > 180:
-        raise MigrationError("timeout must be bounded to 1..180 seconds")
+    if timeout <= 0 or timeout > MAX_SQL_COMMAND_TIMEOUT_SECONDS:
+        raise MigrationError("timeout must be bounded to 1..300 seconds")
 
 
 def validate_database_identifier(database: str) -> None:
@@ -2961,6 +3207,120 @@ def assert_step10_security_catalog(
     }
 
 
+def assert_step11_security_catalog(
+    client: SqlClient,
+    database: str,
+) -> dict[str, Any]:
+    manifest = load_parsing_pipeline_manifest()
+    table_names = [row["table"] for row in manifest["tables"]]
+    quoted_tables = ", ".join(sql_literal(name) for name in table_names)
+    table_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT c.relname AS table_name, c.relrowsecurity, "
+            "c.relforcerowsecurity, owner.rolname AS owner_role "
+            "FROM pg_catalog.pg_class AS c "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = c.relnamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = c.relowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            f"AND c.relname IN ({quoted_tables}) "
+            "AND c.relkind = 'r' ORDER BY c.relname",
+        )
+    )
+    expected_tables = [
+        {
+            "table_name": name,
+            "relrowsecurity": "t",
+            "relforcerowsecurity": "t",
+            "owner_role": "mp_schema_owner",
+        }
+        for name in sorted(table_names)
+    ]
+    if table_rows != expected_tables:
+        raise MigrationError("Step 11 table ownership or RLS state differs")
+    policy_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT tablename, policyname, cmd, roles, qual, with_check "
+            "FROM pg_catalog.pg_policies "
+            "WHERE schemaname = 'memory_patch' "
+            f"AND tablename IN ({quoted_tables}) "
+            "ORDER BY tablename, policyname",
+        )
+    )
+    expected_policies = {
+        (row["table"], row[f"{command}_policy"], command.upper())
+        for row in manifest["tables"]
+        for command in ("select", "insert")
+    }
+    actual_policies = {
+        (row["tablename"], row["policyname"], row["cmd"].upper())
+        for row in policy_rows
+    }
+    if actual_policies != expected_policies:
+        raise MigrationError("Step 11 live policy set differs from manifest")
+    for row in policy_rows:
+        if "mp_app_runtime" not in row["roles"]:
+            raise MigrationError("Step 11 policy lacks runtime role")
+        command = row["cmd"].upper()
+        if command == "SELECT" and not row["qual"]:
+            raise MigrationError("Step 11 SELECT policy lacks USING")
+        if command == "INSERT" and not row["with_check"]:
+            raise MigrationError("Step 11 INSERT policy lacks WITH CHECK")
+    grant_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT table_name, privilege_type "
+            "FROM information_schema.table_privileges "
+            "WHERE table_schema = 'memory_patch' "
+            "AND grantee = 'mp_app_runtime' "
+            f"AND table_name IN ({quoted_tables}) "
+            "ORDER BY table_name, privilege_type",
+        )
+    )
+    expected_grants = sorted(
+        (row["table"], privilege)
+        for row in manifest["tables"]
+        for privilege in row["runtime_privileges"]
+    )
+    actual_grants = [
+        (row["table_name"], row["privilege_type"]) for row in grant_rows
+    ]
+    if actual_grants != expected_grants:
+        raise MigrationError("Step 11 runtime grants are not least privilege")
+    trigger_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT trigger.tgname AS trigger_name "
+            "FROM pg_catalog.pg_trigger AS trigger "
+            "JOIN pg_catalog.pg_class AS target ON target.oid = trigger.tgrelid "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = target.relnamespace "
+            "WHERE namespace.nspname = 'memory_patch' "
+            f"AND target.relname IN ({quoted_tables}) "
+            "AND NOT trigger.tgisinternal ORDER BY trigger.tgname",
+        )
+    )
+    if trigger_rows:
+        raise MigrationError("Step 11 unexpectedly adds mutable table triggers")
+    digest_input = {
+        "grants": grant_rows,
+        "policies": policy_rows,
+        "tables": table_rows,
+        "triggers": trigger_rows,
+    }
+    return {
+        "policy_count": len(policy_rows),
+        "protected_table_count": len(table_rows),
+        "runtime_table_grant_count": len(grant_rows),
+        "security_digest": hashlib.sha256(
+            canonical_json_bytes(digest_input)
+        ).hexdigest(),
+        "trigger_count": 0,
+    }
+
+
 def apply_migrations(
     client: SqlClient,
     database: str,
@@ -3034,6 +3394,14 @@ def apply_migrations(
                 timeout=timeout,
             )
             assert_step10_security_catalog(client, database)
+            database_sql = ""
+        elif migration.migration_id == STEP11_MIGRATION_ID:
+            client.execute(
+                database,
+                "BEGIN;\n" + database_sql + "\nCOMMIT;",
+                timeout=timeout,
+            )
+            assert_step11_security_catalog(client, database)
             database_sql = ""
         migration_record_sql = (
             "INSERT INTO memory_patch.schema_migrations "
@@ -3130,6 +3498,7 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
     persistence_manifest = load_persistence_manifest()
     source_registry_manifest = load_source_registry_manifest()
     ingestion_saga_manifest = load_ingestion_saga_manifest()
+    parsing_pipeline_manifest = load_parsing_pipeline_manifest()
     expected_tables = sorted(
         [
             *schema_manifest["required_tables"],
@@ -3140,11 +3509,12 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
             *[row["table"] for row in persistence_manifest["tables"]],
             *[row["table"] for row in source_registry_manifest["tables"]],
             *[row["table"] for row in ingestion_saga_manifest["tables"]],
+            *[row["table"] for row in parsing_pipeline_manifest["tables"]],
         ]
     )
     if catalog["tables"] != expected_tables:
         raise MigrationError(
-            "live catalog table set differs from Step 4–6/9 manifests"
+            "live catalog table set differs from Step 4–6/9–11 manifests"
         )
     indexes = set(catalog["explicit_indexes"])
     required_persistence_indexes = {
@@ -3156,10 +3526,16 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
         "ingestion_sagas_private_idempotency_uq",
         "ingestion_sagas_shared_idempotency_uq",
     }
+    required_parsing_indexes = {
+        "parse_security_findings_review_idx",
+        "parsed_documents_scope_idx",
+        "parsed_sections_document_ordinal_idx",
+    }
     missing_indexes = (
         set(schema_manifest["explicit_indexes"])
         | required_persistence_indexes
         | required_ingestion_indexes
+        | required_parsing_indexes
     ) - indexes
     if missing_indexes:
         raise MigrationError(f"live catalog lacks indexes: {sorted(missing_indexes)}")
@@ -3699,6 +4075,13 @@ def run_live_validation(
             != step10_security_b["security_digest"]
         ):
             raise MigrationError("Step 10 security reproduction digest differs")
+        step11_security_a = assert_step11_security_catalog(client, database_a)
+        step11_security_b = assert_step11_security_catalog(client, database_b)
+        if (
+            step11_security_a["security_digest"]
+            != step11_security_b["security_digest"]
+        ):
+            raise MigrationError("Step 11 security reproduction digest differs")
         if len(applied_migrations(client, database_a)) != migration_count:
             raise MigrationError("invalid data probes changed migration bookkeeping")
         live_result = {
@@ -3714,7 +4097,7 @@ def run_live_validation(
             "schema": {
                 "column_count": catalog_a["column_count"],
                 "constraint_counts": catalog_a["constraint_counts"],
-                "explicit_index_count": len(load_schema_manifest()["explicit_indexes"]),
+                "explicit_index_count": len(catalog_a["explicit_indexes"]),
                 "schema_digest": catalog_a["schema_digest"],
                 "table_count": len(catalog_a["tables"]),
                 "protected_table_count": offline["protected_table_count"],
@@ -3722,6 +4105,7 @@ def run_live_validation(
             "server_version": server_version.splitlines()[0],
             "step9_security": step9_security_a,
             "step10_security": step10_security_a,
+            "step11_security": step11_security_a,
             "status": "PASS",
         }
     finally:

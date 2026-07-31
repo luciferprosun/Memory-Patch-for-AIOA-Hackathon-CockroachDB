@@ -1,0 +1,202 @@
+{
+  "authority": {
+    "external_volume": "DERIVED_STAGING_EVIDENCE_ONLY",
+    "findings": "SECURITY_EVIDENCE_ONLY",
+    "memory_patch_kernel": "SEMANTIC_AUTHORITY",
+    "model_or_hat": "NO_AUTHORITY",
+    "parser": "DETERMINISTIC_TRANSFORMATION_ONLY",
+    "s3": "IMMUTABLE_STORAGE_EVIDENCE_ONLY",
+    "step9": "PUBLICATION_POLICY_BOUNDARY",
+    "validator": "STRUCTURAL_VALIDATION_ONLY"
+  },
+  "aws": {
+    "caller_type": "ASSUMED_ROLE",
+    "profile": "aoia-admin",
+    "region": "eu-central-1",
+    "root_principal": false,
+    "sensitive_identifiers_redacted": true,
+    "temporary_sso_role": true
+  },
+  "cleanup": {
+    "drain_command_completed": true,
+    "drain_completion_marker": true,
+    "force_kill_used": false,
+    "owned_child_processes_reaped": true,
+    "persistent_database_created": false,
+    "persistent_service_created": false,
+    "ports_closed": true,
+    "runtime_mode": "DISPOSABLE_LOCAL_SINGLE_NODE",
+    "runtime_pid_exited": true,
+    "shutdown_method": "NODE_DRAIN_SELF_ON_RPC_WITH_SHUTDOWN",
+    "temporary_directory_removed": true
+  },
+  "evidence_digest": "4eac1d5c4bb88c477f10f35eac49e4121c3457c9671897741a32e1a0444b254a",
+  "mode": "ZERO_EXTERNAL_WRITE_LIVE_VALIDATION",
+  "plan_digest": "a71fc72b7ecadd433b3cf9cd720e2c8610fdc464f56924f9ea0d8b6ff26498df",
+  "previous_attempts": [
+    {
+      "evidence_digest": "9d03766e0a67ff1d52ef5b6b477908b013233f7160599f8a24cf216ede307e25",
+      "file_sha256": "fb1b46920c915768efc5825cc246245ec89fd8afd6842a78db153ad97b12310a",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "9ef51c38696a6860a99f97379912717550afdb75af2a7af4ac789a564abf59ee",
+      "file_sha256": "f2a9d6bb506e2a4335ccec132a2f17603c38a5952b40e3ec329a9ee44756b54a",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "60dc79dcffdd9bf8f5d562d14028a02d1cf3269092daaa27f168a6a807307bee",
+      "file_sha256": "11cc54e82149d574f341854ba8195a301e8e2dc47ef7db5cb4ae39516d56853e",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-2-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "ac94030b7a795738cd2bb9502eb32b22029b1c71f1ddcf1791c4af67c7d41e77",
+      "file_sha256": "71ed9554359e6a158c9e770c70563ae40adae4d5bee863b46874d094eb814168",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-3-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "589da56a055d0d05895af3fc5a371cb028c8eb3531690dcbf58e3a7f051a8b81",
+      "file_sha256": "e8d122e8adcd118cd0c0e12385ea34394bca6ce3f4c1cbf292554a71de0f4171",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-4-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "8fbc8507ea55d82a1182febc3a1a2a6f7b07b7942a27d86550de81d90bcb7a49",
+      "file_sha256": "ed16f7f62cf0acee6d241d32f10940313e4493f8967cec7b5826b84da9cd68a2",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-5-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "f075633a2e254d1a1fd1ea5eeb1799a32fe87e0d455c59feec7555787e23342c",
+      "file_sha256": "f7cc7312ea7e9b85ff32c9b7d79c85455fecd57ac623dbde286a3a0ff8dea881",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-6-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    }
+  ],
+  "profiles": {
+    "chunking": "model-neutral-character-chunking:1.0.0",
+    "json_parser": "generic-canonical-json-document-parser:1.0.0",
+    "normalization": "unicode-nfc-text-normalization:1.0.0",
+    "security_ruleset": "prompt-injection-static-rules:1.0.0"
+  },
+  "repository": {
+    "baseline": "e9a4416e67c99718b47dac354c73fe393881be15",
+    "remote": "https://github.com/luciferprosun/Memory-Patch-for-AIOA-Hackathon-CockroachDB.git",
+    "worktree_digest": "a9edd4f9e6e5e59734eb88c1dc9665ae7e0b1ff9621c68b88b1205f598fe77f5"
+  },
+  "safety": {
+    "deletions": 0,
+    "external_volume_writes": 0,
+    "model_calls": false,
+    "new_s3_writes": 0,
+    "retention_changes": 0,
+    "step12_started": false
+  },
+  "schema_version": "1.0.0",
+  "status": "PASS",
+  "step": "Step 11 - Generic Parsing, Normalization and Chunking Pipeline 1A",
+  "validation": {
+    "database": {
+      "cluster_version": "26.2",
+      "first_migration_apply": {
+        "applied": [
+          "0001_step4_identity_and_hat_scopes",
+          "0002_step4_knowledge_lineage_and_retrieval",
+          "0003_step4_kernel_memory_and_audit_evidence",
+          "0004_step5_tenant_roles_session_context_rls",
+          "0005_step6_persistence_idempotency_retry_foundation",
+          "0006_step9_source_registry_provenance_publication_states",
+          "0007_step10_idempotent_ingestion_saga",
+          "0008_step11_generic_parsing_pipeline"
+        ],
+        "applied_count": 8,
+        "skipped": [],
+        "skipped_count": 0
+      },
+      "migration_replay": {
+        "applied": [],
+        "applied_count": 0,
+        "skipped": [
+          "0001_step4_identity_and_hat_scopes",
+          "0002_step4_knowledge_lineage_and_retrieval",
+          "0003_step4_kernel_memory_and_audit_evidence",
+          "0004_step5_tenant_roles_session_context_rls",
+          "0005_step6_persistence_idempotency_retry_foundation",
+          "0006_step9_source_registry_provenance_publication_states",
+          "0007_step10_idempotent_ingestion_saga",
+          "0008_step11_generic_parsing_pipeline"
+        ],
+        "skipped_count": 8
+      },
+      "parse_row_counts": {
+        "chunk_search_documents": 0,
+        "knowledge_chunks": 3,
+        "knowledge_versions": 1,
+        "parse_security_findings": 0,
+        "parsed_documents": 1,
+        "parsed_sections": 3
+      },
+      "saga_row_counts": {
+        "ingestion_external_effects": 7,
+        "ingestion_orphans": 0,
+        "ingestion_saga_events": 8,
+        "ingestion_sagas": 1,
+        "persistence_operations": 6,
+        "source_publication_events": 3,
+        "source_registry": 1
+      },
+      "server_version": "CockroachDB CCL v26.2.4 (x86_64-pc-linux-gnu, built 2026/07/14 16:50:57, go1.25.5)",
+      "step10_security_digest": "14ac025f85f116f790eb0266339204bdb48f17b6aa4a9144c453624497907ddc",
+      "step11_security_digest": "815ce95b959b35ea27687c8fbeeb6b2d87036cc59e5aa0eeaf5634d7908312e4",
+      "step9_security_digest": "5943da10368467f0fc82e76bcfceec2f767dfdab6a2bc77442dea476f8137a44"
+    },
+    "external_volume": {
+      "artifact_reconciled": true,
+      "content_length": 92,
+      "content_sha256": "61088c464f21622d0dccd28d41e6f041c9bf7abf165542262c9ea7f8d51241ca",
+      "relative_path": "ingestion/downloads/step10-validation-s3snap-96865bf2b400b16b5be6ba332d965168626dcf958c3ca494a1fb89c47be492c4.json",
+      "root_filesystem_fallback": false,
+      "write_attempts": 0,
+      "write_calls": 0
+    },
+    "parse": {
+      "chunk_combined_digest": "a19c56783566203be7d64234f3d82736ee87c8d56645a862ca7e7bda8c5d2d53",
+      "chunk_count": 3,
+      "document_id": "parsedoc-9652321899b7d9eec21ff6ef29d375982907738f061f1cbf614c991358875ada",
+      "finding_combined_digest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "finding_count": 0,
+      "knowledge_version_id": "mp_step10_version_fc7e5384dfb28b0b",
+      "normalized_content_sha256": "3f7e39c561b1a1c2af8d0a5ad39e15459c19dcca950ea09f338f223b8c38497e",
+      "parse_artifact_digest": "ebe5e505a4f769e789f628c86b3c9120d00b0380d18a9cf9cd96cfc908f79ef4",
+      "parse_receipt_digest": "d407cf89d4997305d6f871048706a8f077ded6b7369826fd92e692ced38641d1",
+      "parse_receipt_synthetic_validation_boundary": false,
+      "section_count": 3,
+      "section_range_digest": "b5dbda510b010efbc166622dc36b345a16f5f882963bfefafe18a6f46cf63aca",
+      "validation_receipt_digest": "2f08ec1cdbe191debec5b50c577dfb0f7b2247441e6d1259e1c527554f06fc3e",
+      "validation_receipt_synthetic_validation_boundary": false
+    },
+    "s3": {
+      "bucket": "aioa-memory-patch-global-3f105fcd-eu-central-1",
+      "delete_markers": 0,
+      "object_key": "memory-patch/snapshots/v1/global/v1/a4/a41db356e0513b9529a04460b47097fdce17f13cc6fd5ee96064c0effec7f629/s3snap-96865bf2b400b16b5be6ba332d965168626dcf958c3ca494a1fb89c47be492c4.bin",
+      "put_object_attempts": 0,
+      "put_object_calls": 0,
+      "retention_changes": 0,
+      "version_count": 1,
+      "version_id": "kfDFfBsGlAR_KoQxDodzESlhebuYpAMx"
+    },
+    "saga": {
+      "conflicting_replay": "REJECTED",
+      "conflicting_replay_code": "IDEMPOTENCY_BINDING_CONFLICT",
+      "event_chain_length": 8,
+      "exact_replay": "SAME_COMPLETED_SAGA_NO_DUPLICATES",
+      "final_milestone": "PUBLISHED",
+      "publication_event_count": 3,
+      "run_digest": "da0069a881aa54a1578b45f50b8c07dc9d5baac25fc671587e55986824c004e2"
+    }
+  }
+}

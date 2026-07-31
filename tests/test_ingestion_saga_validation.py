@@ -297,7 +297,7 @@ class Step10LiveHarnessTests(unittest.TestCase):
         self.assertEqual(plan["external_volume"]["new_writes"], 0)
         self.assertEqual(plan["recovery"]["deletions"], 0)
         self.assertEqual(plan["recovery"]["retention_changes"], 0)
-        self.assertEqual(plan["cockroachdb"]["shutdown_budget"]["grace_seconds"], 40)
+        self.assertEqual(plan["cockroachdb"]["shutdown_budget"]["grace_seconds"], 60)
         command = plan["exact_command_argv"]
         self.assertIn("--recovery-validation", command)
         self.assertIn("--confirm-version-id", command)
@@ -721,13 +721,14 @@ class Step10LiveHarnessTests(unittest.TestCase):
             )
         write.assert_not_called()
 
-    def test_observed_shutdown_settings_derive_a_forty_second_bound(self) -> None:
+    def test_observed_shutdown_settings_use_the_bounded_sixty_second_floor(self) -> None:
         budget = validation.migrations.derive_graceful_shutdown_budget(
             validation.AUDITED_SHUTDOWN_SETTINGS
         )
         self.assertEqual(budget["phase_total_seconds"], 25.0)
         self.assertEqual(budget["scheduling_cushion_seconds"], 15)
-        self.assertEqual(budget["grace_seconds"], 40)
+        self.assertEqual(budget["minimum_grace_seconds"], 60)
+        self.assertEqual(budget["grace_seconds"], 60)
         self.assertEqual(budget["test_only_cap_seconds"], 120)
 
     def test_graceful_drain_with_shutdown_exits_exact_pid(self) -> None:

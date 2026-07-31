@@ -1,0 +1,51 @@
+{
+  "fixed_roles": [
+    "mp_app_runtime",
+    "mp_request_context_setter",
+    "mp_schema_owner",
+    "mp_security_owner"
+  ],
+  "manifest_id": "memory-patch-step11-parsing-pipeline-security-1a",
+  "offset_basis": "NORMALIZED_UNICODE_CODE_POINTS_NFC",
+  "runtime_delete": false,
+  "schema_version": 1,
+  "tables": [
+    {
+      "force_rls": true,
+      "insert_policy": "parse_security_findings_s11_insert",
+      "owner_role": "mp_schema_owner",
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "parse_security_findings_s11_select",
+      "table": "parse_security_findings",
+      "update_policy": null
+    },
+    {
+      "force_rls": true,
+      "insert_policy": "parsed_documents_s11_insert",
+      "owner_role": "mp_schema_owner",
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "parsed_documents_s11_select",
+      "table": "parsed_documents",
+      "update_policy": null
+    },
+    {
+      "force_rls": true,
+      "insert_policy": "parsed_sections_s11_insert",
+      "owner_role": "mp_schema_owner",
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "parsed_sections_s11_select",
+      "table": "parsed_sections",
+      "update_policy": null
+    }
+  ],
+  "target_cockroachdb_version": "v26.2.4"
+}

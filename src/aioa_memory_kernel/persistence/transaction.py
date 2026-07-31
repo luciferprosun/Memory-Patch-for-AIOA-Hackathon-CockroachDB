@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import contextvars
+import re
 import time
 from collections.abc import Callable
 from typing import TypeVar
@@ -33,6 +34,18 @@ BEGIN_SERIALIZABLE_SQL = "BEGIN TRANSACTION ISOLATION LEVEL SERIALIZABLE"
 SET_CONTEXT_SQL = (
     "SELECT memory_patch.set_request_context(%s, %s, %s)"
 )
+_SANITIZED_DATABASE_CODE = re.compile(r"^[A-Z][A-Z0-9_]{0,127}$")
+
+
+def _database_failure_code(error: BaseException, sqlstate: str | None) -> str:
+    """Preserve only an explicitly bounded driver code, never driver text."""
+
+    if sqlstate is not None:
+        return f"SQLSTATE_{sqlstate}"
+    candidate = getattr(error, "sanitized_code", None)
+    if isinstance(candidate, str) and _SANITIZED_DATABASE_CODE.fullmatch(candidate):
+        return candidate
+    return "UNCLASSIFIED_DATABASE_FAILURE"
 
 
 def assert_no_open_persistence_transaction() -> None:
@@ -209,11 +222,7 @@ class SerializableTransactionRunner:
                     sqlstate=sqlstate,
                     attempt=attempt,
                     operation_kind=operation_kind,
-                    sanitized_code=(
-                        f"SQLSTATE_{sqlstate}"
-                        if sqlstate is not None
-                        else "UNCLASSIFIED_DATABASE_FAILURE"
-                    ),
+                    sanitized_code=_database_failure_code(error, sqlstate),
                 ) from None
             else:
                 if marker is not None:

@@ -106,8 +106,10 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 9: COMPLETE AND PUSHED at actual closure commit",
             "- [x] **Step 10 — Idempotent S3–CockroachDB Ingestion Saga 1A**",
             "Step 10: COMPLETE AND PUSHED at actual closure commit",
-            "- [ ] **Step 11 — Generic Parsing, Normalization and Chunking Pipeline 1A**",
-            "Step 11: NOT STARTED",
+            "- [x] **Step 11 — Generic Parsing, Normalization and Chunking Pipeline 1A**",
+            "Step 11: COMPLETE AND PUSHED at actual closure commit",
+            "- [ ] **Step 12 — HAT Registry, Manifest Validation and Runtime Boundary 1A**",
+            "Step 12: NOT STARTED",
         ):
             self.assertIn(required, roadmap)
 
@@ -290,8 +292,9 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 7 was completed after Step 9",
             "Step 8 external-volume runtime integration",
             "Step 10 durable ingestion orchestration",
-            "Step 11: NOT STARTED",
-            "Step 10 completion does not authorize or start it",
+            "Step 11 deterministic parsing",
+            "Step 12: NOT STARTED",
+            "Step 11 completion does not authorize or start it",
         ):
             self.assertIn(required, text)
 

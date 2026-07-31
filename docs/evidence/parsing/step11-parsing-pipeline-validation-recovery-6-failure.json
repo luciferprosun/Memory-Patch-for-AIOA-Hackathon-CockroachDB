@@ -1,0 +1,113 @@
+{
+  "cleanup": {
+    "cleanup_errors": [
+      "BOUNDED_NODE_DRAIN_FAILED",
+      "GRACEFUL_SHUTDOWN_TIMEOUT"
+    ],
+    "drain_command_completed": false,
+    "drain_completion_marker": false,
+    "drain_elapsed_seconds": 43.42,
+    "drain_output_sha256": "7a46b1cd502498d997892da1a8eb921ee8167b399c28f155bedc1fd0860fb6a8",
+    "drain_shutdown_requested": true,
+    "force_kill_used": false,
+    "graceful_shutdown_requested": true,
+    "node_identity": {
+      "node_id": "1",
+      "rpc_binding": "127.0.0.1:<owned-rpc-port>",
+      "sql_binding": "127.0.0.1:<owned-sql-port>"
+    },
+    "owned_child_processes_reaped": true,
+    "owned_pid_recorded": true,
+    "panic_detected": false,
+    "pid_exited": true,
+    "ports_closed": true,
+    "process_exit_accepted": true,
+    "process_exit_code": 0,
+    "runtime_duration_seconds": 1097.561,
+    "runtime_log_evidence": {
+      "byte_length": 82541,
+      "drain_rpc_exit_observed": false,
+      "graceful_drain_request_observed": true,
+      "graceful_shutdown_completed": true,
+      "panic_detected": false,
+      "sha256": "58699f47bbd3bdd76582daf76757091a03160b8f14b25b383af54e1150d3515c"
+    },
+    "runtime_preserved_for_diagnostics": true,
+    "shutdown_budget": {
+      "calculation": "ceil(sum(server.shutdown.*)) + scheduling cushion",
+      "grace_seconds": 40,
+      "phase_total_seconds": 25.0,
+      "scheduling_cushion_seconds": 15,
+      "settings": {
+        "server.shutdown.connections.timeout": "0s",
+        "server.shutdown.initial_wait": "0s",
+        "server.shutdown.jobs.timeout": "10s",
+        "server.shutdown.lease_transfer_iteration.timeout": "5s",
+        "server.shutdown.transactions.timeout": "10s"
+      },
+      "test_only_cap_seconds": 120
+    },
+    "shutdown_method": "NODE_DRAIN_SELF_ON_RPC_WITH_SHUTDOWN",
+    "sigterm_sent_to_exact_pid": true,
+    "temporary_store_removed": false
+  },
+  "cleanup_failures": [
+    "BOUNDED_NODE_DRAIN_FAILED",
+    "GRACEFUL_SHUTDOWN_TIMEOUT",
+    "GRACEFUL_DRAIN_MARKER_MISSING",
+    "OWNED_TEMPORARY_RUNTIME_REMAINS"
+  ],
+  "evidence_digest": "f075633a2e254d1a1fd1ea5eeb1799a32fe87e0d455c59feec7555787e23342c",
+  "external_volume_write_attempts": 0,
+  "failure_chain": [],
+  "failure_detail_sha256": null,
+  "failure_phase": "VERIFY_ZERO_EXTERNAL_WRITES",
+  "failure_progress": {
+    "status": "NOT_AVAILABLE"
+  },
+  "failure_type": null,
+  "first_root_cause": "BOUNDED_NODE_DRAIN_FAILED",
+  "plan_digest": "06d211bc96e713c1bde8b5402a97e6b7d8f623a04c573603b5b7f199da646dc7",
+  "previous_attempts": [
+    {
+      "evidence_digest": "9d03766e0a67ff1d52ef5b6b477908b013233f7160599f8a24cf216ede307e25",
+      "file_sha256": "fb1b46920c915768efc5825cc246245ec89fd8afd6842a78db153ad97b12310a",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "9ef51c38696a6860a99f97379912717550afdb75af2a7af4ac789a564abf59ee",
+      "file_sha256": "f2a9d6bb506e2a4335ccec132a2f17603c38a5952b40e3ec329a9ee44756b54a",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "60dc79dcffdd9bf8f5d562d14028a02d1cf3269092daaa27f168a6a807307bee",
+      "file_sha256": "11cc54e82149d574f341854ba8195a301e8e2dc47ef7db5cb4ae39516d56853e",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-2-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "ac94030b7a795738cd2bb9502eb32b22029b1c71f1ddcf1791c4af67c7d41e77",
+      "file_sha256": "71ed9554359e6a158c9e770c70563ae40adae4d5bee863b46874d094eb814168",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-3-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "589da56a055d0d05895af3fc5a371cb028c8eb3531690dcbf58e3a7f051a8b81",
+      "file_sha256": "e8d122e8adcd118cd0c0e12385ea34394bca6ce3f4c1cbf292554a71de0f4171",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-4-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    },
+    {
+      "evidence_digest": "8fbc8507ea55d82a1182febc3a1a2a6f7b07b7942a27d86550de81d90bcb7a49",
+      "file_sha256": "ed16f7f62cf0acee6d241d32f10940313e4493f8967cec7b5826b84da9cd68a2",
+      "path": "docs/evidence/parsing/step11-parsing-pipeline-validation-recovery-5-failure.json",
+      "status": "PRESERVED_FAILED_ATTEMPT"
+    }
+  ],
+  "s3_put_attempts": 0,
+  "schema_version": "1.0.0",
+  "status": "FAILED_SAFELY",
+  "step": "Step 11 - Generic Parsing, Normalization and Chunking Pipeline 1A"
+}

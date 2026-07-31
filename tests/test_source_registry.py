@@ -964,7 +964,7 @@ class ScopeAndClosureTests(unittest.TestCase):
         ):
             result = module.apply_migrations(client, "mp_step9_noop")
         self.assertEqual(result["applied_count"], 0)
-        self.assertEqual(result["skipped_count"], 7)
+        self.assertEqual(result["skipped_count"], len(loaded))
         client.execute.assert_not_called()
 
     def test_60_two_database_reproduction_is_required_by_harness(self) -> None:

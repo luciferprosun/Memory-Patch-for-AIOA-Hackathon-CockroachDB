@@ -1250,7 +1250,11 @@ class StaticPersistenceAndSecurityTests(unittest.TestCase):
                 self.sql_path.parent / "manifest.json"
             ).read_text(encoding="utf-8")
         )
-        row = migration_manifest["migrations"][-1]
+        row = next(
+            item
+            for item in migration_manifest["migrations"]
+            if item["migration_id"] == "0007_step10_idempotent_ingestion_saga"
+        )
         self.assertEqual(
             row["migration_id"],
             "0007_step10_idempotent_ingestion_saga",
