@@ -95,7 +95,7 @@ class Step9DocumentationTests(unittest.TestCase):
                 self.assertTrue(resolved.is_relative_to(ROOT.resolve()))
                 self.assertTrue(resolved.exists(), (document, target))
 
-    def test_roadmap_records_exact_step7_through_step10_state(self) -> None:
+    def test_roadmap_records_exact_step7_through_step11_state(self) -> None:
         roadmap = ROADMAP.read_text(encoding="utf-8")
         for required in (
             "- [x] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**",
@@ -104,9 +104,10 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 8: COMPLETE AND PUSHED at actual closure commit",
             "- [x] **Step 9 — Source Registry, Provenance and Publication States 1A**",
             "Step 9: COMPLETE AND PUSHED at actual closure commit",
-            "- [ ] **Step 10 — Idempotent S3–CockroachDB Ingestion Saga 1A**",
-            "Step 10: NOT STARTED",
-            "prerequisites do not supply Step 10 authorization",
+            "- [x] **Step 10 — Idempotent S3–CockroachDB Ingestion Saga 1A**",
+            "Step 10: COMPLETE AND PUSHED at actual closure commit",
+            "- [ ] **Step 11 — Generic Parsing, Normalization and Chunking Pipeline 1A**",
+            "Step 11: NOT STARTED",
         ):
             self.assertIn(required, roadmap)
 
@@ -182,7 +183,13 @@ class Step9DocumentationTests(unittest.TestCase):
                 ROOT / "sql" / "cockroachdb" / "migrations" / "manifest.json"
             ).read_text(encoding="utf-8")
         )
-        self.assertEqual(manifest["migrations"][-1]["sha256"], migration_digest)
+        step9 = next(
+            migration
+            for migration in manifest["migrations"]
+            if migration["migration_id"]
+            == "0006_step9_source_registry_provenance_publication_states"
+        )
+        self.assertEqual(step9["sha256"], migration_digest)
         self.assertEqual(value["migration"]["first_apply_count"], 6)
         self.assertEqual(value["migration"]["no_op_applied_count"], 0)
         self.assertEqual(value["migration"]["no_op_skipped_count"], 6)
@@ -282,8 +289,9 @@ class Step9DocumentationTests(unittest.TestCase):
         for required in (
             "Step 7 was completed after Step 9",
             "Step 8 external-volume runtime integration",
-            "Step 10: NOT STARTED",
-            "Completion of Steps 7 and 8 does not authorize or",
+            "Step 10 durable ingestion orchestration",
+            "Step 11: NOT STARTED",
+            "Step 10 completion does not authorize or start it",
         ):
             self.assertIn(required, text)
 

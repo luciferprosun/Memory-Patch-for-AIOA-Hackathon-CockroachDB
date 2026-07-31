@@ -288,7 +288,7 @@ class Step8DocumentationTests(unittest.TestCase):
             ),
         )
 
-    def test_step8_closure_preserves_step10_unstarted(self) -> None:
+    def test_step8_history_is_preserved_after_step10_closure(self) -> None:
         roadmap = ROADMAP.read_text(encoding="utf-8")
         agents = AGENTS.read_text(encoding="utf-8")
         closure = CLOSURE.read_text(encoding="utf-8")
@@ -303,9 +303,13 @@ class Step8DocumentationTests(unittest.TestCase):
         )
         self.assertIn("IMPLEMENTATION AND LIVE VALIDATION COMPLETE", closure)
         self.assertIn("Step 8: COMPLETE AND PUSHED", closure)
-        self.assertIn("- [ ] **Step 10", roadmap)
-        self.assertIn("`Step 10: NOT STARTED`", roadmap)
-        self.assertIn("`Step 10: NOT STARTED`", agents)
+        self.assertIn("- [x] **Step 10", roadmap)
+        self.assertIn(
+            "`Step 10: COMPLETE AND PUSHED at actual closure commit`",
+            roadmap,
+        )
+        self.assertIn("Step 10 durable ingestion orchestration", agents)
+        self.assertIn("`Step 11: NOT STARTED`", agents)
         self.assertIn("Step 10: NOT STARTED", closure)
 
 

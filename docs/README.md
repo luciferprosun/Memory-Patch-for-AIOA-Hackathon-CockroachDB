@@ -16,8 +16,9 @@ foundation. Step 9 adds a live-validated typed source registry, deterministic
 provenance DAG, publication eligibility, append-only publication events, and
 optimistic state transitions. Step 7 adds live-validated immutable S3 snapshot
 storage, and Step 8 adds a live-validated fail-closed external-volume runtime
-boundary. Step 10 is not started; completed storage prerequisites do not
-authorize it.
+boundary. Step 10 adds the live-recovered durable S3-CockroachDB ingestion
+saga while preserving those storage and Step 9 publication boundaries. Step
+11 parsing, normalization, and chunking remains not started.
 Production driver wiring and later integrations remain future roadmap work.
 
 The historical provenance import intentionally excludes raw German-law
@@ -62,6 +63,12 @@ SHA-256 provenance.
 - [Steps 7 and 8 explicit deferral record](audits/STEP_7_STEP_8_EXPLICIT_DEFERRAL_2026_07_29.md)
 - [Step 9 live source-registry validation evidence](evidence/cockroachdb-v26-2/step9-source-registry-validation.json)
 - [Step 9 closure record](audits/STEP_9_SOURCE_REGISTRY_PROVENANCE_PUBLICATION_CLOSURE_1A.md)
+- [Idempotent S3-CockroachDB ingestion saga 1A](architecture/IDEMPOTENT_S3_COCKROACHDB_INGESTION_SAGA_1A.md)
+- [ADR-017: Idempotent ingestion saga boundary](adr/ADR-017-idempotent-s3-cockroachdb-ingestion-saga-boundary.md)
+- [Step 10 live validation and recovery runbook](operations/STEP_10_INGESTION_SAGA_LIVE_VALIDATION_1A.md)
+- [Step 10 failed first-attempt evidence](evidence/ingestion/step10-ingestion-saga-validation-failure.json)
+- [Step 10 successful recovery evidence](evidence/ingestion/step10-ingestion-saga-validation.json)
+- [Step 10 closure record](audits/STEP_10_IDEMPOTENT_S3_COCKROACHDB_INGESTION_SAGA_CLOSURE_1A.md)
 - [Knowledge Kernel Contract Baseline 1A](architecture/KNOWLEDGE_KERNEL_CONTRACT_BASELINE_1A.md)
 - [Personal Memory HATs 1A](architecture/PERSONAL_MEMORY_HATS_1A.md)
 - [Memory Trust and Precedence 1A](architecture/MEMORY_TRUST_AND_PRECEDENCE_1A.md)

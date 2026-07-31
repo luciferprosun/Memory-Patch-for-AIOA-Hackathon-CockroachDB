@@ -58,7 +58,7 @@ class SecurityManifestCoverageTests(unittest.TestCase):
     def test_offline_security_validation_passes(self) -> None:
         result = rls_validation.offline_validate()
         self.assertEqual(result["status"], "PASS")
-        self.assertEqual(result["migration_count"], 6)
+        self.assertEqual(result["migration_count"], 7)
         self.assertEqual(result["step4_table_count"], 29)
         self.assertEqual(result["protected_table_count"], 27)
         self.assertEqual(result["policy_count"], 50)
@@ -834,7 +834,11 @@ class Step5DocumentationTests(unittest.TestCase):
             "- [x] **Step 7 — S3 Snapshot Authority and Object Lock Adapter 1A**",
             roadmap,
         )
-        self.assertIn("Step 10: NOT STARTED", roadmap)
+        self.assertIn(
+            "Step 10: COMPLETE AND PUSHED at actual closure commit",
+            roadmap,
+        )
+        self.assertIn("Step 11: NOT STARTED", roadmap)
 
 
 if __name__ == "__main__":

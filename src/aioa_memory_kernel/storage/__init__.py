@@ -59,6 +59,7 @@ from .models import (
     S3ObjectLockMode,
     SnapshotEnvelope,
     SnapshotStorageEvidence,
+    SnapshotStoragePlan,
 )
 from .protocols import (
     ExternalVolumeRuntimeProtocol,
@@ -120,6 +121,7 @@ __all__ = [
     "SnapshotSessionError",
     "SnapshotStorageError",
     "SnapshotStorageEvidence",
+    "SnapshotStoragePlan",
     "SnapshotStorageProtocol",
     "StreamingBodyProtocol",
     "load_external_volume_environment",

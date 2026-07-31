@@ -1,0 +1,95 @@
+{
+  "execution_dispositions": [
+    "READY",
+    "CLAIMED",
+    "RETRY_WAIT",
+    "OPERATOR_REVIEW",
+    "QUARANTINED",
+    "COMPLETED"
+  ],
+  "fixed_roles": [
+    "mp_app_runtime",
+    "mp_request_context_setter",
+    "mp_schema_owner",
+    "mp_security_owner"
+  ],
+  "genesis_digest": "bcb38ae02e4305d0bec56081a371aeec436fec4a60e09bfbf4c7b3818f1e8b93",
+  "manifest_id": "memory-patch-step10-ingestion-saga-security-1a",
+  "milestones": [
+    "REGISTERED",
+    "ACQUIRED_LOCAL",
+    "HASH_VERIFIED",
+    "SNAPSHOT_UPLOAD_PENDING",
+    "SNAPSHOT_UPLOADED",
+    "SNAPSHOT_LOCK_VERIFIED",
+    "PARSED",
+    "VALIDATED",
+    "PUBLISHED"
+  ],
+  "schema_version": 1,
+  "tables": [
+    {
+      "force_rls": true,
+      "insert_policy": "ingestion_sagas_s10_insert",
+      "owner_role": "mp_schema_owner",
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "select_policy": "ingestion_sagas_s10_select",
+      "table": "ingestion_sagas",
+      "update_policy": "ingestion_sagas_s10_update"
+    },
+    {
+      "force_rls": true,
+      "insert_policy": "ingestion_saga_events_s10_insert",
+      "owner_role": "mp_schema_owner",
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "ingestion_saga_events_s10_select",
+      "table": "ingestion_saga_events",
+      "update_policy": null
+    },
+    {
+      "force_rls": true,
+      "insert_policy": "ingestion_external_effects_s10_insert",
+      "owner_role": "mp_schema_owner",
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "select_policy": "ingestion_external_effects_s10_select",
+      "table": "ingestion_external_effects",
+      "update_policy": "ingestion_external_effects_s10_update"
+    },
+    {
+      "force_rls": true,
+      "insert_policy": "ingestion_orphans_s10_insert",
+      "owner_role": "mp_schema_owner",
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "ingestion_orphans_s10_select",
+      "table": "ingestion_orphans",
+      "update_policy": null
+    }
+  ],
+  "target_cockroachdb_version": "v26.2.4",
+  "triggers": [
+    {
+      "function": "guard_ingestion_saga_update",
+      "table": "ingestion_sagas",
+      "trigger": "ingestion_sagas_s10_state_guard"
+    },
+    {
+      "function": "guard_ingestion_effect_receipt_update",
+      "table": "ingestion_external_effects",
+      "trigger": "ingestion_external_effects_s10_receipt_guard"
+    }
+  ]
+}

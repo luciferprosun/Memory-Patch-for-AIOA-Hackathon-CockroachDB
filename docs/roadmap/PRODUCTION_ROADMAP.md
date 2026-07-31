@@ -38,9 +38,14 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   Source registry, whole-DAG provenance, publication eligibility, append-only
   events, RLS/FORCE RLS and live validation are closed by the intended Step 9
   commit once it is reachable on `origin/main`.
-- `Step 10: NOT STARTED`.
-- Step 10 remains the next unopened production audit. Completed storage
-  prerequisites do not supply Step 10 authorization, and it was not started.
+- `Step 10: COMPLETE AND PUSHED at actual closure commit`.
+  The durable idempotent ingestion saga, migration `0007`, Step 6-9 boundary
+  integration, exact existing-evidence recovery, and graceful disposable
+  CockroachDB shutdown are closed by the intended Step 10 commit once it is
+  reachable on `origin/main`.
+- `Step 11: NOT STARTED`.
+- Step 11 remains the next unopened production step. Step 10 completion does
+  not authorize or start it.
 
 ## Zasada prowadzenia prac
 
@@ -173,11 +178,21 @@ Zbudować bezpieczne, idempotentne przyjmowanie źródeł: CockroachDB jako auto
   [live evidence](../evidence/cockroachdb-v26-2/step9-source-registry-validation.json),
   [rekord zamknięcia](../audits/STEP_9_SOURCE_REGISTRY_PROVENANCE_PUBLICATION_CLOSURE_1A.md).
 
-- [ ] **Step 10 — Idempotent S3–CockroachDB Ingestion Saga 1A**
+- [x] **Step 10 — Idempotent S3–CockroachDB Ingestion Saga 1A**
   Stany: `REGISTERED → ACQUIRED_LOCAL → HASH_VERIFIED → SNAPSHOT_UPLOAD_PENDING → SNAPSHOT_UPLOADED → SNAPSHOT_LOCK_VERIFIED → PARSED → VALIDATED → PUBLISHED`, z retry, reconciliation, quarantine i cleanup orphanów.
-  `Step 10: NOT STARTED`.
-  Zależność od Step 7 jest spełniona, ale Step 10 nie otrzymał autoryzacji i
-  nie został uruchomiony przez późniejsze zamknięcia Steps 7 i 8.
+  `Step 10: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie: deterministyczna saga i append-only event chain, durable intent
+  i receipt, bounded worker claims, migracja `0007`, RLS/FORCE RLS,
+  Step 8 local reconciliation, Step 7 exact-version Object Lock evidence,
+  Step 9 publication transition, typed synthetic parser/validator receipts,
+  zero-write recovery po zachowanym pierwszym nieudanym cleanup oraz graceful
+  CockroachDB drain bez force kill.
+  [Architektura](../architecture/IDEMPOTENT_S3_COCKROACHDB_INGESTION_SAGA_1A.md),
+  [ADR-017](../adr/ADR-017-idempotent-s3-cockroachdb-ingestion-saga-boundary.md),
+  [runbook](../operations/STEP_10_INGESTION_SAGA_LIVE_VALIDATION_1A.md),
+  [failed-attempt evidence](../evidence/ingestion/step10-ingestion-saga-validation-failure.json),
+  [recovery evidence](../evidence/ingestion/step10-ingestion-saga-validation.json),
+  [rekord zamknięcia](../audits/STEP_10_IDEMPOTENT_S3_COCKROACHDB_INGESTION_SAGA_CLOSURE_1A.md).
 
 - [ ] **Step 11 — Generic Parsing, Normalization and Chunking Pipeline 1A**
   Neutralne parser contracts, dokumenty, sekcje, char ranges, chunk IDs, deterministic chunking, prompt-injection flags, quarantine i testowe źródła syntetyczne.

@@ -30,6 +30,7 @@ from .models import (
     S3ObjectLockMode,
     SnapshotEnvelope,
     SnapshotStorageEvidence,
+    SnapshotStoragePlan,
 )
 from .protocols import S3ClientProtocol
 
@@ -236,6 +237,25 @@ class S3SnapshotAdapter:
 
         assert_no_open_persistence_transaction()
         return self._inspect_bucket_capabilities()
+
+    def plan_snapshot(self, snapshot: SnapshotEnvelope) -> SnapshotStoragePlan:
+        """Derive the exact immutable target without contacting AWS."""
+
+        assert_no_open_persistence_transaction()
+        self._validate_snapshot(snapshot, require_active_retention=False)
+        return SnapshotStoragePlan(
+            snapshot_id=snapshot.snapshot_id,
+            canonical_sha256=snapshot.content_sha256,
+            content_length=snapshot.content_length,
+            bucket_reference=self._config.bucket_reference,
+            object_key=self._config.object_key(
+                snapshot.snapshot_id,
+                snapshot.scope_digest,
+                snapshot.object_suffix,
+            ),
+            retention_mode=snapshot.retention_mode,
+            retain_until=snapshot.retain_until,
+        )
 
     def _inspect_bucket_capabilities(self) -> BucketCapabilities:
         parameters = self._bucket_parameters()
@@ -615,6 +635,48 @@ class S3SnapshotAdapter:
                 sanitized_code="SNAPSHOT_IDEMPOTENCY_CONFLICT",
             ) from error
         return retrieved.evidence
+
+    def reconcile_snapshot(
+        self,
+        snapshot: SnapshotEnvelope,
+    ) -> SnapshotStorageEvidence | None:
+        """Read-only reconcile the deterministic key after ambiguous success."""
+
+        assert_no_open_persistence_transaction()
+        self._validate_snapshot(snapshot, require_active_retention=False)
+        object_key = self._config.object_key(
+            snapshot.snapshot_id,
+            snapshot.scope_digest,
+            snapshot.object_suffix,
+        )
+        try:
+            head = self._head(
+                snapshot,
+                object_key,
+                version_id=None,
+                idempotent_replay=True,
+            )
+        except SnapshotIntegrityError as error:
+            if error.sanitized_code == "S3_SNAPSHOT_NOT_FOUND":
+                return None
+            raise SnapshotConflictError(
+                "deterministic object key is bound to different facts",
+                operation="HeadObject",
+                sanitized_code="SNAPSHOT_RECONCILIATION_CONFLICT",
+            ) from error
+        try:
+            return self._retrieve(
+                snapshot,
+                object_key,
+                version_id=head.version_id,
+                idempotent_replay=True,
+            ).evidence
+        except (SnapshotIntegrityError, SnapshotMalformedResponseError) as error:
+            raise SnapshotConflictError(
+                "deterministic object key is bound to different facts",
+                operation="GetObject",
+                sanitized_code="SNAPSHOT_RECONCILIATION_CONFLICT",
+            ) from error
 
     def inspect_snapshot(
         self,

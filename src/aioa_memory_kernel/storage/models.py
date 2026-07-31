@@ -417,6 +417,69 @@ class SnapshotStorageEvidence:
 
 
 @dataclass(frozen=True, slots=True)
+class SnapshotStoragePlan:
+    """Pure deterministic S3 target facts safe to persist before a write."""
+
+    snapshot_id: str
+    canonical_sha256: str
+    content_length: int
+    bucket_reference: str
+    object_key: str
+    retention_mode: S3ObjectLockMode
+    retain_until: datetime
+    plan_digest: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(
+            self,
+            "snapshot_id",
+            _text(self.snapshot_id, "snapshot_id"),
+        )
+        object.__setattr__(
+            self,
+            "canonical_sha256",
+            _digest(self.canonical_sha256, "canonical_sha256"),
+        )
+        if (
+            not isinstance(self.content_length, int)
+            or isinstance(self.content_length, bool)
+            or self.content_length < 0
+        ):
+            raise SnapshotConfigurationError(
+                "content_length must be non-negative",
+                sanitized_code="INVALID_STORAGE_PLAN",
+            )
+        for field_name, maximum in (
+            ("bucket_reference", 96),
+            ("object_key", 1024),
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _text(getattr(self, field_name), field_name, maximum),
+            )
+        if not isinstance(self.retention_mode, S3ObjectLockMode):
+            raise SnapshotConfigurationError(
+                "storage plan retention mode is unsupported",
+                sanitized_code="INVALID_STORAGE_PLAN",
+            )
+        object.__setattr__(
+            self,
+            "retain_until",
+            _timestamp(self.retain_until, "retain_until", whole_seconds=True),
+        )
+        expected = canonical_sha256(self, exclude_fields=("plan_digest",))
+        if self.plan_digest:
+            if _digest(self.plan_digest, "plan_digest") != expected:
+                raise SnapshotConfigurationError(
+                    "storage plan digest mismatch",
+                    sanitized_code="STORAGE_PLAN_DIGEST_MISMATCH",
+                )
+        else:
+            object.__setattr__(self, "plan_digest", expected)
+
+
+@dataclass(frozen=True, slots=True)
 class RetrievedSnapshot:
     """Exact retrieved bytes paired with storage-only verification evidence."""
 

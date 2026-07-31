@@ -65,13 +65,14 @@ class OfflineManifestTests(unittest.TestCase):
         result = migrations.offline_validate()
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["target_version"], "v26.2.4")
-        self.assertEqual(result["migration_count"], 6)
+        self.assertEqual(result["migration_count"], 7)
         self.assertEqual(result["step4_table_count"], 29)
-        self.assertEqual(result["schema_table_count"], 34)
-        self.assertEqual(result["protected_table_count"], 31)
-        self.assertEqual(result["identity_guard_trigger_count"], 4)
+        self.assertEqual(result["schema_table_count"], 38)
+        self.assertEqual(result["protected_table_count"], 35)
+        self.assertEqual(result["identity_guard_trigger_count"], 6)
         self.assertEqual(result["persistence_table_count"], 1)
         self.assertEqual(result["source_registry_table_count"], 3)
+        self.assertEqual(result["ingestion_saga_table_count"], 4)
 
     def test_migration_order_and_ids_are_stable(self) -> None:
         loaded = migrations.load_migrations()
@@ -86,6 +87,7 @@ class OfflineManifestTests(unittest.TestCase):
                 "0004_step5_tenant_roles_session_context_rls",
                 "0005_step6_persistence_idempotency_retry_foundation",
                 "0006_step9_source_registry_provenance_publication_states",
+                "0007_step10_idempotent_ingestion_saga",
             ],
         )
 
@@ -560,7 +562,7 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
         ):
             result = migrations.apply_migrations(client, "mp_step5_noop")
         self.assertEqual(result["applied_count"], 0)
-        self.assertEqual(result["skipped_count"], 6)
+        self.assertEqual(result["skipped_count"], 7)
         client.execute.assert_not_called()
 
     def test_applied_checksum_mismatch_fails_closed(self) -> None:
@@ -650,9 +652,10 @@ class DocumentationContractTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "Step 10: NOT STARTED",
+            "Step 10: COMPLETE AND PUSHED at actual closure commit",
             roadmap,
         )
+        self.assertIn("Step 11: NOT STARTED", roadmap)
 
     def test_documentation_states_sql_isolation_boundary_exactly(self) -> None:
         architecture = (

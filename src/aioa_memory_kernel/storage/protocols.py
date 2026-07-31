@@ -16,6 +16,7 @@ from .models import (
     RetrievedSnapshot,
     SnapshotEnvelope,
     SnapshotStorageEvidence,
+    SnapshotStoragePlan,
 )
 
 
@@ -42,6 +43,12 @@ class S3ClientProtocol(Protocol):
 
 
 class SnapshotStorageProtocol(Protocol):
+    def plan_snapshot(self, snapshot: SnapshotEnvelope) -> SnapshotStoragePlan: ...
+
+    def reconcile_snapshot(
+        self, snapshot: SnapshotEnvelope
+    ) -> SnapshotStorageEvidence | None: ...
+
     def inspect_bucket_capabilities(self) -> BucketCapabilities: ...
 
     def persist_snapshot(

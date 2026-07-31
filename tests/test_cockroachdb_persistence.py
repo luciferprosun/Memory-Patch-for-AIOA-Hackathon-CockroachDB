@@ -974,10 +974,10 @@ class PersistenceStaticValidationTests(unittest.TestCase):
             + "\n"
         ).encode()
         self.assertEqual(path.read_bytes(), canonical)
-        self.assertEqual(len(value["migrations"]), 6)
+        self.assertEqual(len(value["migrations"]), 7)
         self.assertEqual(
             value["migrations"][-1]["migration_id"],
-            "0006_step9_source_registry_provenance_publication_states",
+            "0007_step10_idempotent_ingestion_saga",
         )
 
     def test_transaction_module_has_no_external_business_imports(self) -> None:
@@ -1056,9 +1056,10 @@ class PersistenceStaticValidationTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "Step 10: NOT STARTED",
+            "Step 10: COMPLETE AND PUSHED at actual closure commit",
             roadmap,
         )
+        self.assertIn("Step 11: NOT STARTED", roadmap)
 
     def test_step6_evidence_is_canonical_sanitized_and_consistent(self) -> None:
         path = (

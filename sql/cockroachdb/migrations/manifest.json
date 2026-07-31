@@ -1,6 +1,6 @@
 {
   "cluster_role_policy": "IDEMPOTENT_CLUSTER_SCOPED_ROLE_DDL_MAY_OUTLIVE_A_FAILED_DATABASE_MIGRATION",
-  "manifest_id": "memory-patch-step9-source-registry-1a",
+  "manifest_id": "memory-patch-step10-ingestion-saga-1a",
   "migrations": [
     {
       "filename": "0001_step4_identity_and_hat_scopes.sql",
@@ -31,11 +31,16 @@
       "filename": "0006_step9_source_registry_provenance_publication_states.sql",
       "migration_id": "0006_step9_source_registry_provenance_publication_states",
       "sha256": "921f5e1bb16142c082b1e91fbbaae729af3aad6f62fd0a5a0a15cda5f3fa5347"
+    },
+    {
+      "filename": "0007_step10_idempotent_ingestion_saga.sql",
+      "migration_id": "0007_step10_idempotent_ingestion_saga",
+      "sha256": "9a2f62428d6ed088f5f282b21836d40f4ec632e989df9e3935861c2e4daec122"
     }
   ],
-  "runner_version": "4.0.0",
-  "schema_version": 4,
+  "runner_version": "5.0.0",
+  "schema_version": 5,
   "target_database": "CockroachDB",
   "target_version": "v26.2.4",
-  "transaction_policy": "STEP4_ONE_TRANSACTION_STEP5_NINE_IDEMPOTENT_DATABASE_PHASES_WITH_NONATOMIC_CLUSTER_ROLE_DDL_STEP6_ONE_TRANSACTION_STEP9_ONE_TRANSACTION"
+  "transaction_policy": "STEP4_ONE_TRANSACTION_STEP5_NINE_IDEMPOTENT_DATABASE_PHASES_WITH_NONATOMIC_CLUSTER_ROLE_DDL_STEP6_ONE_TRANSACTION_STEP9_ONE_TRANSACTION_STEP10_ONE_TRANSACTION"
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate and apply the Memory Patch CockroachDB Step 4–6 and 9 migrations.
+"""Validate and apply the Memory Patch CockroachDB Step 4–6, 9, and 10 migrations.
 
 Ordinary repository tests import this module without opening a socket or
 starting a process. Live actions require ``--allow-live`` and an exact pinned
@@ -13,6 +13,7 @@ import csv
 import hashlib
 import io
 import json
+import math
 import os
 import re
 import shutil
@@ -49,18 +50,36 @@ SOURCE_REGISTRY_MANIFEST_PATH = (
     / "source-registry"
     / "source-registry-policy-1a.json"
 )
+INGESTION_SAGA_MANIFEST_PATH = (
+    REPOSITORY_ROOT
+    / "config"
+    / "cockroachdb"
+    / "ingestion-saga-security-1a.json"
+)
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "4.0.0"
+RUNNER_VERSION = "5.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
 START_TIMEOUT_SECONDS = 45.0
-DISPOSABLE_DATABASE_PREFIXES = ("mp_step5_", "mp_step6_", "mp_step9_")
+SHUTDOWN_SCHEDULING_CUSHION_SECONDS = 15
+MIN_GRACEFUL_SHUTDOWN_SECONDS = 30
+MAX_GRACEFUL_SHUTDOWN_SECONDS = 120
+SHUTDOWN_COMMAND_CUSHION_SECONDS = 15
+DISPOSABLE_DATABASE_PREFIXES = (
+    "mp_step5_",
+    "mp_step6_",
+    "mp_step9_",
+    "mp_step10_",
+)
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+GO_DURATION_COMPONENT_PATTERN = re.compile(
+    r"(\d+(?:\.\d+)?)(ns|us|µs|ms|s|m|h)"
+)
 
 STEP4_MIGRATION_HASHES = {
     "0001_step4_identity_and_hat_scopes": (
@@ -86,6 +105,10 @@ STEP9_MIGRATION_ID = (
 )
 STEP9_MIGRATION_SHA256 = (
     "921f5e1bb16142c082b1e91fbbaae729af3aad6f62fd0a5a0a15cda5f3fa5347"
+)
+STEP10_MIGRATION_ID = "0007_step10_idempotent_ingestion_saga"
+STEP10_MIGRATION_SHA256 = (
+    "9a2f62428d6ed088f5f282b21836d40f4ec632e989df9e3935861c2e4daec122"
 )
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
 STEP5_CLUSTER_ROLE_END = "-- STEP5_CLUSTER_ROLE_DDL_END"
@@ -252,6 +275,48 @@ STEP9_FORBIDDEN_MIGRATION_PATTERNS: tuple[
     ("machine-specific path", re.compile(r"(?:/home/|/Users/|[A-Za-z]:\\\\)")),
 )
 
+STEP10_FORBIDDEN_MIGRATION_PATTERNS: tuple[
+    tuple[str, re.Pattern[str]], ...
+] = (
+    ("role creation", re.compile(r"\bCREATE\s+ROLE\b", re.IGNORECASE)),
+    (
+        "positive BYPASSRLS grant",
+        re.compile(r"(?<!NO)\bBYPASSRLS\b", re.IGNORECASE),
+    ),
+    ("cascade deletion", re.compile(r"\bON\s+DELETE\s+CASCADE\b", re.IGNORECASE)),
+    (
+        "runtime DELETE grant",
+        re.compile(
+            r"^\s*GRANT\b[^;]*\bDELETE\b",
+            re.IGNORECASE | re.DOTALL | re.MULTILINE,
+        ),
+    ),
+    (
+        "destructive data statement",
+        re.compile(r"^\s*(?:DELETE\s+FROM|TRUNCATE|DROP\s+TABLE)\b", re.MULTILINE),
+    ),
+    (
+        "retention bypass",
+        re.compile(r"\bBypassGovernanceRetention\b", re.IGNORECASE),
+    ),
+    (
+        "authority-bearing database object",
+        re.compile(
+            r"\b(?:approval_authority|commit_authority|execution_authority|"
+            r"control_write_authority)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "domain-specific ingestion rule",
+        re.compile(
+            r"\b(?:Nachweisgesetz|German\s+law|German-law|employment\s+law)\b",
+            re.IGNORECASE,
+        ),
+    ),
+    ("machine-specific path", re.compile(r"(?:/home/|/Users/|[A-Za-z]:\\\\)")),
+)
+
 SECRET_PATTERN = re.compile(
     r"(?i)(?:api[_-]?key|client[_-]?secret|password|passwd|bearer\s+|"
     r"authorization:|BEGIN\s+.*PRIVATE\s+KEY|sk-[A-Za-z0-9]|"
@@ -363,6 +428,84 @@ class SqlClient:
         return state
 
 
+def parse_go_duration_seconds(value: str) -> float:
+    """Parse the bounded non-negative Go durations used by CockroachDB."""
+
+    if not isinstance(value, str) or not value:
+        raise MigrationError("shutdown setting is not a duration")
+    units = {
+        "ns": 1e-9,
+        "us": 1e-6,
+        "µs": 1e-6,
+        "ms": 1e-3,
+        "s": 1.0,
+        "m": 60.0,
+        "h": 3600.0,
+    }
+    components = tuple(GO_DURATION_COMPONENT_PATTERN.finditer(value))
+    if (
+        not components
+        or "".join(component.group(0) for component in components) != value
+    ):
+        raise MigrationError("shutdown setting uses an unsupported duration")
+    return sum(
+        float(component.group(1)) * units[component.group(2)]
+        for component in components
+    )
+
+
+def derive_graceful_shutdown_budget(
+    settings: Mapping[str, str],
+) -> dict[str, Any]:
+    """Derive one bounded grace period from every live shutdown phase."""
+
+    if not isinstance(settings, Mapping) or not settings:
+        raise MigrationError("CockroachDB shutdown settings are unavailable")
+    normalized: dict[str, str] = {}
+    for name, value in settings.items():
+        if (
+            not isinstance(name, str)
+            or not name.startswith("server.shutdown.")
+            or not isinstance(value, str)
+        ):
+            raise MigrationError("CockroachDB shutdown settings are malformed")
+        normalized[name] = value
+    phase_total = sum(
+        parse_go_duration_seconds(value) for value in normalized.values()
+    )
+    calculated = math.ceil(phase_total) + SHUTDOWN_SCHEDULING_CUSHION_SECONDS
+    if calculated > MAX_GRACEFUL_SHUTDOWN_SECONDS:
+        raise MigrationError(
+            "derived CockroachDB shutdown bound exceeds the test-only cap"
+        )
+    grace_seconds = max(MIN_GRACEFUL_SHUTDOWN_SECONDS, calculated)
+    return {
+        "calculation": "ceil(sum(server.shutdown.*)) + scheduling cushion",
+        "grace_seconds": grace_seconds,
+        "phase_total_seconds": phase_total,
+        "scheduling_cushion_seconds": SHUTDOWN_SCHEDULING_CUSHION_SECONDS,
+        "settings": dict(sorted(normalized.items())),
+        "test_only_cap_seconds": MAX_GRACEFUL_SHUTDOWN_SECONDS,
+    }
+
+
+def read_graceful_shutdown_budget(client: SqlClient) -> dict[str, Any]:
+    """Read all pinned-server shutdown phases and derive their bound."""
+
+    raw = client.execute(
+        "defaultdb",
+        "SELECT variable, value FROM [SHOW ALL CLUSTER SETTINGS] "
+        "WHERE variable LIKE 'server.shutdown.%' ORDER BY variable",
+    )
+    rows = csv.reader(io.StringIO(raw), delimiter="\t")
+    settings = {
+        row[0]: row[1]
+        for row in rows
+        if len(row) >= 2 and row[0].startswith("server.shutdown.")
+    }
+    return derive_graceful_shutdown_budget(settings)
+
+
 @dataclass
 class LocalRuntime:
     binary: Path
@@ -442,10 +585,291 @@ class LocalRuntime:
             raise MigrationError("runtime PID file differs from owned child PID")
         return client
 
-    def stop_and_remove(self) -> dict[str, Any]:
-        errors: list[str] = []
-        panic_detected = False
+    @staticmethod
+    def _client_environment() -> dict[str, str]:
+        environment = os.environ.copy()
+        for variable in (
+            "COCKROACH_URL",
+            "COCKROACH_SQL_URL",
+            "DATABASE_URL",
+            "PGDATABASE",
+            "PGHOST",
+            "PGPASSWORD",
+            "PGPORT",
+            "PGSERVICE",
+            "PGSERVICEFILE",
+            "PGUSER",
+        ):
+            environment.pop(variable, None)
+        environment["LANG"] = "C"
+        environment["LC_ALL"] = "C"
+        return environment
+
+    def _node_identity(self) -> dict[str, str]:
+        if self.sql_port is None or self.rpc_port is None:
+            raise MigrationError("owned CockroachDB ports are unavailable")
+        result = run_process(
+            [
+                str(self.binary),
+                "node",
+                "status",
+                "--insecure",
+                f"--host=127.0.0.1:{self.sql_port}",
+                "--format=csv",
+            ],
+            timeout=30,
+            environment=self._client_environment(),
+        )
+        if result.returncode != 0:
+            raise MigrationError("owned CockroachDB node status failed")
+        rows = list(csv.DictReader(io.StringIO(result.stdout)))
+        if len(rows) != 1:
+            raise MigrationError("disposable runtime did not expose one node")
+        row = rows[0]
+        expected_rpc = f"127.0.0.1:{self.rpc_port}"
+        expected_sql = f"127.0.0.1:{self.sql_port}"
+        if (
+            not str(row.get("id", "")).isdigit()
+            or row.get("address") != expected_rpc
+            or row.get("sql_address") != expected_sql
+            or row.get("build") != PINNED_VERSION
+            or row.get("is_live") != "true"
+        ):
+            raise MigrationError("owned CockroachDB node identity differs")
+        return {
+            "node_id": str(row["id"]),
+            "rpc_binding": "127.0.0.1:<owned-rpc-port>",
+            "sql_binding": "127.0.0.1:<owned-sql-port>",
+        }
+
+    def _runtime_log_evidence(self) -> dict[str, Any]:
+        if self.runtime_dir is None:
+            return {
+                "byte_length": 0,
+                "drain_rpc_exit_observed": False,
+                "graceful_drain_request_observed": False,
+                "graceful_shutdown_completed": False,
+                "panic_detected": False,
+                "sha256": hashlib.sha256(b"").hexdigest(),
+            }
+        log_path = self.runtime_dir / "server.log"
+        if not log_path.is_file() or log_path.is_symlink():
+            return {
+                "byte_length": 0,
+                "drain_rpc_exit_observed": False,
+                "graceful_drain_request_observed": False,
+                "graceful_shutdown_completed": False,
+                "panic_detected": False,
+                "sha256": hashlib.sha256(b"").hexdigest(),
+            }
+        try:
+            payload = log_path.read_bytes()
+        except OSError as exc:
+            raise MigrationError("owned runtime log could not be inspected") from exc
+        text = payload.decode("utf-8", errors="replace")
+        return {
+            "byte_length": len(payload),
+            "drain_rpc_exit_observed": (
+                "shutdown requested by drain RPC" in text
+            ),
+            "graceful_drain_request_observed": (
+                "graceful drain request" in text
+            ),
+            "graceful_shutdown_completed": (
+                "server drained and shutdown completed" in text
+            ),
+            "panic_detected": re.search(
+                r"(?i)(?:^|\s)(?:panic:|fatal error:)",
+                text,
+            )
+            is not None,
+            "sha256": hashlib.sha256(payload).hexdigest(),
+        }
+
+    def _finalize_cleanup(
+        self,
+        errors: list[str],
+        *,
+        details: Mapping[str, Any],
+        preserve_runtime_on_failure: bool,
+    ) -> dict[str, Any]:
         pid = self.process.pid if self.process is not None else None
+        if self.log_handle is not None:
+            self.log_handle.close()
+            self.log_handle = None
+        try:
+            log_evidence = self._runtime_log_evidence()
+        except MigrationError:
+            errors.append("OWNED_RUNTIME_LOG_INSPECTION_FAILED")
+            log_evidence = {
+                "byte_length": 0,
+                "drain_rpc_exit_observed": False,
+                "graceful_drain_request_observed": False,
+                "graceful_shutdown_completed": False,
+                "panic_detected": False,
+                "sha256": hashlib.sha256(b"").hexdigest(),
+            }
+        if log_evidence["panic_detected"]:
+            errors.append("OWNED_RUNTIME_PANIC_MARKER")
+        process_exit_code = details.get("process_exit_code")
+        expected_drain_rpc_exit = bool(
+            details.get("drain_command_completed")
+            and details.get("drain_completion_marker")
+            and details.get("drain_shutdown_requested")
+            and log_evidence["graceful_shutdown_completed"]
+            and log_evidence["drain_rpc_exit_observed"]
+        )
+        process_exit_accepted = process_exit_code == 0 or (
+            process_exit_code == 1 and expected_drain_rpc_exit
+        )
+        if not process_exit_accepted:
+            errors.append("GRACEFUL_SHUTDOWN_EXIT_CODE_MISMATCH")
+        pid_exited = self.process is None or self.process.poll() is not None
+        if not pid_exited:
+            errors.append("OWNED_COCKROACH_PID_REMAINS")
+        ports_closed = all(
+            port is None or not can_connect("127.0.0.1", port)
+            for port in (self.rpc_port, self.sql_port, self.http_port)
+        )
+        if not ports_closed:
+            errors.append("OWNED_LOOPBACK_PORT_REMAINS")
+        path_removed = self.runtime_dir is None
+        should_preserve = bool(errors) and preserve_runtime_on_failure
+        if self.runtime_dir is not None and not should_preserve and pid_exited:
+            if self.runtime_dir.exists():
+                assert_owned_runtime_path(
+                    self.runtime_dir,
+                    self.runtime_parent.expanduser().resolve(),
+                )
+                shutil.rmtree(self.runtime_dir)
+            path_removed = not self.runtime_dir.exists()
+        elif self.runtime_dir is not None:
+            path_removed = not self.runtime_dir.exists()
+        if not path_removed and not should_preserve:
+            errors.append("OWNED_TEMPORARY_RUNTIME_REMAINS")
+        duration = (
+            round(time.monotonic() - self.started_at, 3)
+            if self.started_at is not None
+            else None
+        )
+        return {
+            "cleanup_errors": tuple(dict.fromkeys(errors)),
+            "force_kill_used": self.force_kill_used,
+            "owned_pid_recorded": pid is not None,
+            "panic_detected": bool(log_evidence["panic_detected"]),
+            "pid_exited": pid_exited,
+            "ports_closed": ports_closed,
+            "process_exit_accepted": process_exit_accepted,
+            "runtime_duration_seconds": duration,
+            "runtime_log_evidence": log_evidence,
+            "runtime_preserved_for_diagnostics": should_preserve,
+            "temporary_store_removed": path_removed,
+            **dict(details),
+        }
+
+    def graceful_stop_and_remove(
+        self,
+        client: SqlClient,
+        *,
+        owned_children_reaped: bool,
+    ) -> dict[str, Any]:
+        """Drain the exact owned node, then terminate its exact PID cleanly."""
+
+        errors: list[str] = []
+        details: dict[str, Any] = {
+            "drain_command_completed": False,
+            "drain_completion_marker": False,
+            "drain_output_sha256": None,
+            "drain_shutdown_requested": False,
+            "graceful_shutdown_requested": False,
+            "node_identity": None,
+            "owned_child_processes_reaped": bool(owned_children_reaped),
+            "process_exit_code": None,
+            "shutdown_budget": None,
+            "shutdown_method": "NODE_DRAIN_SELF_ON_RPC_WITH_SHUTDOWN",
+            "sigterm_sent_to_exact_pid": False,
+        }
+        if not owned_children_reaped:
+            errors.append("OWNED_SQL_CHILD_PROCESS_REMAINS")
+        grace_seconds = MAX_GRACEFUL_SHUTDOWN_SECONDS
+        try:
+            budget = read_graceful_shutdown_budget(client)
+            details["shutdown_budget"] = budget
+            grace_seconds = int(budget["grace_seconds"])
+            identity = self._node_identity()
+            details["node_identity"] = identity
+            if self.rpc_port is None:
+                raise MigrationError("owned CockroachDB RPC port is unavailable")
+            details["graceful_shutdown_requested"] = True
+            details["drain_shutdown_requested"] = True
+            started = time.monotonic()
+            drained = run_process(
+                [
+                    str(self.binary),
+                    "node",
+                    "drain",
+                    "--self",
+                    "--shutdown",
+                    "--insecure",
+                    f"--host=127.0.0.1:{self.rpc_port}",
+                    f"--drain-wait={grace_seconds}s",
+                    "--format=json",
+                ],
+                timeout=grace_seconds + SHUTDOWN_COMMAND_CUSHION_SECONDS,
+                environment=self._client_environment(),
+            )
+            combined = (drained.stdout + "\n" + drained.stderr).encode("utf-8")
+            completion_marker = (
+                "drain ok" in drained.stdout
+                and "remaining: 0 (complete)" in drained.stderr
+            )
+            details.update(
+                {
+                    "drain_command_completed": drained.returncode == 0,
+                    "drain_completion_marker": completion_marker,
+                    "drain_elapsed_seconds": round(
+                        time.monotonic() - started,
+                        3,
+                    ),
+                    "drain_output_sha256": hashlib.sha256(combined).hexdigest(),
+                }
+            )
+            if drained.returncode != 0 or not completion_marker:
+                errors.append("BOUNDED_NODE_DRAIN_FAILED")
+        except MigrationError:
+            errors.append("BOUNDED_NODE_DRAIN_FAILED")
+        if self.process is None:
+            errors.append("OWNED_COCKROACH_PID_UNAVAILABLE")
+        else:
+            if self.process.poll() is None:
+                try:
+                    self.process.wait(timeout=grace_seconds)
+                except subprocess.TimeoutExpired:
+                    errors.append("GRACEFUL_SHUTDOWN_TIMEOUT")
+                    details["sigterm_sent_to_exact_pid"] = True
+                    self.process.send_signal(signal.SIGTERM)
+                    try:
+                        self.process.wait(timeout=grace_seconds)
+                    except subprocess.TimeoutExpired:
+                        self.force_kill_used = True
+                        self.process.kill()
+                        try:
+                            self.process.wait(timeout=10)
+                        except subprocess.TimeoutExpired:
+                            errors.append("OWNED_COCKROACH_PID_REMAINS")
+            details["process_exit_code"] = self.process.returncode
+        if self.force_kill_used:
+            errors.append("DISPOSABLE_RUNTIME_FORCE_KILL_USED")
+        return self._finalize_cleanup(
+            errors,
+            details=details,
+            preserve_runtime_on_failure=True,
+        )
+
+    def stop_and_remove(self) -> dict[str, Any]:
+        """Emergency legacy cleanup for startup failure and older callers."""
+
+        errors: list[str] = []
         if self.process is not None and self.process.poll() is None:
             self.process.send_signal(signal.SIGTERM)
             try:
@@ -456,63 +880,22 @@ class LocalRuntime:
                 try:
                     self.process.wait(timeout=10)
                 except subprocess.TimeoutExpired:
-                    errors.append("owned CockroachDB PID did not exit")
-        if self.log_handle is not None:
-            self.log_handle.close()
-            self.log_handle = None
-        if self.runtime_dir is not None:
-            log_path = self.runtime_dir / "server.log"
-            if log_path.is_file():
-                try:
-                    with log_path.open(
-                        "r",
-                        encoding="utf-8",
-                        errors="replace",
-                    ) as log:
-                        panic_detected = any(
-                            re.search(
-                                r"(?i)(?:^|\s)(?:panic:|fatal error:)",
-                                line,
-                            )
-                            is not None
-                            for line in log
-                        )
-                except OSError:
-                    errors.append("owned runtime log could not be inspected")
-        if panic_detected:
-            errors.append("owned CockroachDB log contained a panic marker")
-        ports_closed = all(
-            port is None or not can_connect("127.0.0.1", port)
-            for port in (self.rpc_port, self.sql_port, self.http_port)
+                    errors.append("OWNED_COCKROACH_PID_REMAINS")
+        if self.force_kill_used:
+            errors.append("DISPOSABLE_RUNTIME_FORCE_KILL_USED")
+        return self._finalize_cleanup(
+            errors,
+            details={
+                "drain_command_completed": False,
+                "drain_completion_marker": False,
+                "drain_shutdown_requested": False,
+                "graceful_shutdown_requested": True,
+                "owned_child_processes_reaped": True,
+                "shutdown_method": "EXACT_PID_SIGTERM_EMERGENCY_FALLBACK",
+                "sigterm_sent_to_exact_pid": True,
+            },
+            preserve_runtime_on_failure=False,
         )
-        if not ports_closed:
-            errors.append("an owned loopback port remains open")
-        path_removed = self.runtime_dir is None
-        if self.runtime_dir is not None:
-            if self.runtime_dir.exists():
-                assert_owned_runtime_path(
-                    self.runtime_dir,
-                    self.runtime_parent.expanduser().resolve(),
-                )
-                shutil.rmtree(self.runtime_dir)
-            path_removed = not self.runtime_dir.exists()
-        if not path_removed:
-            errors.append("owned temporary runtime directory remains")
-        duration = (
-            round(time.monotonic() - self.started_at, 3)
-            if self.started_at is not None
-            else None
-        )
-        return {
-            "cleanup_errors": errors,
-            "force_kill_used": self.force_kill_used,
-            "panic_detected": panic_detected,
-            "pid_exited": self.process is None or self.process.poll() is not None,
-            "ports_closed": ports_closed,
-            "runtime_duration_seconds": duration,
-            "temporary_store_removed": path_removed,
-            "owned_pid_recorded": pid is not None,
-        }
 
 
 def utc_now() -> str:
@@ -679,6 +1062,56 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
             )
         ) != 3:
             raise MigrationError("Step 9 table set is not exact")
+    elif migration_id == STEP10_MIGRATION_ID:
+        forbidden_patterns = STEP10_FORBIDDEN_MIGRATION_PATTERNS
+        required_fragments = (
+            "CREATE TABLE memory_patch.ingestion_sagas",
+            "CREATE TABLE memory_patch.ingestion_saga_events",
+            "CREATE TABLE memory_patch.ingestion_external_effects",
+            "CREATE TABLE memory_patch.ingestion_orphans",
+            "guard_ingestion_saga_update",
+            "guard_ingestion_effect_receipt_update",
+            "ingestion_sagas_s10_state_guard",
+            "ingestion_external_effects_s10_receipt_guard",
+            "OWNER TO mp_schema_owner",
+            "GRANT SELECT, INSERT, UPDATE",
+            "ENABLE ROW LEVEL SECURITY",
+            "FORCE ROW LEVEL SECURITY",
+            "CREATE POLICY ingestion_sagas_s10_select",
+            "CREATE POLICY ingestion_sagas_s10_insert",
+            "CREATE POLICY ingestion_sagas_s10_update",
+            "CREATE POLICY ingestion_saga_events_s10_select",
+            "CREATE POLICY ingestion_saga_events_s10_insert",
+            "CREATE POLICY ingestion_external_effects_s10_select",
+            "CREATE POLICY ingestion_external_effects_s10_insert",
+            "CREATE POLICY ingestion_external_effects_s10_update",
+            "CREATE POLICY ingestion_orphans_s10_select",
+            "CREATE POLICY ingestion_orphans_s10_insert",
+            "TO mp_app_runtime",
+        )
+        for fragment in required_fragments:
+            if fragment not in sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required saga fragment: {fragment}"
+                )
+        if re.search(r"\bTO\s+PUBLIC\b", sql, re.IGNORECASE):
+            raise MigrationError("Step 10 policy or grant targets PUBLIC")
+        if re.search(
+            r"\bUSING\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 10 contains an allow-all RLS policy")
+        if len(
+            re.findall(
+                r"^CREATE TABLE memory_patch\.(?:ingestion_sagas|"
+                r"ingestion_saga_events|ingestion_external_effects|"
+                r"ingestion_orphans)\b",
+                sql,
+                re.MULTILINE,
+            )
+        ) != 4:
+            raise MigrationError("Step 10 table set is not exact")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -688,9 +1121,9 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 4:
-        raise MigrationError("migration manifest schema_version must be 4")
-    if manifest.get("manifest_id") != "memory-patch-step9-source-registry-1a":
+    if manifest.get("schema_version") != 5:
+        raise MigrationError("migration manifest schema_version must be 5")
+    if manifest.get("manifest_id") != "memory-patch-step10-ingestion-saga-1a":
         raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
         raise MigrationError("migration manifest runner_version mismatch")
@@ -701,7 +1134,7 @@ def load_migrations() -> list[Migration]:
     if manifest.get("transaction_policy") != (
         "STEP4_ONE_TRANSACTION_STEP5_NINE_IDEMPOTENT_DATABASE_PHASES_"
         "WITH_NONATOMIC_CLUSTER_ROLE_DDL_STEP6_ONE_TRANSACTION_"
-        "STEP9_ONE_TRANSACTION"
+        "STEP9_ONE_TRANSACTION_STEP10_ONE_TRANSACTION"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -762,6 +1195,11 @@ def load_migrations() -> list[Migration]:
             and checksum != STEP9_MIGRATION_SHA256
         ):
             raise MigrationError("Step 9 checksum differs from the audited migration")
+        if (
+            migration_id == STEP10_MIGRATION_ID
+            and checksum != STEP10_MIGRATION_SHA256
+        ):
+            raise MigrationError("Step 10 checksum differs from the audited migration")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -776,11 +1214,12 @@ def load_migrations() -> list[Migration]:
         STEP5_MIGRATION_ID,
         STEP6_MIGRATION_ID,
         STEP9_MIGRATION_ID,
+        STEP10_MIGRATION_ID,
     ]
     if identifiers != expected_identifiers:
         raise MigrationError(
             "migration chain is not the exact Step 4 -> Step 5 -> Step 6 -> "
-            "Step 9 chain"
+            "Step 9 -> Step 10 chain"
         )
     return migrations
 
@@ -1193,6 +1632,97 @@ def load_source_registry_manifest() -> dict[str, Any]:
     return manifest
 
 
+def load_ingestion_saga_manifest() -> dict[str, Any]:
+    manifest = load_json(INGESTION_SAGA_MANIFEST_PATH)
+    if manifest.get("schema_version") != 1:
+        raise MigrationError("ingestion saga manifest schema_version must be 1")
+    if (
+        manifest.get("manifest_id")
+        != "memory-patch-step10-ingestion-saga-security-1a"
+    ):
+        raise MigrationError("ingestion saga manifest identity mismatch")
+    if manifest.get("target_cockroachdb_version") != PINNED_VERSION:
+        raise MigrationError("ingestion saga manifest version pin mismatch")
+    if manifest.get("fixed_roles") != [
+        "mp_app_runtime",
+        "mp_request_context_setter",
+        "mp_schema_owner",
+        "mp_security_owner",
+    ]:
+        raise MigrationError("ingestion saga fixed role set differs")
+    if manifest.get("milestones") != [
+        "REGISTERED",
+        "ACQUIRED_LOCAL",
+        "HASH_VERIFIED",
+        "SNAPSHOT_UPLOAD_PENDING",
+        "SNAPSHOT_UPLOADED",
+        "SNAPSHOT_LOCK_VERIFIED",
+        "PARSED",
+        "VALIDATED",
+        "PUBLISHED",
+    ]:
+        raise MigrationError("ingestion milestone vocabulary differs")
+    if manifest.get("execution_dispositions") != [
+        "READY",
+        "CLAIMED",
+        "RETRY_WAIT",
+        "OPERATOR_REVIEW",
+        "QUARANTINED",
+        "COMPLETED",
+    ]:
+        raise MigrationError("ingestion disposition vocabulary differs")
+    if (
+        manifest.get("genesis_digest")
+        != "bcb38ae02e4305d0bec56081a371aeec436fec4a60e09bfbf4c7b3818f1e8b93"
+    ):
+        raise MigrationError("ingestion saga genesis digest differs")
+    tables = manifest.get("tables")
+    if not isinstance(tables, list) or [
+        row.get("table") for row in tables if isinstance(row, dict)
+    ] != [
+        "ingestion_sagas",
+        "ingestion_saga_events",
+        "ingestion_external_effects",
+        "ingestion_orphans",
+    ]:
+        raise MigrationError("ingestion saga table manifest differs")
+    expected_privileges = {
+        "ingestion_sagas": ["INSERT", "SELECT", "UPDATE"],
+        "ingestion_saga_events": ["INSERT", "SELECT"],
+        "ingestion_external_effects": ["INSERT", "SELECT", "UPDATE"],
+        "ingestion_orphans": ["INSERT", "SELECT"],
+    }
+    for row in tables:
+        name = row["table"]
+        if (
+            row.get("owner_role") != "mp_schema_owner"
+            or row.get("force_rls") is not True
+            or row.get("runtime_privileges") != expected_privileges[name]
+            or not isinstance(row.get("select_policy"), str)
+            or not isinstance(row.get("insert_policy"), str)
+            or (
+                ("UPDATE" in expected_privileges[name])
+                != isinstance(row.get("update_policy"), str)
+            )
+        ):
+            raise MigrationError(f"unsafe ingestion saga table decision: {name}")
+    triggers = manifest.get("triggers")
+    if triggers != [
+        {
+            "function": "guard_ingestion_saga_update",
+            "table": "ingestion_sagas",
+            "trigger": "ingestion_sagas_s10_state_guard",
+        },
+        {
+            "function": "guard_ingestion_effect_receipt_update",
+            "table": "ingestion_external_effects",
+            "trigger": "ingestion_external_effects_s10_receipt_guard",
+        },
+    ]:
+        raise MigrationError("ingestion saga trigger manifest differs")
+    return manifest
+
+
 def offline_validate() -> dict[str, Any]:
     pin = load_version_pin()
     migrations = load_migrations()
@@ -1200,6 +1730,7 @@ def offline_validate() -> dict[str, Any]:
     security_manifest = load_security_manifest()
     persistence_manifest = load_persistence_manifest()
     source_registry_manifest = load_source_registry_manifest()
+    ingestion_saga_manifest = load_ingestion_saga_manifest()
     step4_sql = "\n".join(
         migration.sql
         for migration in migrations
@@ -1219,6 +1750,11 @@ def offline_validate() -> dict[str, Any]:
         migration.sql
         for migration in migrations
         if migration.migration_id == STEP9_MIGRATION_ID
+    )
+    step10_sql = next(
+        migration.sql
+        for migration in migrations
+        if migration.migration_id == STEP10_MIGRATION_ID
     )
     historical_sql = step4_sql + "\n" + step5_sql
     step4_tables = sorted(
@@ -1266,12 +1802,25 @@ def offline_validate() -> dict[str, Any]:
     )
     if source_registry_tables != expected_source_registry_tables:
         raise MigrationError("source registry tables differ from migration SQL")
+    ingestion_saga_tables = sorted(
+        re.findall(
+            r"^CREATE TABLE memory_patch\.([a-z0-9_]+)",
+            step10_sql,
+            re.MULTILINE,
+        )
+    )
+    expected_ingestion_saga_tables = sorted(
+        row["table"] for row in ingestion_saga_manifest["tables"]
+    )
+    if ingestion_saga_tables != expected_ingestion_saga_tables:
+        raise MigrationError("ingestion saga tables differ from migration SQL")
     created_tables = sorted(
         [
             *step4_tables,
             *security_tables,
             *persistence_tables,
             *source_registry_tables,
+            *ingestion_saga_tables,
         ]
     )
     created_indexes = sorted(
@@ -1453,6 +2002,64 @@ def offline_validate() -> dict[str, Any]:
         re.IGNORECASE,
     ):
         raise MigrationError("Step 9 contains an allow-all policy")
+    step10_enabled = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"ENABLE ROW LEVEL SECURITY;",
+            step10_sql,
+        )
+    )
+    step10_forced = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"FORCE ROW LEVEL SECURITY;",
+            step10_sql,
+        )
+    )
+    expected_step10_protected = set(expected_ingestion_saga_tables)
+    if step10_enabled != expected_step10_protected:
+        raise MigrationError("Step 10 RLS coverage is incomplete")
+    if step10_forced != expected_step10_protected:
+        raise MigrationError("Step 10 FORCE RLS coverage is incomplete")
+    for table in ingestion_saga_manifest["tables"]:
+        for command in ("select", "insert", "update"):
+            policy = table[f"{command}_policy"]
+            if policy is None:
+                continue
+            pattern = re.compile(
+                rf"CREATE POLICY {re.escape(policy)}\s+"
+                rf"ON memory_patch\.{re.escape(table['table'])}\s+"
+                rf"FOR {command.upper()}\s+TO mp_app_runtime",
+                re.MULTILINE,
+            )
+            if pattern.search(step10_sql) is None:
+                raise MigrationError(f"Step 10 policy is missing: {policy}")
+    step10_triggers = set(
+        re.findall(
+            r"^CREATE TRIGGER ([a-z0-9_]+)",
+            step10_sql,
+            re.MULTILINE,
+        )
+    )
+    if step10_triggers != {
+        "ingestion_external_effects_s10_receipt_guard",
+        "ingestion_sagas_s10_state_guard",
+    }:
+        raise MigrationError("Step 10 trigger set differs")
+    if re.search(r"\bTO\s+PUBLIC\b", step10_sql, re.IGNORECASE):
+        raise MigrationError("Step 10 policy or grant targets PUBLIC")
+    if re.search(
+        r"\bUSING\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+        step10_sql,
+        re.IGNORECASE,
+    ):
+        raise MigrationError("Step 10 contains an allow-all policy")
+    if re.search(
+        r"^\s*(?:DELETE\s+FROM|TRUNCATE|DROP\s+TABLE)\b",
+        step10_sql,
+        re.IGNORECASE | re.MULTILINE,
+    ):
+        raise MigrationError("Step 10 contains destructive cleanup SQL")
     return {
         "migration_count": len(migrations),
         "migration_ids": [migration.migration_id for migration in migrations],
@@ -1460,13 +2067,17 @@ def offline_validate() -> dict[str, Any]:
         "security_internal_table_count": len(security_tables),
         "persistence_table_count": len(persistence_tables),
         "source_registry_table_count": len(source_registry_tables),
+        "ingestion_saga_table_count": len(ingestion_saga_tables),
         "step4_table_count": len(step4_tables),
         "protected_table_count": (
             len(protected)
             + len(persistence_tables)
             + len(source_registry_tables)
+            + len(ingestion_saga_tables)
         ),
-        "identity_guard_trigger_count": len(guard_triggers) + 2,
+        "identity_guard_trigger_count": (
+            len(guard_triggers) + 2 + len(step10_triggers)
+        ),
         "explicit_index_count": len(created_indexes) + len(persistence_indexes),
         "status": "PASS",
         "target_version": pin["exact_version"],
@@ -1490,8 +2101,8 @@ def assert_disposable_database(database: str) -> None:
     validate_database_identifier(database)
     if not database.startswith(DISPOSABLE_DATABASE_PREFIXES):
         raise MigrationError(
-            "destructive cleanup requires an mp_step5_, mp_step6_, or "
-            "mp_step9_ database"
+            "destructive cleanup requires an mp_step5_, mp_step6_, mp_step9_, "
+            "or mp_step10_ database"
         )
 
 
@@ -2214,6 +2825,142 @@ def assert_step9_security_catalog(
     }
 
 
+def assert_step10_security_catalog(
+    client: SqlClient,
+    database: str,
+) -> dict[str, Any]:
+    manifest = load_ingestion_saga_manifest()
+    table_names = [row["table"] for row in manifest["tables"]]
+    quoted_tables = ", ".join(sql_literal(name) for name in table_names)
+    table_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT c.relname AS table_name, c.relrowsecurity, "
+            "c.relforcerowsecurity, owner.rolname AS owner_role "
+            "FROM pg_catalog.pg_class AS c "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = c.relnamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = c.relowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            f"AND c.relname IN ({quoted_tables}) "
+            "AND c.relkind = 'r' ORDER BY c.relname",
+        )
+    )
+    expected_tables = [
+        {
+            "table_name": name,
+            "relrowsecurity": "t",
+            "relforcerowsecurity": "t",
+            "owner_role": "mp_schema_owner",
+        }
+        for name in sorted(table_names)
+    ]
+    if table_rows != expected_tables:
+        raise MigrationError("Step 10 table ownership or RLS state differs")
+    policy_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT tablename, policyname, cmd, roles, qual, with_check "
+            "FROM pg_catalog.pg_policies "
+            "WHERE schemaname = 'memory_patch' "
+            f"AND tablename IN ({quoted_tables}) "
+            "ORDER BY tablename, policyname",
+        )
+    )
+    expected_policies = {
+        (row["table"], row[f"{command}_policy"], command.upper())
+        for row in manifest["tables"]
+        for command in ("select", "insert", "update")
+        if row[f"{command}_policy"] is not None
+    }
+    actual_policies = {
+        (row["tablename"], row["policyname"], row["cmd"].upper())
+        for row in policy_rows
+    }
+    if actual_policies != expected_policies:
+        raise MigrationError("Step 10 live policy set differs from manifest")
+    for row in policy_rows:
+        if "mp_app_runtime" not in row["roles"]:
+            raise MigrationError("Step 10 policy lacks runtime role")
+        command = row["cmd"].upper()
+        if command == "SELECT" and not row["qual"]:
+            raise MigrationError("Step 10 SELECT policy lacks USING")
+        if command == "INSERT" and not row["with_check"]:
+            raise MigrationError("Step 10 INSERT policy lacks WITH CHECK")
+        if command == "UPDATE" and (
+            not row["qual"] or not row["with_check"]
+        ):
+            raise MigrationError("Step 10 UPDATE policy is incomplete")
+    grant_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT table_name, privilege_type "
+            "FROM information_schema.table_privileges "
+            "WHERE table_schema = 'memory_patch' "
+            "AND grantee = 'mp_app_runtime' "
+            f"AND table_name IN ({quoted_tables}) "
+            "ORDER BY table_name, privilege_type",
+        )
+    )
+    expected_grants = sorted(
+        (row["table"], privilege)
+        for row in manifest["tables"]
+        for privilege in row["runtime_privileges"]
+    )
+    actual_grants = [
+        (row["table_name"], row["privilege_type"]) for row in grant_rows
+    ]
+    if actual_grants != expected_grants:
+        raise MigrationError("Step 10 runtime grants are not least privilege")
+    trigger_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT trigger.tgname AS trigger_name, "
+            "target.relname AS table_name, "
+            "procedure.proname AS function_name "
+            "FROM pg_catalog.pg_trigger AS trigger "
+            "JOIN pg_catalog.pg_class AS target "
+            "ON target.oid = trigger.tgrelid "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = target.relnamespace "
+            "JOIN pg_catalog.pg_proc AS procedure "
+            "ON procedure.oid = trigger.tgfoid "
+            "WHERE namespace.nspname = 'memory_patch' "
+            f"AND target.relname IN ({quoted_tables}) "
+            "AND NOT trigger.tgisinternal "
+            "ORDER BY trigger.tgname",
+        )
+    )
+    expected_triggers = sorted(
+        (
+            {
+                "trigger_name": row["trigger"],
+                "table_name": row["table"],
+                "function_name": row["function"],
+            }
+            for row in manifest["triggers"]
+        ),
+        key=lambda row: row["trigger_name"],
+    )
+    if trigger_rows != expected_triggers:
+        raise MigrationError("Step 10 consistency triggers differ")
+    digest_input = {
+        "grants": grant_rows,
+        "policies": policy_rows,
+        "tables": table_rows,
+        "triggers": trigger_rows,
+    }
+    return {
+        "policy_count": len(policy_rows),
+        "protected_table_count": len(table_rows),
+        "runtime_table_grant_count": len(grant_rows),
+        "security_digest": hashlib.sha256(
+            canonical_json_bytes(digest_input)
+        ).hexdigest(),
+        "trigger_count": len(trigger_rows),
+    }
+
+
 def apply_migrations(
     client: SqlClient,
     database: str,
@@ -2279,6 +3026,14 @@ def apply_migrations(
                 timeout=timeout,
             )
             assert_step9_security_catalog(client, database)
+            database_sql = ""
+        elif migration.migration_id == STEP10_MIGRATION_ID:
+            client.execute(
+                database,
+                "BEGIN;\n" + database_sql + "\nCOMMIT;",
+                timeout=timeout,
+            )
+            assert_step10_security_catalog(client, database)
             database_sql = ""
         migration_record_sql = (
             "INSERT INTO memory_patch.schema_migrations "
@@ -2374,6 +3129,7 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
     security_manifest = load_security_manifest()
     persistence_manifest = load_persistence_manifest()
     source_registry_manifest = load_source_registry_manifest()
+    ingestion_saga_manifest = load_ingestion_saga_manifest()
     expected_tables = sorted(
         [
             *schema_manifest["required_tables"],
@@ -2383,6 +3139,7 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
             ],
             *[row["table"] for row in persistence_manifest["tables"]],
             *[row["table"] for row in source_registry_manifest["tables"]],
+            *[row["table"] for row in ingestion_saga_manifest["tables"]],
         ]
     )
     if catalog["tables"] != expected_tables:
@@ -2395,9 +3152,14 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
         "persistence_operations_private_idempotency_uq",
         "persistence_operations_shared_idempotency_uq",
     }
+    required_ingestion_indexes = {
+        "ingestion_sagas_private_idempotency_uq",
+        "ingestion_sagas_shared_idempotency_uq",
+    }
     missing_indexes = (
         set(schema_manifest["explicit_indexes"])
         | required_persistence_indexes
+        | required_ingestion_indexes
     ) - indexes
     if missing_indexes:
         raise MigrationError(f"live catalog lacks indexes: {sorted(missing_indexes)}")
@@ -2869,11 +3631,16 @@ def drop_database(
         raise MigrationError(f"disposable database survived cleanup: {database}")
 
 
-def run_live_validation(binary: Path) -> dict[str, Any]:
+def run_live_validation(
+    binary: Path,
+    *,
+    timeout: float = DEFAULT_TIMEOUT_SECONDS,
+) -> dict[str, Any]:
+    validate_timeout(timeout)
     offline = offline_validate()
     migration_count = offline["migration_count"]
     binary_identity = verify_binary_identity(binary)
-    run_id = "mp_step9_" + uuid.uuid4().hex[:12]
+    run_id = "mp_step10_" + uuid.uuid4().hex[:12]
     database_a = run_id + "_a"
     database_b = run_id + "_b"
     runtime = LocalRuntime(binary=binary, run_id=run_id)
@@ -2895,9 +3662,13 @@ def run_live_validation(binary: Path) -> dict[str, Any]:
         for database in (database_a, database_b):
             create_database(client, database)
             created_databases.append(database)
-        first_apply = apply_migrations(client, database_a)
-        second_apply = apply_migrations(client, database_a)
-        reproduction_apply = apply_migrations(client, database_b)
+        first_apply = apply_migrations(client, database_a, timeout=timeout)
+        second_apply = apply_migrations(client, database_a, timeout=timeout)
+        reproduction_apply = apply_migrations(
+            client,
+            database_b,
+            timeout=timeout,
+        )
         if first_apply["applied_count"] != migration_count:
             raise MigrationError("fresh database did not apply all migrations")
         if (
@@ -2921,6 +3692,13 @@ def run_live_validation(binary: Path) -> dict[str, Any]:
             != step9_security_b["security_digest"]
         ):
             raise MigrationError("Step 9 security reproduction digest differs")
+        step10_security_a = assert_step10_security_catalog(client, database_a)
+        step10_security_b = assert_step10_security_catalog(client, database_b)
+        if (
+            step10_security_a["security_digest"]
+            != step10_security_b["security_digest"]
+        ):
+            raise MigrationError("Step 10 security reproduction digest differs")
         if len(applied_migrations(client, database_a)) != migration_count:
             raise MigrationError("invalid data probes changed migration bookkeeping")
         live_result = {
@@ -2943,16 +3721,26 @@ def run_live_validation(binary: Path) -> dict[str, Any]:
             },
             "server_version": server_version.splitlines()[0],
             "step9_security": step9_security_a,
+            "step10_security": step10_security_a,
             "status": "PASS",
         }
     finally:
         if client is not None:
             for database in reversed(created_databases):
                 try:
-                    drop_database(client, database)
+                    drop_database(client, database, timeout=timeout)
                 except MigrationError as exc:
                     cleanup_errors.append(str(exc))
-        cleanup = runtime.stop_and_remove()
+        cleanup = (
+            runtime.graceful_stop_and_remove(
+                client,
+                owned_children_reaped=True,
+            )
+            if client is not None
+            and runtime.process is not None
+            and runtime.process.poll() is None
+            else runtime.stop_and_remove()
+        )
         cleanup_errors.extend(cleanup["cleanup_errors"])
     if cleanup_errors:
         raise MigrationError(f"cleanup failed: {cleanup_errors}")
@@ -2961,10 +3749,23 @@ def run_live_validation(binary: Path) -> dict[str, Any]:
     live_result["cleanup"] = {
         "databases_removed": len(created_databases) == 2,
         "force_kill_used": cleanup["force_kill_used"],
+        "drain_command_completed": cleanup["drain_command_completed"],
+        "drain_completion_marker": cleanup["drain_completion_marker"],
+        "drain_shutdown_requested": cleanup["drain_shutdown_requested"],
+        "graceful_shutdown_requested": cleanup[
+            "graceful_shutdown_requested"
+        ],
         "no_password_credentials_created": True,
+        "owned_child_processes_reaped": cleanup[
+            "owned_child_processes_reaped"
+        ],
         "owned_pid_exited": cleanup["pid_exited"],
         "ports_closed": cleanup["ports_closed"],
+        "process_exit_accepted": cleanup["process_exit_accepted"],
+        "process_exit_code": cleanup["process_exit_code"],
         "runtime_duration_seconds": cleanup["runtime_duration_seconds"],
+        "shutdown_budget": cleanup.get("shutdown_budget"),
+        "shutdown_method": cleanup["shutdown_method"],
         "temporary_store_removed": cleanup["temporary_store_removed"],
     }
     live_result["generated_at_utc"] = utc_now()
@@ -3000,7 +3801,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             binary = args.cockroach_binary.expanduser().resolve()
             verify_binary_identity(binary)
             if args.live_test:
-                result = run_live_validation(binary)
+                result = run_live_validation(binary, timeout=args.timeout)
             else:
                 if args.database is None or args.port is None:
                     raise MigrationError("--database and --port are required")

@@ -932,7 +932,12 @@ class ScopeAndClosureTests(unittest.TestCase):
         manifest = json.loads(
             (SQL_ROOT / "manifest.json").read_text(encoding="utf-8")
         )
-        final = manifest["migrations"][-1]
+        final = next(
+            row
+            for row in manifest["migrations"]
+            if row["migration_id"]
+            == "0006_step9_source_registry_provenance_publication_states"
+        )
         self.assertEqual(
             final["migration_id"],
             "0006_step9_source_registry_provenance_publication_states",
@@ -959,7 +964,7 @@ class ScopeAndClosureTests(unittest.TestCase):
         ):
             result = module.apply_migrations(client, "mp_step9_noop")
         self.assertEqual(result["applied_count"], 0)
-        self.assertEqual(result["skipped_count"], 6)
+        self.assertEqual(result["skipped_count"], 7)
         client.execute.assert_not_called()
 
     def test_60_two_database_reproduction_is_required_by_harness(self) -> None:

@@ -1,0 +1,64 @@
+{
+  "approved_live_command": {
+    "exit_code": 1,
+    "plan_digest": "db000d17600624d15401ed55f6f0b7a845b5c1fadb3d7318373863fa0accfc5e",
+    "sanitized_error": "STEP10_VALIDATION_FAILED"
+  },
+  "cleanup": {
+    "force_kill_used": true,
+    "persistent_database_created": false,
+    "persistent_service_created": false,
+    "ports_closed": true,
+    "runtime_pid_exited": true,
+    "temporary_directory_removed": true
+  },
+  "diagnostic_recovery": {
+    "cockroachdb_writes": "DISPOSABLE_IN_MEMORY_ONLY",
+    "external_volume_write_calls": 0,
+    "full_saga_checks_before_cleanup": "PASS",
+    "result": "CLEANUP_POLICY_FAILURE_REPRODUCED",
+    "s3_put_object_calls": 0
+  },
+  "evidence_digest": "78a7cfd94c41a40726f9c4bde5f6f6c441615acba384acebab825b5651ff5de4",
+  "external_volume_artifact": {
+    "canonical_sha256": "61088c464f21622d0dccd28d41e6f041c9bf7abf165542262c9ea7f8d51241ca",
+    "content_length": 92,
+    "device_reference": "external-volume-sha256:1bb3c26846f6aca5196a2980679f50fa8e1c241225c0e25971efcc998ecd102b",
+    "exact_read_back": true,
+    "relative_path": "ingestion/downloads/step10-validation-s3snap-96865bf2b400b16b5be6ba332d965168626dcf958c3ca494a1fb89c47be492c4.json"
+  },
+  "first_root_cause": {
+    "code": "DISPOSABLE_RUNTIME_FORCE_KILL_USED",
+    "detail": "CockroachDB did not exit within the bounded 20-second graceful wait; exact-PID force kill completed cleanup but violates the Step 10 no-force-kill closure invariant.",
+    "secondary_diagnostic_defect": "The post-validation cleanup invariant is raised after the failure-evidence branch, so the canonical failure evidence file was not produced."
+  },
+  "observed_at": "2026-07-31T09:23:17Z",
+  "preservation": {
+    "existing_data_deleted": false,
+    "existing_data_overwritten": false,
+    "external_artifact_deleted": false,
+    "retention_bypass_used": false,
+    "s3_version_deleted": false,
+    "step10_owned_readback_preserved": true
+  },
+  "repository": {
+    "commit_created": false,
+    "head": "e93536626c105f5186ce7e2c89a419f5bf6c4b83",
+    "push_performed": false
+  },
+  "s3_artifact": {
+    "canonical_sha256": "61088c464f21622d0dccd28d41e6f041c9bf7abf165542262c9ea7f8d51241ca",
+    "content_length": 92,
+    "delete_marker_count": 0,
+    "exact_read_back": true,
+    "metadata_verified": true,
+    "object_key": "memory-patch/snapshots/v1/global/v1/a4/a41db356e0513b9529a04460b47097fdce17f13cc6fd5ee96064c0effec7f629/s3snap-96865bf2b400b16b5be6ba332d965168626dcf958c3ca494a1fb89c47be492c4.bin",
+    "object_lock_mode": "GOVERNANCE",
+    "retain_until": "2026-08-30T07:39:23Z",
+    "version_count": 1,
+    "version_id": "kfDFfBsGlAR_KoQxDodzESlhebuYpAMx"
+  },
+  "schema_version": "1.0.0",
+  "status": "FAILED_VALIDATION_NOT_COMMITTED",
+  "step": "Step 10 - Idempotent S3-CockroachDB Ingestion Saga 1A"
+}
