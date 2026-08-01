@@ -416,6 +416,7 @@ class ExternalVolumeOperation(StableStringEnum):
     """Bounded derived-data operations permitted by the Step 8 adapter."""
 
     CORPUS_REPLICA = "CORPUS_REPLICA"
+    CORPUS_MANIFEST = "CORPUS_MANIFEST"
     EMBEDDING_CACHE = "EMBEDDING_CACHE"
     INDEX_CACHE = "INDEX_CACHE"
     INGESTION_STAGING = "INGESTION_STAGING"
@@ -440,6 +441,12 @@ _OPERATION_POLICIES = {
     ExternalVolumeOperation.CORPUS_REPLICA: ExternalVolumeOperationPolicy(
         ExternalVolumeOperation.CORPUS_REPLICA,
         "corpora/raw",
+        ExternalVolumeFailurePolicy.FAIL_CLOSED,
+        True,
+    ),
+    ExternalVolumeOperation.CORPUS_MANIFEST: ExternalVolumeOperationPolicy(
+        ExternalVolumeOperation.CORPUS_MANIFEST,
+        "corpora/manifests",
         ExternalVolumeFailurePolicy.FAIL_CLOSED,
         True,
     ),

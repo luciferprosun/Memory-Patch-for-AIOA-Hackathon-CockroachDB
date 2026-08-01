@@ -50,7 +50,12 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   commit once it is reachable on `origin/main`.
 - `Step 12: COMPLETE AND PUSHED at actual closure commit`.
 - `Step 13: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 14: NOT STARTED`. Step 14 remains the next unopened production step.
+- `Step 14: COMPLETE AND PUSHED at actual closure commit`.
+  The deterministic bounded inventory, exact and review-only deduplication,
+  license/privacy/quarantine classification, external canonical bundle, and
+  zero-publication Step 9 registration validation are closed by the intended
+  Step 14 commit once it is reachable on `origin/main`.
+- `Step 15: NOT STARTED`. Step 15 remains the next unopened production step.
 
 ## Zasada prowadzenia prac
 
@@ -262,8 +267,18 @@ Zaimplementować neutralną platformę HAT-ów, a następnie podłączyć pełn�
   [live evidence](../evidence/hats/step13-german-law-hat-policy-validation.json),
   [rekord zamknięcia](../audits/STEP_13_GERMAN_LAW_HAT_SOURCE_AUTHORITY_CLOSURE_1A.md).
 
-- [ ] **Step 14 — German Law Corpus Inventory, Deduplication and Source Registration 1A**
+- [x] **Step 14 — German Law Corpus Inventory, Deduplication and Source Registration 1A**
   Pełna inwentaryzacja posiadanej biblioteki, hashe, duplikaty, near-duplicates, źródła urzędowe, prywatność, licensing, quarantine i mapping do source registry.
+  `Step 14: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie: 19,391 stabilnych plików i 1,963,389,627 bajtów odczytanych
+  strumieniowo bez mutacji źródła; 28 grup exact-duplicate, 24 kandydatów
+  near-duplicate, 6,124 deterministyczne kandydaty rejestracji, zewnętrzny
+  canonical bundle, exact replay/conflict/isolation PASS i zero publikacji.
+  [Architektura](../architecture/GERMAN_LAW_CORPUS_INVENTORY_DEDUP_SOURCE_REGISTRATION_1A.md),
+  [ADR-021](../adr/ADR-021-german-law-corpus-inventory-dedup-source-registration.md),
+  [runbook](../operations/STEP_14_GERMAN_LAW_CORPUS_INVENTORY_VALIDATION_1A.md),
+  [live evidence](../evidence/corpus/step14-german-law-corpus-inventory-summary.json),
+  [rekord zamknięcia](../audits/STEP_14_GERMAN_LAW_CORPUS_INVENTORY_DEDUP_SOURCE_REGISTRATION_CLOSURE_1A.md).
 
 - [ ] **Step 15 — German Law Temporal and Jurisdictional Normalization 1A**
   `published_at`, `effective_from`, `effective_to`, `retrieved_at`, `ingested_at`, `superseded_at`, `verified_at`, zakres jurysdykcji, wersje i konflikty.

@@ -86,7 +86,12 @@ At roadmap adoption and in subsequent audited closure records:
   authority and temporal policy, fixed metadata adapters, and controlled
   disposable validation are complete in its intended closure commit. It is
   completion evidence only after that commit is reachable on `origin/main`.
-- `Step 14: NOT STARTED`. Step 13 completion does not authorize or start it.
+- Step 14 bounded corpus inventory, non-destructive duplicate evidence,
+  license/privacy/quarantine classification, external canonical bundle, and
+  idempotent zero-publication Step 9 registration validation are complete in
+  its intended closure commit. It is completion evidence only after that
+  commit is reachable on `origin/main`.
+- `Step 15: NOT STARTED`. Step 14 completion does not authorize or start it.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

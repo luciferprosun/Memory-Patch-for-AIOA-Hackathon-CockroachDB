@@ -83,6 +83,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step11_",
     "mp_step12_",
     "mp_step13_",
+    "mp_step14_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
@@ -2371,8 +2372,8 @@ def assert_disposable_database(database: str) -> None:
     validate_database_identifier(database)
     if not database.startswith(DISPOSABLE_DATABASE_PREFIXES):
         raise MigrationError(
-            "destructive cleanup requires an mp_step5_, mp_step6_, mp_step9_, "
-            "or mp_step10_ database"
+            "destructive cleanup requires an approved disposable validation "
+            "database prefix"
         )
 
 
