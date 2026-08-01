@@ -118,6 +118,7 @@ def validate(binary: Path) -> dict:
         if (
             enabled_count != "1"
             or registered is not replayed
+            or ranked.index("promulgation") >= ranked.index("court")
             or ranked.index("promulgation") >= ranked.index("consolidation")
         ):
             raise RuntimeError("controlled registry or authority validation mismatch")

@@ -103,6 +103,23 @@ def assess_source(metadata: GermanLawSourceMetadata, request: GermanLawRequest) 
         reasons.append("DECISION_PRIMARY_ONLY_FOR_IDENTIFIED_CASE")
         if metadata.court_identity is None:
             limitations.append("COURT_IDENTITY_MISSING")
+        court_scope_hints = tuple(
+            hint
+            for hint in (request.court_or_proceeding_hint, request.official_identifier_hint)
+            if hint is not None
+        )
+        if not court_scope_hints:
+            limitations.append("COURT_OR_PROCEEDING_SCOPE_UNBOUND")
+        else:
+            exact_scope_identities = {
+                identity
+                for identity in (metadata.court_identity, metadata.canonical_official_identifier)
+                if identity is not None
+            }
+            if not any(hint in exact_scope_identities for hint in court_scope_hints):
+                limitations.append("COURT_OR_PROCEEDING_SCOPE_MISMATCH")
+            else:
+                reasons.append("COURT_OR_PROCEEDING_SCOPE_BOUND")
     if temporal.decision is not TemporalDecision.APPLICABLE:
         limitations.append("TEMPORAL_APPLICABILITY_UNRESOLVED")
     return GermanLawSourceAuthorityAssessment(metadata.source_id, authority, metadata.source_class, metadata.authenticity_status, metadata.verification_status, GERMAN_LAW_POLICY_VERSION, tuple(reasons), tuple(limitations), temporal.assessment_digest)

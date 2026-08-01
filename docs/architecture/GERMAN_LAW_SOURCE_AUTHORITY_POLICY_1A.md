@@ -13,7 +13,11 @@ jurisdiction, verification, or temporal facts remain explicit limitations.
 - Official consolidations are `AUTHORITATIVE_SECONDARY`; they may be useful
   for current wording but are not authentic promulgation.
 - An official court decision is primary evidence of that identified decision,
-  not universal authority for arbitrary propositions.
+  not universal authority for arbitrary propositions. A decision is treated as
+  scope-bound only when the request's explicit court/proceeding or official
+  identifier exactly matches the typed decision metadata. Missing or mismatched
+  scope is an unresolved limitation and cannot win a generic primary-source
+  ranking merely through identifier ordering.
 - Legislative materials document procedure and history, not enacted law.
 - Administrative guidance is agency interpretation, not a replacement for
   legislation or controlling judgments.

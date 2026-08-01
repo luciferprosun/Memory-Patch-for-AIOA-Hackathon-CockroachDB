@@ -179,7 +179,21 @@ class SourceAuthorityTests(unittest.TestCase):
 
     def test_court_decision_case_specific(self):
         value=metadata(GermanLegalSourceClass.DE_FEDERAL_OFFICIAL_COURT_DECISION,official_publisher="Bundesverfassungsgericht",court_identity="BVerfG",court_level="federal-supreme")
-        self.assertIn("DECISION_PRIMARY_ONLY_FOR_IDENTIFIED_CASE",assess_source(value,request()).reason_codes)
+        result=assess_source(value,request())
+        self.assertIn("DECISION_PRIMARY_ONLY_FOR_IDENTIFIED_CASE",result.reason_codes)
+        self.assertIn("COURT_OR_PROCEEDING_SCOPE_UNBOUND",result.unresolved_limitations)
+
+    def test_court_decision_exact_scope_binding(self):
+        value=metadata(GermanLegalSourceClass.DE_FEDERAL_OFFICIAL_COURT_DECISION,official_publisher="Bundesverfassungsgericht",court_identity="BVerfG",court_level="federal-supreme")
+        result=assess_source(value,request(court_or_proceeding_hint="BVerfG"))
+        self.assertIn("COURT_OR_PROCEEDING_SCOPE_BOUND",result.reason_codes)
+        self.assertNotIn("COURT_OR_PROCEEDING_SCOPE_UNBOUND",result.unresolved_limitations)
+        self.assertNotIn("COURT_OR_PROCEEDING_SCOPE_MISMATCH",result.unresolved_limitations)
+
+    def test_court_decision_scope_mismatch_fails_closed(self):
+        value=metadata(GermanLegalSourceClass.DE_FEDERAL_OFFICIAL_COURT_DECISION,official_publisher="Bundesverfassungsgericht",court_identity="BVerfG",court_level="federal-supreme")
+        result=assess_source(value,request(court_or_proceeding_hint="BAG"))
+        self.assertIn("COURT_OR_PROCEEDING_SCOPE_MISMATCH",result.unresolved_limitations)
 
     def test_legislative_material_not_enacted(self):
         value=metadata(GermanLegalSourceClass.OFFICIAL_LEGISLATIVE_MATERIAL,official_publisher="Deutscher Bundestag",authenticity_status=AuthenticityStatus.OFFICIAL_NON_AUTHENTIC,verification_status=VerificationStatus.OFFICIAL_REFERENCE_VERIFIED)
@@ -260,6 +274,12 @@ class TemporalAdapterRuntimeTests(unittest.TestCase):
         authentic=metadata(source_id="authentic")
         consolidated=metadata(GermanLegalSourceClass.DE_FEDERAL_OFFICIAL_CONSOLIDATED_LAW,source_id="consolidated",authenticity_status=AuthenticityStatus.OFFICIAL_NON_AUTHENTIC,consolidation_status=ConsolidationStatus.OFFICIAL_CONSOLIDATED,verification_status=VerificationStatus.OFFICIAL_REFERENCE_VERIFIED)
         self.assertEqual(hat.rank_source_authority(({"request":req,"metadata":mapping(consolidated)},{"request":req,"metadata":mapping(authentic)})),("authentic","consolidated"))
+
+    def test_generic_ranking_does_not_promote_unbound_court_decision(self):
+        hat=GermanLawHat(IDENTITY.manifest); req=request_mapping(request())
+        authentic=metadata(source_id="promulgation")
+        court=metadata(GermanLegalSourceClass.DE_FEDERAL_OFFICIAL_COURT_DECISION,source_id="court",official_publisher="Bundesverfassungsgericht",court_identity="BVerfG",court_level="federal-supreme",authenticity_status=AuthenticityStatus.OFFICIAL_NON_AUTHENTIC)
+        self.assertEqual(hat.rank_source_authority(({"request":req,"metadata":mapping(court)},{"request":req,"metadata":mapping(authentic)})),("promulgation","court"))
 
     def test_no_import_time_or_runtime_external_capability(self):
         source=(REPOSITORY_ROOT/"src/aioa_memory_kernel/german_law/hat.py").read_text()
