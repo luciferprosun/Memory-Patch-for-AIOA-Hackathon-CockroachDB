@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest import mock
 
 from aioa_memory_kernel.acquisition import AcquisitionPolicy, SourceStatus
 from aioa_memory_kernel.contracts.serialization import (
@@ -127,10 +128,37 @@ class AcquisitionRunnerTests(unittest.TestCase):
         for path in ("README.md", "src/unrelated.py", "tests/test_other.py"):
             self.assertFalse(runner._dirty_path_allowed(path))
 
-    def test_live_repository_guard_accepts_only_the_intended_dirty_scope(self) -> None:
-        state = runner._repository_guard()
-        self.assertEqual(state["repository_head"], runner.EXPECTED_BASELINE)
-        self.assertEqual(state["origin_main"], runner.EXPECTED_BASELINE)
+    def test_repository_guard_accepts_synchronized_descendant_with_intended_dirty_scope(self) -> None:
+        head = "a" * 40
+        dirty_path = "src/aioa_memory_kernel/acquisition/http.py"
+        responses = {
+            ("rev-parse", "--show-toplevel"): f"{runner.REPOSITORY_ROOT}\n",
+            ("remote", "get-url", "origin"): f"{runner.EXPECTED_REMOTE}\n",
+            ("branch", "--show-current"): f"{runner.EXPECTED_BRANCH}\n",
+            ("fetch", "origin", "--prune"): "",
+            ("rev-parse", "HEAD"): f"{head}\n",
+            ("rev-parse", "origin/main"): f"{head}\n",
+            ("merge-base", "--is-ancestor", runner.EXPECTED_BASELINE, head): "",
+            ("rev-list", "--left-right", "--count", "origin/main...HEAD"): "0\t0\n",
+            ("ls-files", "-u"): "",
+            ("rev-parse", "--git-dir"): ".git\n",
+            ("worktree", "list", "--porcelain"): f"worktree {runner.REPOSITORY_ROOT}\n",
+            ("diff", "--name-only", "-z", "HEAD", "--"): f"{dirty_path}\0",
+            ("ls-files", "--others", "--exclude-standard", "-z"): "",
+        }
+        record = {
+            "relative_path": dirty_path,
+            "byte_length": 7,
+            "sha256": "b" * 64,
+        }
+        with mock.patch.object(
+            runner,
+            "_git",
+            side_effect=lambda arguments: responses[tuple(arguments)],
+        ), mock.patch.object(runner, "_worktree_records", return_value=[record]):
+            state = runner._repository_guard()
+        self.assertEqual(state["repository_head"], head)
+        self.assertEqual(state["origin_main"], head)
         self.assertTrue(state["dirty_paths"])
         self.assertRegex(str(state["worktree_digest"]), r"^[0-9a-f]{64}$")
 

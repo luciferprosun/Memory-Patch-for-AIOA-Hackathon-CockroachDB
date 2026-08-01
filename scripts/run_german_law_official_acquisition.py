@@ -206,8 +206,9 @@ def _repository_guard() -> dict[str, object]:
     _git(("fetch", "origin", "--prune"))
     head = _git(("rev-parse", "HEAD")).strip()
     origin_main = _git(("rev-parse", "origin/main")).strip()
-    if head != EXPECTED_BASELINE or origin_main != EXPECTED_BASELINE:
+    if head != origin_main:
         raise OfficialAcquisitionScriptError("REPOSITORY_BASELINE_MISMATCH")
+    _git(("merge-base", "--is-ancestor", EXPECTED_BASELINE, head))
     if _git(("rev-list", "--left-right", "--count", "origin/main...HEAD")).split() != [
         "0",
         "0",
