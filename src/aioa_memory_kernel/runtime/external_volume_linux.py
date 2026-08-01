@@ -33,6 +33,8 @@ def _nested_block_devices(devices: object) -> list[Mapping[str, Any]]:
 class LinuxExternalVolumeProbe:
     """Read Linux mount and block-device identity without a shell."""
 
+    _LSBLK_COLUMNS = "PATH,KNAME,PKNAME,TYPE,TRAN,UUID,LABEL,RO"
+
     @staticmethod
     def _json_command(
         arguments: list[str],
@@ -73,6 +75,132 @@ class LinuxExternalVolumeProbe:
                 sanitized_code=failure_code,
             )
         return payload
+
+    @classmethod
+    def _resolved_transport(
+        cls,
+        selected: Mapping[str, Any],
+    ) -> str:
+        """Resolve transport from one exact partition and, only when needed,
+        its one exact block parent.
+
+        Linux commonly leaves ``TRAN`` empty on a partition while reporting
+        it on the parent disk.  The fallback is intentionally USB-only and
+        fails closed for every missing, ambiguous, or mismatched relationship.
+        """
+
+        transport = selected.get("tran")
+        if isinstance(transport, str) and transport:
+            return transport
+        if transport not in (None, ""):
+            raise ExternalVolumeIdentityError(
+                "partition transport identity is malformed",
+                sanitized_code="MALFORMED_BLOCK_DEVICE_IDENTITY",
+            )
+        if selected.get("type") != "part":
+            raise ExternalVolumeIdentityError(
+                "transport-less block device has no supported parent relationship",
+                sanitized_code="BLOCK_DEVICE_PARENT_MISSING",
+            )
+        parent_path = selected.get("pkname")
+        if (
+            not isinstance(parent_path, str)
+            or not parent_path.startswith("/dev/")
+            or parent_path == selected.get("path")
+        ):
+            raise ExternalVolumeIdentityError(
+                "partition parent identity is missing",
+                sanitized_code="BLOCK_DEVICE_PARENT_MISSING",
+            )
+        parent_payload = cls._json_command(
+            [
+                "lsblk",
+                "--json",
+                "--bytes",
+                "--paths",
+                "--output",
+                cls._LSBLK_COLUMNS,
+                parent_path,
+            ],
+            "BLOCK_DEVICE_PARENT_PROBE_FAILED",
+        )
+        parent_devices = _nested_block_devices(
+            parent_payload.get("blockdevices")
+        )
+        parents = [
+            item
+            for item in parent_devices
+            if item.get("path") == parent_path
+        ]
+        if not parents:
+            raise ExternalVolumeIdentityError(
+                "partition parent is absent from block-device identity",
+                sanitized_code="BLOCK_DEVICE_PARENT_MISSING",
+            )
+        if len(parents) != 1:
+            raise ExternalVolumeIdentityError(
+                "partition parent identity is ambiguous",
+                sanitized_code="BLOCK_DEVICE_PARENT_AMBIGUOUS",
+            )
+        confirmed_children = [
+            item
+            for item in parent_devices
+            if item.get("path") == selected.get("path")
+        ]
+        if len(confirmed_children) != 1:
+            raise ExternalVolumeIdentityError(
+                "partition relationship changed during parent verification",
+                sanitized_code="BLOCK_DEVICE_PARENT_MISMATCH",
+            )
+        confirmed_child = confirmed_children[0]
+        relationship_fields = (
+            "path",
+            "kname",
+            "pkname",
+            "type",
+            "tran",
+            "uuid",
+            "label",
+            "ro",
+        )
+        if any(
+            confirmed_child.get(field) != selected.get(field)
+            for field in relationship_fields
+        ):
+            raise ExternalVolumeIdentityError(
+                "partition identity changed during parent verification",
+                sanitized_code="BLOCK_DEVICE_PARENT_MISMATCH",
+            )
+        parent = parents[0]
+        if (
+            selected.get("pkname") != parent.get("path")
+            or parent.get("kname") != parent.get("path")
+            or parent.get("type") != "disk"
+            or parent.get("pkname") not in (None, "")
+        ):
+            raise ExternalVolumeIdentityError(
+                "partition and parent block-device identities do not match",
+                sanitized_code="BLOCK_DEVICE_PARENT_MISMATCH",
+            )
+        try:
+            parent_mode = os.stat(parent_path, follow_symlinks=True).st_mode
+        except OSError as exc:
+            raise ExternalVolumeUnavailableError(
+                "partition parent block-device metadata is unavailable",
+                sanitized_code="BLOCK_DEVICE_PARENT_UNAVAILABLE",
+            ) from exc
+        if not stat.S_ISBLK(parent_mode):
+            raise ExternalVolumeIdentityError(
+                "partition parent is not a block device",
+                sanitized_code="BLOCK_DEVICE_PARENT_MISMATCH",
+            )
+        parent_transport = parent.get("tran")
+        if parent_transport != "usb":
+            raise ExternalVolumeIdentityError(
+                "partition parent transport is not the approved USB transport",
+                sanitized_code="BLOCK_DEVICE_PARENT_TRANSPORT_MISMATCH",
+            )
+        return "usb"
 
     def inspect(self, mountpoint: Path) -> ExternalMountIdentity:
         mount_payload = self._json_command(
@@ -128,21 +256,32 @@ class LinuxExternalVolumeProbe:
                 "--bytes",
                 "--paths",
                 "--output",
-                "PATH,TYPE,TRAN,UUID,LABEL,RO",
+                self._LSBLK_COLUMNS,
                 source,
             ],
             "BLOCK_DEVICE_PROBE_FAILED",
         )
         devices = _nested_block_devices(block_payload.get("blockdevices"))
-        selected = next(
-            (item for item in devices if item.get("path") == source),
-            None,
-        )
-        if selected is None:
+        selected_devices = [
+            item for item in devices if item.get("path") == source
+        ]
+        if not selected_devices:
             raise ExternalVolumeIdentityError(
                 "mount source is absent from block-device identity",
                 sanitized_code="BLOCK_DEVICE_IDENTITY_MISSING",
             )
+        if len(selected_devices) != 1:
+            raise ExternalVolumeIdentityError(
+                "mount source block-device identity is ambiguous",
+                sanitized_code="BLOCK_DEVICE_IDENTITY_AMBIGUOUS",
+            )
+        selected = selected_devices[0]
+        if selected.get("kname") != source:
+            raise ExternalVolumeIdentityError(
+                "mount source block-device identity does not match",
+                sanitized_code="BLOCK_DEVICE_IDENTITY_MISMATCH",
+            )
+        device_transport = self._resolved_transport(selected)
         try:
             source_mode = os.stat(source, follow_symlinks=True).st_mode
             mount_stat = os.stat(mountpoint, follow_symlinks=False)
@@ -168,7 +307,7 @@ class LinuxExternalVolumeProbe:
             ),
             device_uuid=str(selected.get("uuid") or ""),
             device_label=str(selected.get("label") or ""),
-            device_transport=str(selected.get("tran") or ""),
+            device_transport=device_transport,
             device_read_only=bool(read_only),
             source_is_block_device=stat.S_ISBLK(source_mode),
             total_bytes=usage.total,
