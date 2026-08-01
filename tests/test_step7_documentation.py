@@ -272,7 +272,8 @@ class Step7DocumentationTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn("Step 11: COMPLETE AND PUSHED at actual closure commit", roadmap)
-        self.assertIn("Step 13: NOT STARTED", roadmap)
+        self.assertIn("Step 13: COMPLETE AND PUSHED at actual closure commit", roadmap)
+        self.assertIn("Step 14: NOT STARTED", roadmap)
         self.assertIn("Step 7 was completed after Step 9", agents)
         self.assertIn(
             "Step 8 external-volume runtime integration",

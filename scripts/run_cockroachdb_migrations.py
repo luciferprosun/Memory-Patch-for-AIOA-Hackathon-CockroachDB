@@ -82,6 +82,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step10_",
     "mp_step11_",
     "mp_step12_",
+    "mp_step13_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")

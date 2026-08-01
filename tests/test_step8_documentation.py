@@ -310,7 +310,9 @@ class Step8DocumentationTests(unittest.TestCase):
         )
         self.assertIn("Step 10 durable ingestion orchestration", agents)
         self.assertIn("Step 11 deterministic parsing", agents)
-        self.assertIn("`Step 13: NOT STARTED`", agents)
+        self.assertIn("Step 13 German Law HAT manifest", agents)
+        self.assertIn("complete in its intended closure commit", agents)
+        self.assertIn("`Step 14: NOT STARTED`", agents)
         self.assertIn("Step 10: NOT STARTED", closure)
 
 

@@ -49,7 +49,8 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   and zero-external-write live validation are closed by the intended Step 11
   commit once it is reachable on `origin/main`.
 - `Step 12: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 13: NOT STARTED`. Step 13 remains the next unopened production step.
+- `Step 13: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 14: NOT STARTED`. Step 14 remains the next unopened production step.
 
 ## Zasada prowadzenia prac
 
@@ -247,9 +248,19 @@ Zaimplementować neutralną platformę HAT-ów, a następnie podłączyć pełn�
   [live evidence](../evidence/hats/step12-hat-registry-validation.json),
   [rekord zamknięcia](../audits/STEP_12_HAT_REGISTRY_MANIFEST_RUNTIME_BOUNDARY_CLOSURE_1A.md).
 
-- [ ] **Step 13 — German Law HAT Package and Source Authority Policy 1A**
+- [x] **Step 13 — German Law HAT Package and Source Authority Policy 1A**
   Manifest German Law HAT, domeny, języki, jurysdykcje, hierarchia źródeł urzędowych i wtórnych, polityka temporalna, parser adapters i contract tests.
   Bez wybierania końcowego pytania testowego.
+  `Step 13: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie: `german-law@1.0.0`, jawne scope federal/state/EU i
+  `knowledge_as_of`, typed source-authority i temporal policy, fixed
+  non-fetching metadata adapters, Step 12 trusted runtime integration oraz
+  controlled CockroachDB validation bez korpusu i z zerem zapisów zewnętrznych.
+  [Architektura](../architecture/GERMAN_LAW_HAT_SOURCE_AUTHORITY_POLICY_1A.md),
+  [ADR-020](../adr/ADR-020-german-law-hat-source-authority-policy.md),
+  [official-source research](../provenance/STEP_13_OFFICIAL_SOURCE_RESEARCH_1A.md),
+  [live evidence](../evidence/hats/step13-german-law-hat-policy-validation.json),
+  [rekord zamknięcia](../audits/STEP_13_GERMAN_LAW_HAT_SOURCE_AUTHORITY_CLOSURE_1A.md).
 
 - [ ] **Step 14 — German Law Corpus Inventory, Deduplication and Source Registration 1A**
   Pełna inwentaryzacja posiadanej biblioteki, hashe, duplikaty, near-duplicates, źródła urzędowe, prywatność, licensing, quarantine i mapping do source registry.

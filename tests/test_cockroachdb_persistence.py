@@ -1112,7 +1112,8 @@ class PersistenceStaticValidationTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn("Step 11: COMPLETE AND PUSHED at actual closure commit", roadmap)
-        self.assertIn("Step 13: NOT STARTED", roadmap)
+        self.assertIn("Step 13: COMPLETE AND PUSHED at actual closure commit", roadmap)
+        self.assertIn("Step 14: NOT STARTED", roadmap)
 
     def test_step6_evidence_is_canonical_sanitized_and_consistent(self) -> None:
         path = (

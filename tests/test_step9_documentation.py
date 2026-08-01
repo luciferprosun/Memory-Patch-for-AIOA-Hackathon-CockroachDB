@@ -109,7 +109,8 @@ class Step9DocumentationTests(unittest.TestCase):
             "- [x] **Step 11 — Generic Parsing, Normalization and Chunking Pipeline 1A**",
             "Step 11: COMPLETE AND PUSHED at actual closure commit",
             "- [x] **Step 12 — HAT Registry, Manifest Validation and Runtime Boundary 1A**",
-            "Step 13: NOT STARTED",
+            "Step 13: COMPLETE AND PUSHED at actual closure commit",
+            "Step 14: NOT STARTED",
         ):
             self.assertIn(required, roadmap)
 
@@ -293,8 +294,10 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 8 external-volume runtime integration",
             "Step 10 durable ingestion orchestration",
             "Step 11 deterministic parsing",
-            "Step 13: NOT STARTED",
-            "Step 12 completion does not authorize or start it",
+            "Step 13 German Law HAT manifest",
+            "complete in its intended closure commit",
+            "Step 14: NOT STARTED",
+            "Step 13 completion does not authorize or start it",
         ):
             self.assertIn(required, text)
 

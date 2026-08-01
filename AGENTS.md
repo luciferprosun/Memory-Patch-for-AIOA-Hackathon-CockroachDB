@@ -82,7 +82,11 @@ At roadmap adoption and in subsequent audited closure records:
   explicit system-installed catalog, capability gate, and controlled disposable
   validation are complete in its intended closure commit. It is completion
   evidence only after that commit is reachable on `origin/main`.
-- `Step 13: NOT STARTED`. Step 12 completion does not authorize or start it.
+- Step 13 German Law HAT manifest, request/scope contracts, typed source
+  authority and temporal policy, fixed metadata adapters, and controlled
+  disposable validation are complete in its intended closure commit. It is
+  completion evidence only after that commit is reachable on `origin/main`.
+- `Step 14: NOT STARTED`. Step 13 completion does not authorize or start it.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

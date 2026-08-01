@@ -140,10 +140,14 @@ class Step11DocumentationTests(unittest.TestCase):
         text = ROADMAP.read_text(encoding="utf-8")
         self.assertIn("[x] **Step 11", text)
         self.assertIn("[x] **Step 12", text)
-        self.assertIn("Step 13: NOT STARTED", text)
+        self.assertIn("Step 13: COMPLETE AND PUSHED at actual closure commit", text)
+        self.assertIn("Step 14: NOT STARTED", text)
 
     def test_repository_indexes_preserve_step11_after_step12(self) -> None:
-        self.assertIn("Step 13: NOT STARTED", AGENTS.read_text(encoding="utf-8"))
+        agents = AGENTS.read_text(encoding="utf-8")
+        self.assertIn("Step 13 German Law HAT manifest", agents)
+        self.assertIn("complete in its intended closure commit", agents)
+        self.assertIn("Step 14: NOT STARTED", agents)
         readme = README.read_text(encoding="utf-8")
         self.assertIn("Step 11 closure record", readme)
         self.assertIn("Step 12 closure record", readme)

@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0.0",
+  "hat_id": "german-law",
+  "hat_version": "1.0.0",
+  "display_name": "German Law HAT",
+  "domain_ids": ["law.de", "law.de.federal", "law.de.state", "law.eu"],
+  "kernel_api_compatibility": ">=1.0.0,<2.0.0",
+  "supported_languages": ["de"],
+  "scope_dimension_definitions": [
+    {"name":"legal_jurisdiction","value_type":"STRING","comparison_mode":"EXACT","required":true,"default_behavior":"REJECT","missing_creates_ambiguous":false,"description":"Explicit German federal, German state, or EU jurisdiction."},
+    {"name":"knowledge_as_of","value_type":"TIMESTAMP","comparison_mode":"TIMESTAMP","required":true,"default_behavior":"AMBIGUOUS","missing_creates_ambiguous":true,"description":"Explicit temporal knowledge boundary; current time is never substituted."},
+    {"name":"source_language","value_type":"STRING","comparison_mode":"EXACT","required":true,"default_behavior":"REJECT","missing_creates_ambiguous":false,"description":"Descriptive source language without authority implications."},
+    {"name":"legal_source_class","value_type":"STRING_SET","comparison_mode":"IN_SET","required":true,"default_behavior":"AMBIGUOUS","missing_creates_ambiguous":true,"description":"Typed legal source class constraint."},
+    {"name":"federal_state","value_type":"STRING","comparison_mode":"EXACT","required":false,"default_behavior":"OPTIONAL","missing_creates_ambiguous":false,"description":"State identity when jurisdiction is DE_STATE."}
+  ],
+  "capabilities": ["REQUEST_NORMALIZATION", "SCOPE_DERIVATION", "EVIDENCE_CONSTRAINTS", "SOURCE_AUTHORITY_RANKING"],
+  "source_authority_policy": {"policy_version":"german-law-source-authority-1a","typed_dimensions":["source_class","authenticity","official_publisher","jurisdiction","document_identity","temporal_applicability","court_identity","verification","consolidation_status","language"]},
+  "retrieval_contract": {"contract_version":"german-law-retrieval-constraints-1a","declarative_only":true,"requires_explicit_jurisdiction":true,"missing_knowledge_as_of":"AMBIGUOUS"},
+  "claim_contract": {"contract_version":"german-law-claim-boundary-1a","implemented":false},
+  "conflict_contract": {"contract_version":"german-law-conflict-boundary-1a","preserve_same_class_conflicts":true,"implemented":false},
+  "memory_policy": {"contract_version":"german-law-memory-boundary-1a","proposal_only":true,"implemented":false},
+  "security_policy": {"external_action_authority":"NONE","canonical_write_authority":"NONE","patch_approval_authority":"NONE","patch_commit_authority":"NONE","executable_user_code":false,"private_memory_access":false},
+  "extension_points": {"contract_version":"german-law-fixed-adapters-1a","metadata_adapter_ids":["federal-gazette-metadata-1a","consolidated-federal-law-metadata-1a","official-court-decision-metadata-1a","eu-legal-act-metadata-1a","legislative-material-metadata-1a"]}
+}

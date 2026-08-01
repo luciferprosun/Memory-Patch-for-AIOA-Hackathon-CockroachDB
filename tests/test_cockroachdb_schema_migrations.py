@@ -661,7 +661,8 @@ class DocumentationContractTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn("Step 11: COMPLETE AND PUSHED at actual closure commit", roadmap)
-        self.assertIn("Step 13: NOT STARTED", roadmap)
+        self.assertIn("Step 13: COMPLETE AND PUSHED at actual closure commit", roadmap)
+        self.assertIn("Step 14: NOT STARTED", roadmap)
 
     def test_documentation_states_sql_isolation_boundary_exactly(self) -> None:
         architecture = (

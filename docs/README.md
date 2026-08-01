@@ -20,8 +20,12 @@ boundary. Step 10 adds the live-recovered durable S3-CockroachDB ingestion
 saga while preserving those storage and Step 9 publication boundaries. Step
 11 adds deterministic plain-text and JSON parsing, Unicode NFC normalization,
 sectioning, model-neutral chunking, static security findings, durable parsed
-artifacts, and real Step 10 parser/validator ports. Step 12 remains not started.
-Production driver wiring and later integrations remain future roadmap work.
+artifacts, and real Step 10 parser/validator ports. Step 12 adds the trusted
+installed-HAT registry/runtime boundary. Step 13 adds
+the production German Law HAT manifest, explicit request/scope contracts,
+source-authority and temporal policies, and fixed non-fetching metadata
+adapters without touching a corpus. Production driver wiring and later
+integrations remain future roadmap work.
 
 The historical provenance import intentionally excludes raw German-law
 datasets, raw UNIX corpus records, retrieval-index data, application code and
@@ -81,6 +85,11 @@ SHA-256 provenance.
 - [Step 12 controlled validation runbook](operations/STEP_12_HAT_REGISTRY_LIVE_VALIDATION_1A.md)
 - [Step 12 controlled validation evidence](evidence/hats/step12-hat-registry-validation.json)
 - [Step 12 closure record](audits/STEP_12_HAT_REGISTRY_MANIFEST_RUNTIME_BOUNDARY_CLOSURE_1A.md)
+- [German Law HAT and source-authority boundary 1A](architecture/GERMAN_LAW_HAT_SOURCE_AUTHORITY_POLICY_1A.md)
+- [ADR-020: German Law trusted policy HAT](adr/ADR-020-german-law-hat-source-authority-policy.md)
+- [Step 13 official-source research](provenance/STEP_13_OFFICIAL_SOURCE_RESEARCH_1A.md)
+- [Step 13 controlled validation evidence](evidence/hats/step13-german-law-hat-policy-validation.json)
+- [Step 13 closure record](audits/STEP_13_GERMAN_LAW_HAT_SOURCE_AUTHORITY_CLOSURE_1A.md)
 - [Knowledge Kernel Contract Baseline 1A](architecture/KNOWLEDGE_KERNEL_CONTRACT_BASELINE_1A.md)
 - [Personal Memory HATs 1A](architecture/PERSONAL_MEMORY_HATS_1A.md)
 - [Memory Trust and Precedence 1A](architecture/MEMORY_TRUST_AND_PRECEDENCE_1A.md)
