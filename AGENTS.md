@@ -91,7 +91,12 @@ At roadmap adoption and in subsequent audited closure records:
   idempotent zero-publication Step 9 registration validation are complete in
   its intended closure commit. It is completion evidence only after that
   commit is reachable on `origin/main`.
-- `Step 15: NOT STARTED`. Step 14 completion does not authorize or start it.
+- Step 15 temporal and jurisdictional normalization, digest-bound external
+  artifacts, document/version and supersession candidates, conflict
+  preservation, review-only Step 9 proposals, and controlled disposable
+  CockroachDB validation are complete in its intended closure commit. It is
+  completion evidence only after that commit is reachable on `origin/main`.
+- `Step 16: NOT STARTED`. Step 15 completion does not authorize or start it.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

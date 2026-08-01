@@ -28,7 +28,10 @@ adapters without touching a corpus. Production driver wiring and later
 integrations remain future roadmap work. Step 14 adds the bounded read-only
 German-law corpus inventory, evidence-only deduplication, explicit
 license/privacy/quarantine classifications, a canonical external bundle, and
-idempotent Step 9 registration validation with zero publication.
+idempotent Step 9 registration validation with zero publication. Step 15 adds
+digest-bound temporal and jurisdictional normalization, document/version and
+supersession candidates, preserved conflicts, and review-only Step 9 proposals
+without publication or legal-question resolution.
 
 The historical provenance import intentionally excludes raw German-law
 datasets, raw UNIX corpus records, retrieval-index data, application code and
@@ -98,6 +101,11 @@ SHA-256 provenance.
 - [Step 14 controlled inventory and registration runbook](operations/STEP_14_GERMAN_LAW_CORPUS_INVENTORY_VALIDATION_1A.md)
 - [Step 14 controlled validation evidence](evidence/corpus/step14-german-law-corpus-inventory-summary.json)
 - [Step 14 closure record](audits/STEP_14_GERMAN_LAW_CORPUS_INVENTORY_DEDUP_SOURCE_REGISTRATION_CLOSURE_1A.md)
+- [German Law temporal and jurisdictional normalization 1A](architecture/GERMAN_LAW_TEMPORAL_JURISDICTIONAL_NORMALIZATION_1A.md)
+- [ADR-022: Preserve temporal and jurisdiction facts as reviewable evidence](adr/ADR-022-german-law-temporal-jurisdictional-normalization.md)
+- [Step 15 controlled normalization runbook](operations/STEP_15_GERMAN_LAW_TEMPORAL_JURISDICTIONAL_VALIDATION_1A.md)
+- [Step 15 controlled validation evidence](evidence/corpus/step15-german-law-temporal-jurisdictional-summary.json)
+- [Step 15 closure record](audits/STEP_15_GERMAN_LAW_TEMPORAL_JURISDICTIONAL_NORMALIZATION_CLOSURE_1A.md)
 - [Knowledge Kernel Contract Baseline 1A](architecture/KNOWLEDGE_KERNEL_CONTRACT_BASELINE_1A.md)
 - [Personal Memory HATs 1A](architecture/PERSONAL_MEMORY_HATS_1A.md)
 - [Memory Trust and Precedence 1A](architecture/MEMORY_TRUST_AND_PRECEDENCE_1A.md)

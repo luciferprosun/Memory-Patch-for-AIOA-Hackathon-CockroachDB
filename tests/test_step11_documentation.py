@@ -142,14 +142,16 @@ class Step11DocumentationTests(unittest.TestCase):
         self.assertIn("[x] **Step 12", text)
         self.assertIn("Step 13: COMPLETE AND PUSHED at actual closure commit", text)
         self.assertIn("Step 14: COMPLETE AND PUSHED at actual closure commit", text)
-        self.assertIn("Step 15: NOT STARTED", text)
+        self.assertIn("Step 15: COMPLETE AND PUSHED at actual closure commit", text)
+        self.assertIn("Step 16: NOT STARTED", text)
 
     def test_repository_indexes_preserve_step11_after_step12(self) -> None:
         agents = AGENTS.read_text(encoding="utf-8")
         self.assertIn("Step 13 German Law HAT manifest", agents)
         self.assertIn("complete in its intended closure commit", agents)
         self.assertIn("Step 14 bounded corpus inventory", agents)
-        self.assertIn("Step 15: NOT STARTED", agents)
+        self.assertIn("Step 15 temporal and jurisdictional normalization", agents)
+        self.assertIn("Step 16: NOT STARTED", agents)
         readme = README.read_text(encoding="utf-8")
         self.assertIn("Step 11 closure record", readme)
         self.assertIn("Step 12 closure record", readme)

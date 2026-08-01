@@ -313,7 +313,7 @@ class Step8DocumentationTests(unittest.TestCase):
         self.assertIn("Step 13 German Law HAT manifest", agents)
         self.assertIn("complete in its intended closure commit", agents)
         self.assertIn("Step 14 bounded corpus inventory", agents)
-        self.assertIn("`Step 15: NOT STARTED`", agents)
+        self.assertIn("`Step 16: NOT STARTED`", agents)
         self.assertIn("Step 10: NOT STARTED", closure)
 
 

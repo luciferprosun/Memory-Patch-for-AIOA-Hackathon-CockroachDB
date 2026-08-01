@@ -55,7 +55,13 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   license/privacy/quarantine classification, external canonical bundle, and
   zero-publication Step 9 registration validation are closed by the intended
   Step 14 commit once it is reachable on `origin/main`.
-- `Step 15: NOT STARTED`. Step 15 remains the next unopened production step.
+- `Step 15: COMPLETE AND PUSHED at actual closure commit`.
+  The digest-bound external temporal and jurisdictional normalization bundle,
+  document/version and supersession candidates, preserved conflicts,
+  review-only Step 9 proposals, and graceful disposable CockroachDB validation
+  are closed by the intended Step 15 commit once it is reachable on
+  `origin/main`.
+- `Step 16: NOT STARTED`. Step 16 remains the next unopened production step.
 
 ## Zasada prowadzenia prac
 
@@ -280,8 +286,20 @@ Zaimplementować neutralną platformę HAT-ów, a następnie podłączyć pełn�
   [live evidence](../evidence/corpus/step14-german-law-corpus-inventory-summary.json),
   [rekord zamknięcia](../audits/STEP_14_GERMAN_LAW_CORPUS_INVENTORY_DEDUP_SOURCE_REGISTRATION_CLOSURE_1A.md).
 
-- [ ] **Step 15 — German Law Temporal and Jurisdictional Normalization 1A**
+- [x] **Step 15 — German Law Temporal and Jurisdictional Normalization 1A**
   `published_at`, `effective_from`, `effective_to`, `retrieved_at`, `ingested_at`, `superseded_at`, `verified_at`, zakres jurysdykcji, wersje i konflikty.
+  `Step 15: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie: 6,134 hash-bound rekordów metadanych znormalizowanych do
+  zewnętrznego bundle’a bez mutacji corpus; 6,124 tożsamości dokumentów i
+  wersji, 24 kandydatów relacji wersji, zachowane konflikty i wyłącznie
+  review-only propozycje Step 9.  Controlled CockroachDB validation potwierdza
+  exact replay, conflict rejection, zero publikacji i graceful cleanup bez
+  force kill.
+  [Architektura](../architecture/GERMAN_LAW_TEMPORAL_JURISDICTIONAL_NORMALIZATION_1A.md),
+  [ADR-022](../adr/ADR-022-german-law-temporal-jurisdictional-normalization.md),
+  [runbook](../operations/STEP_15_GERMAN_LAW_TEMPORAL_JURISDICTIONAL_VALIDATION_1A.md),
+  [live evidence](../evidence/corpus/step15-german-law-temporal-jurisdictional-summary.json),
+  [rekord zamknięcia](../audits/STEP_15_GERMAN_LAW_TEMPORAL_JURISDICTIONAL_NORMALIZATION_CLOSURE_1A.md).
 
 - [ ] **Step 16 — German Law HAT Publication and Corpus Verification 1A**
   Publikacja zweryfikowanych wersji, provenance chain, parser/chunk coverage, walidacja temporalna i raport braków.

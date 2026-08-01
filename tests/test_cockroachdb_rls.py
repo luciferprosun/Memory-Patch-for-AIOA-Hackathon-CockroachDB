@@ -841,7 +841,8 @@ class Step5DocumentationTests(unittest.TestCase):
         self.assertIn("Step 11: COMPLETE AND PUSHED at actual closure commit", roadmap)
         self.assertIn("Step 13: COMPLETE AND PUSHED at actual closure commit", roadmap)
         self.assertIn("Step 14: COMPLETE AND PUSHED at actual closure commit", roadmap)
-        self.assertIn("Step 15: NOT STARTED", roadmap)
+        self.assertIn("Step 15: COMPLETE AND PUSHED at actual closure commit", roadmap)
+        self.assertIn("Step 16: NOT STARTED", roadmap)
 
 
 if __name__ == "__main__":

@@ -74,21 +74,24 @@ class Step14DocumentationTests(unittest.TestCase):
         ):
             self.assertIn(phrase, text)
 
-    def test_roadmap_closes_only_step14(self) -> None:
+    def test_roadmap_preserves_step14_and_closes_step15_without_step16(self) -> None:
         text = ROADMAP.read_text(encoding="utf-8")
         self.assertIn("Step 14: COMPLETE AND PUSHED at actual closure commit", text)
+        self.assertIn("Step 15: COMPLETE AND PUSHED at actual closure commit", text)
         step15 = text[text.index("**Step 15") - 10 : text.index("**Step 15") + 100]
-        self.assertIn("[ ]", step15)
-        self.assertNotIn("[x]", step15)
+        self.assertIn("[x]", step15)
+        step16 = text[text.index("**Step 16") - 10 : text.index("**Step 16") + 100]
+        self.assertIn("[ ]", step16)
+        self.assertNotIn("[x]", step16)
 
-    def test_no_raw_corpus_or_step15_implementation_is_committed(self) -> None:
+    def test_no_raw_corpus_is_committed_and_step15_stays_domain_bound(self) -> None:
         paths = [path.relative_to(REPOSITORY_ROOT).as_posix() for path in REPOSITORY_ROOT.rglob("*") if path.is_file()]
         self.assertFalse(any("law_record.json" in path for path in paths))
         production = "\n".join(
             path.read_text(encoding="utf-8", errors="ignore")
             for path in (REPOSITORY_ROOT / "src").rglob("*.py")
         )
-        self.assertNotIn("Step15TemporalNormalizer", production)
+        self.assertIn("TemporalJurisdictionNormalizationEngine", production)
         self.assertNotIn("Nachweisgesetz", production)
 
 

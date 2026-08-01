@@ -111,7 +111,8 @@ class Step9DocumentationTests(unittest.TestCase):
             "- [x] **Step 12 — HAT Registry, Manifest Validation and Runtime Boundary 1A**",
             "Step 13: COMPLETE AND PUSHED at actual closure commit",
             "Step 14: COMPLETE AND PUSHED at actual closure commit",
-            "Step 15: NOT STARTED",
+            "Step 15: COMPLETE AND PUSHED at actual closure commit",
+            "Step 16: NOT STARTED",
         ):
             self.assertIn(required, roadmap)
 
@@ -298,8 +299,9 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 13 German Law HAT manifest",
             "complete in its intended closure commit",
             "Step 14 bounded corpus inventory",
-            "Step 15: NOT STARTED",
-            "Step 14 completion does not authorize or start it",
+            "Step 15 temporal and jurisdictional normalization",
+            "Step 16: NOT STARTED",
+            "Step 15 completion does not authorize or start it",
         ):
             self.assertIn(required, text)
 
