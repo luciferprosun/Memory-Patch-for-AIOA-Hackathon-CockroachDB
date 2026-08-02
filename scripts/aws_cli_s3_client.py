@@ -27,6 +27,16 @@ _SSO_SESSION_ERROR = re.compile(
     r"token has expired and refresh failed)",
     re.IGNORECASE,
 )
+_TRANSIENT_TRANSPORT_ERROR = re.compile(
+    r"(?:"
+    r"read timeout|connect timeout|timed out|"
+    r"connection (?:was )?(?:closed|reset)|"
+    r"could not connect to (?:the )?endpoint|"
+    r"endpoint connection error|"
+    r"temporarily unavailable|service unavailable"
+    r")",
+    re.IGNORECASE,
+)
 _REGION = re.compile(r"^[a-z]{2}(?:-[a-z0-9]+)+-\d+$")
 _PROFILE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -185,7 +195,11 @@ class AwsCliS3Client:
                 else (
                     "SSOTokenLoadError"
                     if _SSO_SESSION_ERROR.search(completed.stderr)
-                    else "UnclassifiedAwsCliError"
+                    else (
+                        "RequestTimeout"
+                        if _TRANSIENT_TRANSPORT_ERROR.search(completed.stderr)
+                        else "UnclassifiedAwsCliError"
+                    )
                 )
             )
             if code in {"404", "NoSuchObject"}:

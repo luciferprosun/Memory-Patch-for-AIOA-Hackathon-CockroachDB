@@ -112,7 +112,7 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 13: COMPLETE AND PUSHED at actual closure commit",
             "Step 14: COMPLETE AND PUSHED at actual closure commit",
             "Step 15: COMPLETE AND PUSHED at actual closure commit",
-            "Step 16: NOT STARTED",
+            "Step 16: COMPLETE AND PUSHED at actual closure commit",
         ):
             self.assertIn(required, roadmap)
 
@@ -300,8 +300,8 @@ class Step9DocumentationTests(unittest.TestCase):
             "complete in its intended closure commit",
             "Step 14 bounded corpus inventory",
             "Step 15 temporal and jurisdictional normalization",
-            "Step 16: NOT STARTED",
-            "Step 15 completion does not authorize or start it",
+            "`Step 16: Step 16 trusted publication complete and pushed at actual closure",
+            "Step 16 completion does not authorize Step 17.",
         ):
             self.assertIn(required, text)
 

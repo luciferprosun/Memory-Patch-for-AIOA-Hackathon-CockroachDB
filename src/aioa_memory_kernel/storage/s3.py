@@ -238,6 +238,42 @@ class S3SnapshotAdapter:
         assert_no_open_persistence_transaction()
         return self._inspect_bucket_capabilities()
 
+    def validate_bucket_capabilities(
+        self,
+        capabilities: BucketCapabilities,
+    ) -> BucketCapabilities:
+        """Bind a previously inspected capability receipt to this adapter.
+
+        Batch callers may inspect the immutable bucket configuration once, then
+        reuse that typed receipt for a bounded sequence of object writes.  This
+        deliberately avoids treating a plain mapping or a stale configuration
+        as proof of capability.  It grants no additional S3 operation and does
+        not relax the per-object Object Lock, checksum, metadata, or exact-key
+        verification performed by :meth:`persist_snapshot`.
+        """
+
+        assert_no_open_persistence_transaction()
+        if not isinstance(capabilities, BucketCapabilities):
+            raise SnapshotCapabilityError(
+                "bucket capabilities must be a typed receipt",
+                sanitized_code="INVALID_BUCKET_CAPABILITIES",
+            )
+        if (
+            capabilities.bucket_reference != self._config.bucket_reference
+            or capabilities.region != self._config.region
+            or capabilities.versioning_status != "Enabled"
+            or capabilities.object_lock_enabled is not True
+            or capabilities.default_retention_mode
+            is not self._config.retention_mode
+            or capabilities.default_retention_days
+            != self._config.retention_days
+        ):
+            raise SnapshotCapabilityError(
+                "bucket capabilities differ from the immutable adapter configuration",
+                sanitized_code="BUCKET_CAPABILITIES_MISMATCH",
+            )
+        return capabilities
+
     def plan_snapshot(self, snapshot: SnapshotEnvelope) -> SnapshotStoragePlan:
         """Derive the exact immutable target without contacting AWS."""
 
@@ -570,6 +606,32 @@ class S3SnapshotAdapter:
         assert_no_open_persistence_transaction()
         self._validate_snapshot(snapshot, require_active_retention=True)
         self._inspect_bucket_capabilities()
+        return self._persist_validated_snapshot(snapshot)
+
+    def persist_snapshot_after_capability_validation(
+        self,
+        snapshot: SnapshotEnvelope,
+        capabilities: BucketCapabilities,
+    ) -> SnapshotStorageEvidence:
+        """Persist an exact snapshot after a same-run typed capability check.
+
+        This is intentionally a narrow performance integration for a trusted
+        batch boundary.  Callers still need a current typed receipt from
+        :meth:`inspect_bucket_capabilities`; each object is independently
+        conditionally written and verified by a version-specific ``HeadObject``
+        response.  The method never accepts a manifest-supplied bucket receipt.
+        """
+
+        assert_no_open_persistence_transaction()
+        self._validate_snapshot(snapshot, require_active_retention=True)
+        self.validate_bucket_capabilities(capabilities)
+        return self._persist_validated_snapshot(snapshot)
+
+    def _persist_validated_snapshot(
+        self, snapshot: SnapshotEnvelope
+    ) -> SnapshotStorageEvidence:
+        """Put and head one already validated snapshot without re-preflight."""
+
         object_key = self._config.object_key(
             snapshot.snapshot_id,
             snapshot.scope_digest,

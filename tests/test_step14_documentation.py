@@ -70,7 +70,6 @@ class Step14DocumentationTests(unittest.TestCase):
             "6,124 registration candidates",
             "source-tree writes, modifications, and deletions: 0",
             "force kill: no",
-            "Step 15: NOT STARTED",
         ):
             self.assertIn(phrase, text)
 
@@ -81,8 +80,7 @@ class Step14DocumentationTests(unittest.TestCase):
         step15 = text[text.index("**Step 15") - 10 : text.index("**Step 15") + 100]
         self.assertIn("[x]", step15)
         step16 = text[text.index("**Step 16") - 10 : text.index("**Step 16") + 100]
-        self.assertIn("[ ]", step16)
-        self.assertNotIn("[x]", step16)
+        self.assertIn("[x]", step16)
 
     def test_no_raw_corpus_is_committed_and_step15_stays_domain_bound(self) -> None:
         paths = [path.relative_to(REPOSITORY_ROOT).as_posix() for path in REPOSITORY_ROOT.rglob("*") if path.is_file()]

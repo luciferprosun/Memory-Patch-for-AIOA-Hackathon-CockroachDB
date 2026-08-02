@@ -1,0 +1,100 @@
+{
+  "verdict": "PASS",
+  "step": "STEP_16_GERMAN_LAW_HAT_PUBLICATION_CORPUS_VERIFICATION_1A",
+  "schema_version": "1.0.0",
+  "policy_version": "german-law-publication-verification-1a.1",
+  "artifact_root_reference": "corpora/manifests/step16/step16-0f4d32b53427e229070f58f8511af709",
+  "artifact_manifest_digest": "6871562b5b17d632c0e15169fefe7186f3fc7d7b5eb59f4140c367bf2c8a37e8",
+  "run_summary_digest": "21efbf22aff73d1fe796e731ee2dafe6f176f27896af092e7de610be4c597c72",
+  "run_id": "step16-0f4d32b53427e229070f58f8511af709",
+  "started_at": "2026-08-01T21:51:24.994307+00:00",
+  "completed_at": "2026-08-02T07:19:11.755868+00:00",
+  "inputs": {
+    "step14_manifest_digest": "ab898ea4c3dbfcae12f9c5fcf136914ab68ad11b77ae9431ef648af5c0873f89",
+    "step15_manifest_digest": "7094358f7c9bb6acf62160484a017074da70361c73e4e5bbd7623f700414b125",
+    "source_root_identity_digest": "5c149c3e2f3fd7a90f5c416d659dc0e36f27873d7eac9dba24f0c81830747d06",
+    "source_tree_digest": "b9732b7db7d74a08fb592e3efb73d7464732d11567e5240f6da3e3fce67eaa70",
+    "step14_inventory_objects": 19391,
+    "step15_version_records": 6134
+  },
+  "publication": {
+    "publication_policy_version": "german-law-publication-verification-1a.1",
+    "publication_policy_digest": "681a496689653c89ca789649e53e739b1ecbdcd7fd2a439c0889305bf683850c",
+    "publication_candidates": 6124,
+    "eligible_versions": 3544,
+    "published_versions": 3544,
+    "exact_replays": 60,
+    "new_snapshot_uploads": 7032,
+    "raw_snapshot_bindings": 3546,
+    "projection_snapshot_bindings": 3546,
+    "snapshot_bindings": 7092,
+    "ineligible": 2544,
+    "review_required": 2,
+    "conflicting": 34,
+    "dispositions": {
+      "CONFLICTING": 34,
+      "ELIGIBLE": 3544,
+      "INELIGIBLE": 2544,
+      "REVIEW_REQUIRED": 2
+    },
+    "sections": 158535,
+    "chunks": 185436,
+    "coverage_gaps": 0,
+    "coverage_overlaps": 0,
+    "snapshot_bindings_total": 7092
+  },
+  "validation": {
+    "jurisdiction_validations": 6124,
+    "temporal_validations": 6124,
+    "parser_required_versions": 3544,
+    "parsed_versions": 3544,
+    "prompt_injection_findings": 12620,
+    "version_alias_records": 10,
+    "version_alias_metadata_conflicts": 10,
+    "publication_conflicts": 30
+  },
+  "boundaries": {
+    "source_tree_writes": 0,
+    "source_files_modified": 0,
+    "source_files_deleted": 0,
+    "aws_writes_outside_approved_s3_boundary": 0,
+    "s3_deletes": 0,
+    "public_acl_changes": 0,
+    "model_calls": 0,
+    "ocr_operations": 0,
+    "network_acquisitions": 0,
+    "retrieval_indexes_created": 0,
+    "embeddings_created": 0,
+    "step17_started": false,
+    "final_question_selected": false,
+    "forbidden_scenario_hardcoded": false
+  },
+  "controlled_validation": {
+    "cleanup": {
+      "drain_completed": true,
+      "force_kill_used": false
+    },
+    "runtime": {
+      "cockroachdb_version": "v26.2.4",
+      "runtime_transient": true
+    },
+    "step15_manifest_reverified": true,
+    "step14_manifest_reverified": true
+  },
+  "exclusions": {
+    "publication_disposition_counts": {
+      "CONFLICTING": 34,
+      "ELIGIBLE": 3544,
+      "INELIGIBLE": 2544,
+      "REVIEW_REQUIRED": 2
+    },
+    "conflict_category_count": 30
+  },
+  "repository": {
+    "starting_head": "4fdc5cb135fb0c209c421c25a8b2532339f9bd94",
+    "starting_head_short": "4fdc5cb",
+    "run_id": "step16-0f4d32b53427e229070f58f8511af709"
+  },
+  "created_at_utc": "2026-08-02T10:32:28.080888+00:00",
+  "evidence_digest": "8a40c6806a36ea2111953727a18b77498496d3c812a0fdfd6fe71489882eaca6"
+}

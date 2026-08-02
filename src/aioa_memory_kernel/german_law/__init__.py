@@ -5,6 +5,7 @@ from .hat import GermanLawHat, request_from_mapping
 from .models import *
 from .policy import assess_source, assess_temporal, authority_sort_key
 from .normalization import *
+from .publication import *
 from .corpus import (
     STEP14_HAT_SCOPE_ID,
     STEP14_MAPPING_VERSION,

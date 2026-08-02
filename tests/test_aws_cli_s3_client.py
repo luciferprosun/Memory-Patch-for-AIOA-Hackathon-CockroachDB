@@ -98,6 +98,30 @@ class AwsCliTransportTests(unittest.TestCase):
         )
         self.assertNotIn("expired", str(captured.exception).casefold())
 
+    def test_known_cli_transport_timeout_maps_to_retryable_s3_code(self) -> None:
+        failed = mock.Mock(
+            returncode=1,
+            stdout="",
+            stderr="Read timeout on endpoint URL: https://example.invalid/object",
+        )
+        with mock.patch.object(client_module.subprocess, "run", return_value=failed):
+            with self.assertRaises(client_module.AwsCliS3Error) as captured:
+                self.client.get_bucket_versioning(Bucket="bucket-name")
+        self.assertEqual(
+            captured.exception.response,
+            {"Error": {"Code": "RequestTimeout"}},
+        )
+
+    def test_unknown_cli_failure_remains_fail_closed(self) -> None:
+        failed = mock.Mock(returncode=1, stdout="", stderr="unexpected failure")
+        with mock.patch.object(client_module.subprocess, "run", return_value=failed):
+            with self.assertRaises(client_module.AwsCliS3Error) as captured:
+                self.client.get_bucket_versioning(Bucket="bucket-name")
+        self.assertEqual(
+            captured.exception.response,
+            {"Error": {"Code": "UnclassifiedAwsCliError"}},
+        )
+
     def test_binary_identity_change_fails_before_subprocess(self) -> None:
         with (
             mock.patch.object(

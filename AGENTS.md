@@ -96,7 +96,10 @@ At roadmap adoption and in subsequent audited closure records:
   preservation, review-only Step 9 proposals, and controlled disposable
   CockroachDB validation are complete in its intended closure commit. It is
   completion evidence only after that commit is reachable on `origin/main`.
-- `Step 16: NOT STARTED`. Step 15 completion does not authorize or start it.
+- `Step 16: Step 16 trusted publication complete and pushed at actual closure
+  commit` after deterministic publication, evidence-bound snapshot binding,
+  parser/chunk coverage, and controlled cleanup.
+- `Step 17: NOT STARTED`. Step 16 completion does not authorize Step 17.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

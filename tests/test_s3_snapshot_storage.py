@@ -464,6 +464,41 @@ class BucketCapabilityTests(unittest.TestCase):
             "BUCKET_OBJECT_LOCK_REQUIRED",
         )
 
+    def test_typed_capability_receipt_supports_one_verified_batch_write(self) -> None:
+        client = FakeS3Client()
+        snapshot = make_snapshot()
+        queue_capabilities(client)
+        client.queue("put_object", {"VersionId": VERSION_ID})
+        client.queue("head_object", object_response(snapshot))
+        adapter = make_adapter(client)
+        capabilities = adapter.inspect_bucket_capabilities()
+        evidence = adapter.persist_snapshot_after_capability_validation(
+            snapshot,
+            capabilities,
+        )
+        self.assertEqual(evidence.version_id, VERSION_ID)
+        self.assertEqual(
+            [operation for operation, _parameters in client.calls],
+            [
+                "get_bucket_location",
+                "get_bucket_versioning",
+                "get_object_lock_configuration",
+                "put_object",
+                "head_object",
+            ],
+        )
+
+    def test_batch_write_rejects_capability_receipt_for_another_bucket(self) -> None:
+        client = FakeS3Client()
+        queue_capabilities(client)
+        capabilities = make_adapter(client).inspect_bucket_capabilities()
+        with self.assertRaises(SnapshotCapabilityError) as caught:
+            make_adapter(FakeS3Client(), make_config(bucket_name="another-step7-bucket")).persist_snapshot_after_capability_validation(
+                make_snapshot(),
+                capabilities,
+            )
+        self.assertEqual(caught.exception.sanitized_code, "BUCKET_CAPABILITIES_MISMATCH")
+
 
 class PersistenceAndVerificationTests(unittest.TestCase):
     def test_successful_upload_returns_structured_storage_evidence(self) -> None:

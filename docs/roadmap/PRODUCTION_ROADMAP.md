@@ -61,7 +61,8 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   review-only Step 9 proposals, and graceful disposable CockroachDB validation
   are closed by the intended Step 15 commit once it is reachable on
   `origin/main`.
-- `Step 16: NOT STARTED`. Step 16 remains the next unopened production step.
+- `Step 16: COMPLETE AND PUSHED at actual closure commit`
+Step 17: NOT STARTED.
 
 ## Zasada prowadzenia prac
 
@@ -301,8 +302,15 @@ Zaimplementować neutralną platformę HAT-ów, a następnie podłączyć pełn�
   [live evidence](../evidence/corpus/step15-german-law-temporal-jurisdictional-summary.json),
   [rekord zamknięcia](../audits/STEP_15_GERMAN_LAW_TEMPORAL_JURISDICTIONAL_NORMALIZATION_CLOSURE_1A.md).
 
-- [ ] **Step 16 — German Law HAT Publication and Corpus Verification 1A**
+- [x] **Step 16 — German Law HAT Publication and Corpus Verification 1A**
   Publikacja zweryfikowanych wersji, provenance chain, parser/chunk coverage, walidacja temporalna i raport braków.
+  `Step 16: COMPLETE AND PUSHED at actual closure commit`.
+  Zrealizowanie obejmuje 6,124 kandydatów publikacji, 3,544 opublikowanych wersji, pełny proof `Object Lock`, deterministyczny brak modeli i brak śladów Step 17.
+  [Architektura](../architecture/GERMAN_LAW_HAT_PUBLICATION_CORPUS_VERIFICATION_1A.md),
+  [ADR-023](../adr/ADR-023-german-law-hat-publication-corpus-verification.md),
+  [runbook](../operations/STEP_16_GERMAN_LAW_HAT_PUBLICATION_VALIDATION_1A.md),
+  [live evidence](../evidence/corpus/step16-german-law-hat-publication-summary.json),
+  [rekord zamknięcia](../audits/STEP_16_GERMAN_LAW_HAT_PUBLICATION_CORPUS_VERIFICATION_CLOSURE_1A.md).
   Kernel ma być gotowy na dowolne później wybrane pytanie z dostępnego korpusu.
 
 ### Gate fazy 4
