@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ast
+import hashlib
 import importlib.util
 import io
 import json
@@ -124,10 +125,89 @@ class Step10LiveHarnessTests(unittest.TestCase):
         self.assertTrue(self.bundle.saga.saga_id.startswith("ingsaga-"))
         self.assertTrue(self.bundle.snapshot.snapshot_id.startswith("s3snap-"))
 
-    def test_worktree_fingerprint_binds_all_surviving_step10_files(self) -> None:
+    def test_worktree_fingerprint_is_valid_for_clean_or_changed_worktree(
+        self,
+    ) -> None:
         fingerprint = validation._worktree_fingerprint()
-        self.assertGreater(fingerprint["worktree_change_count"], 0)
+        repeated = validation._worktree_fingerprint()
+
+        self.assertIs(type(fingerprint["worktree_change_count"]), int)
+        self.assertGreaterEqual(fingerprint["worktree_change_count"], 0)
         self.assertRegex(fingerprint["worktree_digest"], r"^[0-9a-f]{64}$")
+        self.assertEqual(fingerprint, repeated)
+        if fingerprint["worktree_change_count"] == 0:
+            self.assertEqual(
+                fingerprint["worktree_digest"],
+                validation.canonical_sha256([]),
+            )
+
+    def test_worktree_fingerprint_binds_reported_changed_file_content(
+        self,
+    ) -> None:
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            root = Path(temporary_directory)
+
+            def fingerprint_for(
+                relative: str,
+                content: bytes,
+                *,
+                state: str = "TRACKED_CHANGE",
+                executable: bool = False,
+            ) -> dict[str, object]:
+                target = root / relative
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(content)
+                target.chmod(0o700 if executable else 0o600)
+                reported_path = os.fsencode(relative) + b"\0"
+                git_outputs = (
+                    [reported_path, b""]
+                    if state == "TRACKED_CHANGE"
+                    else [b"", reported_path]
+                )
+                with (
+                    mock.patch.object(validation, "REPOSITORY_ROOT", root),
+                    mock.patch.object(
+                        validation,
+                        "_git_raw",
+                        side_effect=git_outputs,
+                    ),
+                ):
+                    result = dict(validation._worktree_fingerprint())
+                self.assertEqual(result["worktree_change_count"], 1)
+                return result
+
+            relative = "fixtures/fingerprint.txt"
+            content = b"alpha\n"
+            fingerprint = fingerprint_for(relative, content)
+            expected_entry = {
+                "path": relative,
+                "state": "TRACKED_CHANGE",
+                "content_sha256": hashlib.sha256(content).hexdigest(),
+                "executable": False,
+                "size": len(content),
+            }
+            self.assertEqual(
+                fingerprint["worktree_digest"],
+                validation.canonical_sha256([expected_entry]),
+            )
+
+            bound_digests = {
+                fingerprint["worktree_digest"],
+                fingerprint_for("fixtures/renamed.txt", content)[
+                    "worktree_digest"
+                ],
+                fingerprint_for(relative, content, state="UNTRACKED")[
+                    "worktree_digest"
+                ],
+                fingerprint_for(relative, b"bravo\n")["worktree_digest"],
+                fingerprint_for(relative, content, executable=True)[
+                    "worktree_digest"
+                ],
+                fingerprint_for(relative, b"alpha-longer\n")[
+                    "worktree_digest"
+                ],
+            }
+            self.assertEqual(len(bound_digests), 6)
 
     def test_timestamp_change_creates_a_fresh_non_overwriting_target(self) -> None:
         changed = validation.build_validation_bundle(
