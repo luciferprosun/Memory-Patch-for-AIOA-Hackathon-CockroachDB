@@ -73,7 +73,7 @@ class Step16DocumentationTests(unittest.TestCase):
             with self.subTest(unsafe=unsafe):
                 self.assertNotIn(unsafe, rendered.casefold())
 
-    def test_closure_and_indexes_close_step16_without_starting_step17(self) -> None:
+    def test_historical_closure_and_current_indexes_preserve_step_order(self) -> None:
         text = CLOSURE.read_text(encoding="utf-8")
         for phrase in (
             "COMPLETE AND PUSHED",
@@ -88,9 +88,13 @@ class Step16DocumentationTests(unittest.TestCase):
         step16 = roadmap[roadmap.index("**Step 16") - 10 : roadmap.index("**Step 16") + 120]
         self.assertIn("[x]", step16)
         step17 = roadmap[roadmap.index("**Step 17") - 10 : roadmap.index("**Step 17") + 120]
-        self.assertIn("[ ]", step17)
-        self.assertIn("Step 16 trusted publication", AGENTS.read_text(encoding="utf-8"))
-        self.assertIn("Step 17: NOT STARTED", AGENTS.read_text(encoding="utf-8"))
+        self.assertIn("[x]", step17)
+        step18 = roadmap[roadmap.index("**Step 18") - 10 : roadmap.index("**Step 18") + 120]
+        self.assertIn("[ ]", step18)
+        agents = AGENTS.read_text(encoding="utf-8")
+        self.assertIn("Step 16 trusted publication", agents)
+        self.assertIn("Step 17 deterministic Axis A routing", agents)
+        self.assertIn("Step 18: NOT STARTED", agents)
         self.assertIn("Step 16 closure record", README.read_text(encoding="utf-8"))
 
 

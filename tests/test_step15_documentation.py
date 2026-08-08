@@ -98,14 +98,15 @@ class Step15DocumentationTests(unittest.TestCase):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, text)
 
-    def test_current_indexes_close_step15_and_leave_step17_unstarted(self) -> None:
+    def test_current_indexes_preserve_completed_step_order(self) -> None:
         roadmap = ROADMAP.read_text(encoding="utf-8")
         self.assertIn("Step 15: COMPLETE AND PUSHED at actual closure commit", roadmap)
         self.assertIn("- [x] **Step 15", roadmap)
         self.assertIn("- [x] **Step 16", roadmap)
         agents = AGENTS.read_text(encoding="utf-8")
         self.assertIn("Step 15 temporal and jurisdictional normalization", agents)
-        self.assertIn("Step 17: NOT STARTED", agents)
+        self.assertIn("Step 17 deterministic Axis A routing", agents)
+        self.assertIn("Step 18: NOT STARTED", agents)
         readme = README.read_text(encoding="utf-8")
         self.assertIn("Step 15 closure record", readme)
         self.assertIn("STEP_15_GERMAN_LAW_TEMPORAL_JURISDICTIONAL_VALIDATION_1A.md", readme)

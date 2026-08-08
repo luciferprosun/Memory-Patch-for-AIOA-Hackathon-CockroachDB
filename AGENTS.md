@@ -99,7 +99,11 @@ At roadmap adoption and in subsequent audited closure records:
 - `Step 16: Step 16 trusted publication complete and pushed at actual closure
   commit` after deterministic publication, evidence-bound snapshot binding,
   parser/chunk coverage, and controlled cleanup.
-- `Step 17: NOT STARTED`. Step 16 completion does not authorize Step 17.
+- Step 17 deterministic Axis A routing, independent Axis B knowledge and
+  execution policy, evidence/answer separation, isolation, and offline
+  validation are complete in its intended closure commit. It is completion
+  evidence only after that commit is reachable on `origin/main`.
+- `Step 18: NOT STARTED`. Step 17 completion does not authorize Step 18.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

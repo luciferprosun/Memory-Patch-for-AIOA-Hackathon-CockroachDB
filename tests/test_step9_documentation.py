@@ -301,7 +301,8 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 14 bounded corpus inventory",
             "Step 15 temporal and jurisdictional normalization",
             "`Step 16: Step 16 trusted publication complete and pushed at actual closure",
-            "Step 16 completion does not authorize Step 17.",
+            "Step 17 deterministic Axis A routing",
+            "Step 17 completion does not authorize Step 18.",
         ):
             self.assertIn(required, text)
 

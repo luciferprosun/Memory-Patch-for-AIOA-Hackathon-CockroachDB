@@ -62,7 +62,11 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   are closed by the intended Step 15 commit once it is reachable on
   `origin/main`.
 - `Step 16: COMPLETE AND PUSHED at actual closure commit`
-Step 17: NOT STARTED.
+- `Step 17: COMPLETE AND PUSHED at actual closure commit`.
+  Deterministyczny Axis A, niezależny Axis B, oddzielenie evidence/answer,
+  tenant/user isolation oraz zero-effect offline validation są zamknięte przez
+  zamierzony commit Step 17, gdy jest osiągalny na `origin/main`.
+Step 18: NOT STARTED.
 
 ## Zasada prowadzenia prac
 
@@ -329,8 +333,21 @@ Zaimplementować neutralną platformę HAT-ów, a następnie podłączyć pełn�
 
 Zbudować deterministyczne wybranie HAT-u, twarde scope filters i Evidence Bundle, którego semantic ranking nie może unieważnić.
 
-- [ ] **Step 17 — Axis A Router, Axis B Policy Gate and Evidence Status 1A**
-  `PASS_THROUGH / HAT_ASSIST / HAT_ENFORCE / AMBIGUOUS`, niezależne `ALLOW / DENY_ACTION / REQUIRE_CONFIRMATION`, osobne evidence status i answer status.
+- [x] **Step 17 — Axis A Router, Axis B Policy Gate and Evidence Status 1A**
+  `PASS_THROUGH / HAT_ASSIST / HAT_ENFORCE / AMBIGUOUS`; niezależne
+  `ALLOW_ANSWER / BLOCK_ANSWER / REQUIRE_CONFIRMATION` oraz
+  `ALLOW / ALLOW_SCOPED / REQUIRE_HUMAN / DENY`; osobne evidence status i
+  answer status.
+  `Step 17: COMPLETE AND PUSHED at actual closure commit`.
+  Zrealizowanie obejmuje hash-bound snapshot istniejącego trusted HAT registry,
+  domain-neutral routing, osobne knowledge/execution policy ceilings, częściowe
+  evidence bez zmiany DB vocabulary, German Law fixture oraz brak zewnętrznych
+  efektów i implementacji Step 18.
+  [Architektura](../architecture/AXIS_A_ROUTER_AXIS_B_POLICY_GATE_EVIDENCE_STATUS_1A.md),
+  [ADR-024](../adr/ADR-024-axis-a-router-axis-b-policy-evidence-status.md),
+  [runbook](../operations/STEP_17_ROUTING_POLICY_VALIDATION_1A.md),
+  [offline evidence](../evidence/routing/step17-routing-policy-validation.json),
+  [rekord zamknięcia](../audits/STEP_17_AXIS_A_ROUTER_AXIS_B_POLICY_GATE_CLOSURE_1A.md).
 
 - [ ] **Step 18 — Exact and Full-Text Retrieval Baseline 1A**
   Exact identifiers, statute/section lookup, German full-text, keyword search, source authority, tenant/HAT isolation i twarde scope filters.
