@@ -83,7 +83,12 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   Evidence Bundle identity, hard authority/isolation revalidation, and
   controlled real-input/disposable validation are closed by the intended
   Step 20 commit once it is reachable on `origin/main`.
-- `Step 21: NOT STARTED`.
+- `Step 21: COMPLETE AND PUSHED at actual closure commit`.
+  Explicit current/historical/future time, exact supersession and conflict
+  preservation, policy-driven freshness, canonical evidence states, bounded
+  same-scope fallback, and offline validation are closed by the intended Step
+  21 commit once it is reachable on `origin/main`.
+- `Step 22: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -409,8 +414,19 @@ Zbudować deterministyczne wybranie HAT-u, twarde scope filters i Evidence Bundl
   [live evidence](../evidence/retrieval/step20-hybrid-evidence-bundle-validation.json),
   [rekord zamknięcia](../audits/STEP_20_HYBRID_RETRIEVAL_EVIDENCE_BUNDLE_CLOSURE_1A.md).
 
-- [ ] **Step 21 — Temporal Resolver, Conflict Detection and Freshness Policy 1A**
+- [x] **Step 21 — Temporal Resolver, Conflict Detection and Freshness Policy 1A**
   Historyczne i bieżące pytania, future-effective, repealed/superseded, conflicting evidence, stale sources, insufficient evidence i completeness fallback.
+  `Step 21: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje hash-bound question time, start-inclusive/end-exclusive
+  applicability, explicit supersession graph and conflict groups, separate
+  policy-driven freshness, canonical evidence status, one bounded same-scope
+  completeness fallback, preserved Step 17/20 authority and isolation, and
+  controlled offline validation with an honest real/synthetic fixture split.
+  [Architektura](../architecture/TEMPORAL_RESOLVER_CONFLICT_FRESHNESS_POLICY_1A.md),
+  [ADR-028](../adr/ADR-028-temporal-resolution-conflict-preservation-freshness-policy.md),
+  [runbook](../operations/STEP_21_TEMPORAL_RESOLUTION_VALIDATION_1A.md),
+  [validation evidence](../evidence/retrieval/step21-temporal-conflict-freshness-validation.json),
+  [rekord zamknięcia](../audits/STEP_21_TEMPORAL_RESOLVER_CONFLICT_FRESHNESS_CLOSURE_1A.md).
 
 ### Gate fazy 5
 

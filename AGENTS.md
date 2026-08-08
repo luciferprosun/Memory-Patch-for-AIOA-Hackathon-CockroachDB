@@ -119,7 +119,13 @@ At roadmap adoption and in subsequent audited closure records:
   controlled real-input/disposable validation are complete in its intended
   closure commit. It is completion evidence only after that commit is
   reachable on `origin/main`.
-- `Step 21: NOT STARTED`. Step 20 completion does not authorize Step 21.
+- Step 21 verified Step 20 bundle binding, explicit current/historical/future
+  applicability, deterministic supersession/conflict preservation, separate
+  policy-driven freshness, canonical evidence statuses, bounded same-scope
+  completeness fallback, and offline real/synthetic validation are complete
+  in its intended closure commit. It is completion evidence only after that
+  commit is reachable on `origin/main`.
+- `Step 22: NOT STARTED`. Step 21 completion does not authorize Step 22.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this
