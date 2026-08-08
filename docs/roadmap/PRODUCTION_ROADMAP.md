@@ -71,7 +71,13 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   hard tenant/HAT/scope/source filters, real Step 16 fixture validation, and
   zero Step 19/20 leakage are closed by the intended Step 18 commit once it is
   reachable on `origin/main`.
-- `Step 19: NOT STARTED`.
+- `Step 19: COMPLETE AND PUSHED at actual closure commit`.
+  Immutable local-only E5 embeddings, verified external derived cache,
+  lineage-bound `VECTOR(384)` persistence, L2 vector candidates, shared hard
+  scope, RLS/FORCE RLS, real-model capability proof, and disposable
+  CockroachDB validation are closed by the intended Step 19 commit once it is
+  reachable on `origin/main`.
+- `Step 20: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -368,8 +374,20 @@ Zbudować deterministyczne wybranie HAT-u, twarde scope filters i Evidence Bundl
   [live evidence](../evidence/retrieval/step18-exact-fulltext-retrieval-validation.json),
   [rekord zamknięcia](../audits/STEP_18_EXACT_FULL_TEXT_RETRIEVAL_CLOSURE_1A.md).
 
-- [ ] **Step 19 — Embedding Generation and Vector Retrieval Foundation 1A**
+- [x] **Step 19 — Embedding Generation and Vector Retrieval Foundation 1A**
   Przypięty model embeddingowy, wersja i dimension, batch generation, cache na external volume, rekordy w CockroachDB, capability proof i resource limits.
+  `Step 19: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje immutable/hash-bound contracts, przypięty lokalny model
+  `intfloat/multilingual-e5-small` wraz z revision i safetensors SHA-256,
+  zweryfikowany external-volume cache, migrację `0010` z `VECTOR(384)`, L2
+  vector index i RLS/FORCE RLS, ponowne użycie hard scope Step 18 oraz
+  kontrolowaną walidację realnego modelu, korpusu Step 16 i disposable
+  CockroachDB.
+  [Architektura](../architecture/EMBEDDING_GENERATION_VECTOR_RETRIEVAL_FOUNDATION_1A.md),
+  [ADR-026](../adr/ADR-026-embedding-generation-vector-retrieval-foundation.md),
+  [runbook](../operations/STEP_19_EMBEDDING_VECTOR_VALIDATION_1A.md),
+  [live evidence](../evidence/retrieval/step19-embedding-vector-validation.json),
+  [rekord zamknięcia](../audits/STEP_19_EMBEDDING_VECTOR_RETRIEVAL_CLOSURE_1A.md).
 
 - [ ] **Step 20 — Hybrid Retrieval, Evidence Bundle and Deterministic Ranking 1A**
   Łączenie exact, full-text i vector candidates, hard filters przed finalnym dopuszczeniem, deterministic ordering, diversity, context budget i zamrożony Evidence Bundle.

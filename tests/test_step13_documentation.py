@@ -28,7 +28,7 @@ class Step13DocumentationTests(unittest.TestCase):
     def test_no_step13_migration(self):
         import json
         manifest=json.loads((REPOSITORY_ROOT/"sql/cockroachdb/migrations/manifest.json").read_text())
-        self.assertEqual(manifest["migrations"][-1]["migration_id"],"0009_step12_hat_registry_runtime_boundary")
+        self.assertFalse(any("step13" in row["migration_id"] for row in manifest["migrations"]))
 
 
 if __name__ == "__main__": unittest.main()

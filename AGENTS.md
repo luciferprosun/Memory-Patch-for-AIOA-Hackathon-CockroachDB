@@ -108,7 +108,12 @@ At roadmap adoption and in subsequent audited closure records:
   controlled disposable validation are complete in its intended closure
   commit. It is completion evidence only after that commit is reachable on
   `origin/main`.
-- `Step 19: NOT STARTED`. Step 18 completion does not authorize Step 19.
+- Step 19 immutable local-model embeddings, verified external derived cache,
+  lineage-bound `VECTOR(384)` persistence, L2 vector retrieval, shared Step 18
+  hard scope, RLS/FORCE RLS, and controlled real-model/disposable CockroachDB
+  validation are complete in its intended closure commit. It is completion
+  evidence only after that commit is reachable on `origin/main`.
+- `Step 20: NOT STARTED`. Step 19 completion does not authorize Step 20.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

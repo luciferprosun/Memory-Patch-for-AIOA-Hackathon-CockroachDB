@@ -81,7 +81,7 @@ class RegistryRuntimeTests(unittest.TestCase):
 
 class MigrationTests(unittest.TestCase):
     def test_manifest_and_global_security(self):
-        manifest=json.loads((REPOSITORY_ROOT/"sql/cockroachdb/migrations/manifest.json").read_text()); self.assertEqual(manifest["migrations"][-1]["migration_id"],"0009_step12_hat_registry_runtime_boundary")
+        manifest=json.loads((REPOSITORY_ROOT/"sql/cockroachdb/migrations/manifest.json").read_text()); self.assertIn("0009_step12_hat_registry_runtime_boundary", {row["migration_id"] for row in manifest["migrations"]})
         sql=(REPOSITORY_ROOT/"sql/cockroachdb/migrations/0009_step12_hat_registry_runtime_boundary.sql").read_text()
         for token in ("hat_registry_entries","hat_registry_events","hat_runtime_bindings","append-only","REVOKE ALL","GRANT SELECT"):
             self.assertIn(token,sql)

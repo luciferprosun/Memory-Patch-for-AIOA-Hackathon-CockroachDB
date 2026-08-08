@@ -65,10 +65,12 @@ class OfflineManifestTests(unittest.TestCase):
         result = migrations.offline_validate()
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["target_version"], "v26.2.4")
-        self.assertEqual(result["migration_count"], 9)
+        self.assertEqual(result["migration_count"], 10)
         self.assertEqual(result["step4_table_count"], 29)
-        self.assertEqual(result["schema_table_count"], 41)
-        self.assertEqual(result["protected_table_count"], 38)
+        self.assertEqual(result["schema_table_count"], 42)
+        self.assertEqual(result["protected_table_count"], 39)
+        self.assertEqual(result["embedding_table_count"], 1)
+        self.assertEqual(result["vector_boundary"], "STEP19_VECTOR_384_L2_PINNED")
         self.assertEqual(result["identity_guard_trigger_count"], 6)
         self.assertEqual(result["persistence_table_count"], 1)
         self.assertEqual(result["source_registry_table_count"], 3)
@@ -91,6 +93,7 @@ class OfflineManifestTests(unittest.TestCase):
                 "0007_step10_idempotent_ingestion_saga",
                 "0008_step11_generic_parsing_pipeline",
                 "0009_step12_hat_registry_runtime_boundary",
+                "0010_step19_embedding_vector_retrieval",
             ],
         )
 
@@ -366,13 +369,14 @@ class RetrievalBoundaryTests(unittest.TestCase):
         self.assertIn("'german'", MIGRATION_SQL)
         self.assertIn("'simple'", MIGRATION_SQL)
 
-    def test_vector_dimension_is_not_fabricated(self) -> None:
-        self.assertNotRegex(MIGRATION_SQL, r"(?i)\bVECTOR\s*\(")
+    def test_step4_deferred_vector_dimension_until_step19(self) -> None:
+        self.assertNotRegex(STEP4_SQL, r"(?i)\bVECTOR\s*\(")
         manifest = migrations.load_schema_manifest()
         self.assertIn(
             "VECTOR_COLUMN_AND_INDEX_PENDING_MODEL_AND_DIMENSION_PIN",
             manifest["deferred_features"],
         )
+        self.assertRegex(MIGRATION_SQL, r"(?i)\bVECTOR\s*\(\s*384\s*\)")
 
     def test_prefix_indexes_are_filtering_not_authority(self) -> None:
         self.assertIn("knowledge_chunks_scope_retrieval_idx", MIGRATION_SQL)
@@ -567,7 +571,7 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
         ):
             result = migrations.apply_migrations(client, "mp_step5_noop")
         self.assertEqual(result["applied_count"], 0)
-        self.assertEqual(result["skipped_count"], 9)
+        self.assertEqual(result["skipped_count"], 10)
         client.execute.assert_not_called()
 
     def test_applied_checksum_mismatch_fails_closed(self) -> None:

@@ -936,7 +936,7 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
             for token in tokens:
                 self.assertIn(token, text, relative)
 
-    def test_roadmap_preserves_step17_and_closes_only_current_step18(self) -> None:
+    def test_roadmap_preserves_completed_steps_and_leaves_step20_open(self) -> None:
         roadmap = (
             REPOSITORY_ROOT / "docs/roadmap/PRODUCTION_ROADMAP.md"
         ).read_text(encoding="utf-8")
@@ -949,11 +949,16 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "- [ ] **Step 19 — Embedding Generation and Vector Retrieval Foundation 1A**",
+            "- [x] **Step 19 — Embedding Generation and Vector Retrieval Foundation 1A**",
+            roadmap,
+        )
+        self.assertIn(
+            "- [ ] **Step 20 — Hybrid Retrieval, Evidence Bundle and Deterministic Ranking 1A**",
             roadmap,
         )
         agents = (REPOSITORY_ROOT / "AGENTS.md").read_text(encoding="utf-8")
-        self.assertIn("Step 19: NOT STARTED", agents)
+        self.assertIn("Step 19 immutable local-model embeddings", agents)
+        self.assertIn("Step 20: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

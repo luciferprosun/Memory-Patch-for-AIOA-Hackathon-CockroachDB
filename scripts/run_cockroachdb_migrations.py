@@ -65,7 +65,7 @@ PARSING_PIPELINE_MANIFEST_PATH = (
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "7.0.0"
+RUNNER_VERSION = "8.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
@@ -85,6 +85,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step13_",
     "mp_step14_",
     "mp_step15_",
+    "mp_step19_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
@@ -129,6 +130,10 @@ STEP11_MIGRATION_SHA256 = (
 STEP12_MIGRATION_ID = "0009_step12_hat_registry_runtime_boundary"
 STEP12_MIGRATION_SHA256 = (
     "d4437055e913d5d4874c4d0b1b1985a4d93a0ec0606d905b04e43c38534204f7"
+)
+STEP19_MIGRATION_ID = "0010_step19_embedding_vector_retrieval"
+STEP19_MIGRATION_SHA256 = (
+    "e335631fb1087d191b775ef6d3fb77ac99156ae83bffd77a77651b75541e3377"
 )
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
 STEP5_CLUSTER_ROLE_END = "-- STEP5_CLUSTER_ROLE_DDL_END"
@@ -1230,6 +1235,49 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
                 raise MigrationError(f"{migration_id} lacks required registry fragment: {fragment}")
         if "BYPASSRLS" in sql or "CREATE ROLE" in sql or "GRANT DELETE" in sql:
             raise MigrationError("Step 12 weakens global registry security")
+    elif migration_id == STEP19_MIGRATION_ID:
+        forbidden_patterns = ()
+        for fragment in (
+            "CREATE TABLE memory_patch.chunk_embeddings",
+            "embedding VECTOR(384) NOT NULL",
+            "chunk_embeddings_chunk_fk",
+            "CREATE VECTOR INDEX chunk_embeddings_vector_l2_idx",
+            "embedding vector_l2_ops",
+            "CREATE INDEX chunk_embeddings_model_lookup_idx",
+            "ENABLE ROW LEVEL SECURITY",
+            "FORCE ROW LEVEL SECURITY",
+            "CREATE POLICY chunk_embeddings_s19_select",
+            "CREATE POLICY chunk_embeddings_s19_insert",
+            "memory_patch.hat_scope_context_matches(tenant_id, hat_scope_id)",
+            "GRANT SELECT, INSERT",
+            "ON DELETE RESTRICT",
+        ):
+            if fragment not in sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required vector fragment: {fragment}"
+                )
+        if re.search(r"\bTO\s+PUBLIC\b", sql, re.IGNORECASE):
+            raise MigrationError("Step 19 policy or grant targets PUBLIC")
+        if re.search(
+            r"\bUSING\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 19 contains an allow-all RLS policy")
+        if re.search(
+            r"^\s*(?:DELETE\s+FROM|UPDATE\s+memory_patch\.|TRUNCATE|DROP\s+TABLE)\b",
+            sql,
+            re.IGNORECASE | re.MULTILINE,
+        ):
+            raise MigrationError("Step 19 mutates pre-existing authority data")
+        if len(
+            re.findall(
+                r"^CREATE TABLE memory_patch\.chunk_embeddings\b",
+                sql,
+                re.MULTILINE,
+            )
+        ) != 1:
+            raise MigrationError("Step 19 table set is not exact")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -1239,11 +1287,11 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 7:
-        raise MigrationError("migration manifest schema_version must be 7")
+    if manifest.get("schema_version") != 8:
+        raise MigrationError("migration manifest schema_version must be 8")
     if (
         manifest.get("manifest_id")
-        != "memory-patch-step12-hat-registry-runtime-boundary-1a"
+        != "memory-patch-step19-embedding-vector-retrieval-1a"
     ):
         raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
@@ -1256,7 +1304,8 @@ def load_migrations() -> list[Migration]:
         "STEP4_ONE_TRANSACTION_STEP5_NINE_IDEMPOTENT_DATABASE_PHASES_"
         "WITH_NONATOMIC_CLUSTER_ROLE_DDL_STEP6_ONE_TRANSACTION_"
         "STEP9_ONE_TRANSACTION_STEP10_ONE_TRANSACTION_"
-        "STEP11_ONE_TRANSACTION_STEP12_ONE_TRANSACTION"
+        "STEP11_ONE_TRANSACTION_STEP12_ONE_TRANSACTION_"
+        "STEP19_ONE_TRANSACTION"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -1329,6 +1378,8 @@ def load_migrations() -> list[Migration]:
             raise MigrationError("Step 11 checksum differs from the audited migration")
         if migration_id == STEP12_MIGRATION_ID and checksum != STEP12_MIGRATION_SHA256:
             raise MigrationError("Step 12 checksum differs from the audited migration")
+        if migration_id == STEP19_MIGRATION_ID and checksum != STEP19_MIGRATION_SHA256:
+            raise MigrationError("Step 19 checksum differs from the audited migration")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -1346,11 +1397,12 @@ def load_migrations() -> list[Migration]:
         STEP10_MIGRATION_ID,
         STEP11_MIGRATION_ID,
         STEP12_MIGRATION_ID,
+        STEP19_MIGRATION_ID,
     ]
     if identifiers != expected_identifiers:
         raise MigrationError(
             "migration chain is not the exact Step 4 -> Step 5 -> Step 6 -> "
-            "Step 9 -> Step 10 -> Step 11 -> Step 12 chain"
+            "Step 9 -> Step 10 -> Step 11 -> Step 12 -> Step 19 chain"
         )
     return migrations
 
@@ -1952,6 +2004,11 @@ def offline_validate() -> dict[str, Any]:
         for migration in migrations
         if migration.migration_id == STEP11_MIGRATION_ID
     )
+    step19_sql = next(
+        migration.sql
+        for migration in migrations
+        if migration.migration_id == STEP19_MIGRATION_ID
+    )
     historical_sql = step4_sql + "\n" + step5_sql
     step4_tables = sorted(
         re.findall(
@@ -2022,6 +2079,15 @@ def offline_validate() -> dict[str, Any]:
     )
     if parsing_pipeline_tables != expected_parsing_pipeline_tables:
         raise MigrationError("parsing pipeline tables differ from migration SQL")
+    embedding_tables = sorted(
+        re.findall(
+            r"^CREATE TABLE memory_patch\.([a-z0-9_]+)",
+            step19_sql,
+            re.MULTILINE,
+        )
+    )
+    if embedding_tables != ["chunk_embeddings"]:
+        raise MigrationError("Step 19 embedding table set is not exact")
     created_tables = sorted(
         [
             *step4_tables,
@@ -2030,6 +2096,7 @@ def offline_validate() -> dict[str, Any]:
             *source_registry_tables,
             *ingestion_saga_tables,
             *parsing_pipeline_tables,
+            *embedding_tables,
         ]
     )
     created_indexes = sorted(
@@ -2067,6 +2134,18 @@ def offline_validate() -> dict[str, Any]:
         "parsed_sections_document_ordinal_idx",
     ]:
         raise MigrationError("parsing pipeline index boundary is not exact")
+    embedding_indexes = sorted(
+        re.findall(
+            r"^CREATE (?:UNIQUE |INVERTED |VECTOR )?INDEX ([a-z0-9_]+)",
+            step19_sql,
+            re.MULTILINE,
+        )
+    )
+    if embedding_indexes != [
+        "chunk_embeddings_model_lookup_idx",
+        "chunk_embeddings_vector_l2_idx",
+    ]:
+        raise MigrationError("Step 19 embedding index boundary is not exact")
     required_entities = {
         "tenants",
         "users",
@@ -2328,6 +2407,35 @@ def offline_validate() -> dict[str, Any]:
         re.IGNORECASE | re.MULTILINE,
     ):
         raise MigrationError("Step 11 contains destructive cleanup SQL")
+    step19_enabled = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"ENABLE ROW LEVEL SECURITY;",
+            step19_sql,
+        )
+    )
+    step19_forced = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"FORCE ROW LEVEL SECURITY;",
+            step19_sql,
+        )
+    )
+    if step19_enabled != {"chunk_embeddings"}:
+        raise MigrationError("Step 19 RLS coverage is incomplete")
+    if step19_forced != {"chunk_embeddings"}:
+        raise MigrationError("Step 19 FORCE RLS coverage is incomplete")
+    for policy, command in (
+        ("chunk_embeddings_s19_select", "SELECT"),
+        ("chunk_embeddings_s19_insert", "INSERT"),
+    ):
+        if re.search(
+            rf"CREATE POLICY {policy}\s+ON memory_patch\.chunk_embeddings\s+"
+            rf"FOR {command}\s+TO mp_app_runtime",
+            step19_sql,
+            re.MULTILINE,
+        ) is None:
+            raise MigrationError(f"Step 19 policy is missing: {policy}")
     return {
         "migration_count": len(migrations),
         "migration_ids": [migration.migration_id for migration in migrations],
@@ -2337,6 +2445,7 @@ def offline_validate() -> dict[str, Any]:
         "source_registry_table_count": len(source_registry_tables),
         "ingestion_saga_table_count": len(ingestion_saga_tables),
         "parsing_pipeline_table_count": len(parsing_pipeline_tables),
+        "embedding_table_count": len(embedding_tables),
         "step4_table_count": len(step4_tables),
         "protected_table_count": (
             len(protected)
@@ -2344,6 +2453,7 @@ def offline_validate() -> dict[str, Any]:
             + len(source_registry_tables)
             + len(ingestion_saga_tables)
             + len(parsing_pipeline_tables)
+            + len(embedding_tables)
         ),
         "identity_guard_trigger_count": (
             len(guard_triggers) + 2 + len(step10_triggers)
@@ -2353,7 +2463,7 @@ def offline_validate() -> dict[str, Any]:
         ),
         "status": "PASS",
         "target_version": pin["exact_version"],
-        "vector_boundary": "DEFERRED_NO_CANONICAL_DIMENSION",
+        "vector_boundary": "STEP19_VECTOR_384_L2_PINNED",
     }
 
 
@@ -3436,6 +3546,13 @@ def apply_migrations(
                 timeout=timeout,
             )
             database_sql = ""
+        elif migration.migration_id == STEP19_MIGRATION_ID:
+            client.execute(
+                database,
+                "BEGIN;\n" + database_sql + "\nCOMMIT;",
+                timeout=timeout,
+            )
+            database_sql = ""
         migration_record_sql = (
             "INSERT INTO memory_patch.schema_migrations "
             "(migration_id, checksum_sha256, applied_at, runner_version) VALUES ("
@@ -3546,11 +3663,12 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
             "hat_registry_entries",
             "hat_registry_events",
             "hat_runtime_bindings",
+            "chunk_embeddings",
         ]
     )
     if catalog["tables"] != expected_tables:
         raise MigrationError(
-            "live catalog table set differs from Step 4–6/9–12 manifests"
+            "live catalog table set differs from Step 4–6/9–12/19 manifests"
         )
     indexes = set(catalog["explicit_indexes"])
     required_persistence_indexes = {
@@ -3567,11 +3685,16 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
         "parsed_documents_scope_idx",
         "parsed_sections_document_ordinal_idx",
     }
+    required_embedding_indexes = {
+        "chunk_embeddings_model_lookup_idx",
+        "chunk_embeddings_vector_l2_idx",
+    }
     missing_indexes = (
         set(schema_manifest["explicit_indexes"])
         | required_persistence_indexes
         | required_ingestion_indexes
         | required_parsing_indexes
+        | required_embedding_indexes
     ) - indexes
     if missing_indexes:
         raise MigrationError(f"live catalog lacks indexes: {sorted(missing_indexes)}")

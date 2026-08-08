@@ -1026,10 +1026,10 @@ class PersistenceStaticValidationTests(unittest.TestCase):
             + "\n"
         ).encode()
         self.assertEqual(path.read_bytes(), canonical)
-        self.assertEqual(len(value["migrations"]), 9)
+        self.assertEqual(len(value["migrations"]), 10)
         self.assertEqual(
             value["migrations"][-1]["migration_id"],
-            "0009_step12_hat_registry_runtime_boundary",
+            "0010_step19_embedding_vector_retrieval",
         )
 
     def test_transaction_module_has_no_external_business_imports(self) -> None:

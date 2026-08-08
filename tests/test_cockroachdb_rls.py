@@ -58,7 +58,7 @@ class SecurityManifestCoverageTests(unittest.TestCase):
     def test_offline_security_validation_passes(self) -> None:
         result = rls_validation.offline_validate()
         self.assertEqual(result["status"], "PASS")
-        self.assertEqual(result["migration_count"], 9)
+        self.assertEqual(result["migration_count"], 10)
         self.assertEqual(result["step4_table_count"], 29)
         self.assertEqual(result["protected_table_count"], 27)
         self.assertEqual(result["policy_count"], 50)
