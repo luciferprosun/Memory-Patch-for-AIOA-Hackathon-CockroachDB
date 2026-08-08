@@ -106,7 +106,7 @@ class Step15DocumentationTests(unittest.TestCase):
         agents = AGENTS.read_text(encoding="utf-8")
         self.assertIn("Step 15 temporal and jurisdictional normalization", agents)
         self.assertIn("Step 17 deterministic Axis A routing", agents)
-        self.assertIn("Step 18: NOT STARTED", agents)
+        self.assertIn("Step 19: NOT STARTED", agents)
         readme = README.read_text(encoding="utf-8")
         self.assertIn("Step 15 closure record", readme)
         self.assertIn("STEP_15_GERMAN_LAW_TEMPORAL_JURISDICTIONAL_VALIDATION_1A.md", readme)

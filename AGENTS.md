@@ -103,7 +103,12 @@ At roadmap adoption and in subsequent audited closure records:
   execution policy, evidence/answer separation, isolation, and offline
   validation are complete in its intended closure commit. It is completion
   evidence only after that commit is reachable on `origin/main`.
-- `Step 18: NOT STARTED`. Step 17 completion does not authorize Step 18.
+- Step 18 exact identifiers, structured statute/section lookup, German lexical
+  retrieval, hard pre-candidate tenant/HAT/scope/authority filtering, and
+  controlled disposable validation are complete in its intended closure
+  commit. It is completion evidence only after that commit is reachable on
+  `origin/main`.
+- `Step 19: NOT STARTED`. Step 18 completion does not authorize Step 19.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

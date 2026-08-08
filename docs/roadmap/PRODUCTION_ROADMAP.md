@@ -66,7 +66,12 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   Deterministyczny Axis A, niezależny Axis B, oddzielenie evidence/answer,
   tenant/user isolation oraz zero-effect offline validation są zamknięte przez
   zamierzony commit Step 17, gdy jest osiągalny na `origin/main`.
-Step 18: NOT STARTED.
+- `Step 18: COMPLETE AND PUSHED at actual closure commit`.
+  Exact and structured retrieval, German lexical search, route binding,
+  hard tenant/HAT/scope/source filters, real Step 16 fixture validation, and
+  zero Step 19/20 leakage are closed by the intended Step 18 commit once it is
+  reachable on `origin/main`.
+- `Step 19: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -349,8 +354,19 @@ Zbudować deterministyczne wybranie HAT-u, twarde scope filters i Evidence Bundl
   [offline evidence](../evidence/routing/step17-routing-policy-validation.json),
   [rekord zamknięcia](../audits/STEP_17_AXIS_A_ROUTER_AXIS_B_POLICY_GATE_CLOSURE_1A.md).
 
-- [ ] **Step 18 — Exact and Full-Text Retrieval Baseline 1A**
+- [x] **Step 18 — Exact and Full-Text Retrieval Baseline 1A**
   Exact identifiers, statute/section lookup, German full-text, keyword search, source authority, tenant/HAT isolation i twarde scope filters.
+  `Step 18: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje immutable i hash-bound contracts, pełne związanie z
+  `KnowledgeRouteResult`, parametryzowany read-only repository, hard filters
+  przed candidate generation, ponowne użycie istniejącego German `TSVECTOR`
+  i Source Registry oraz controlled CockroachDB validation na jednym
+  zweryfikowanym elemencie korpusu Step 16.
+  [Architektura](../architecture/EXACT_FULL_TEXT_RETRIEVAL_BASELINE_1A.md),
+  [ADR-025](../adr/ADR-025-exact-full-text-retrieval-hard-scope-filtering.md),
+  [runbook](../operations/STEP_18_RETRIEVAL_VALIDATION_1A.md),
+  [live evidence](../evidence/retrieval/step18-exact-fulltext-retrieval-validation.json),
+  [rekord zamknięcia](../audits/STEP_18_EXACT_FULL_TEXT_RETRIEVAL_CLOSURE_1A.md).
 
 - [ ] **Step 19 — Embedding Generation and Vector Retrieval Foundation 1A**
   Przypięty model embeddingowy, wersja i dimension, batch generation, cache na external volume, rekordy w CockroachDB, capability proof i resource limits.
