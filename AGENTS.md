@@ -113,7 +113,13 @@ At roadmap adoption and in subsequent audited closure records:
   hard scope, RLS/FORCE RLS, and controlled real-model/disposable CockroachDB
   validation are complete in its intended closure commit. It is completion
   evidence only after that commit is reachable on `origin/main`.
-- `Step 20: NOT STARTED`. Step 19 completion does not authorize Step 20.
+- Step 20 verified Step 18/19 input binding, exact lineage deduplication,
+  fixed-integer fusion, deterministic diversity, provider-neutral byte budget,
+  immutable/hash-bound Evidence Bundle, authority/isolation revalidation, and
+  controlled real-input/disposable validation are complete in its intended
+  closure commit. It is completion evidence only after that commit is
+  reachable on `origin/main`.
+- `Step 21: NOT STARTED`. Step 20 completion does not authorize Step 21.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

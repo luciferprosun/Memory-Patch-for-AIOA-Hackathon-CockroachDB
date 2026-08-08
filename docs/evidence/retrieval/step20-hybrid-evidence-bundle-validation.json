@@ -1,0 +1,215 @@
+{
+  "baseline_sha": "c8d0258bf38b207b29a1a4d1121172ba26f11caa",
+  "boundaries": {
+    "aws_mutations": 0,
+    "freshness_policy": 0,
+    "provider_calls": 0,
+    "remote_model_calls": 0,
+    "s3_mutations": 0,
+    "step21_started": false,
+    "temporal_resolution": 0
+  },
+  "cleanup": {
+    "force_kill_used": false,
+    "pid_exited": true,
+    "ports_closed": true,
+    "step16_source_bundle_unchanged": true,
+    "step19_model_cache_preserved": true,
+    "temporary_store_removed": true
+  },
+  "cockroachdb": {
+    "binary_sha256": "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf",
+    "migration_replay": "PASS_NOOP",
+    "new_step20_migration": false,
+    "pinned_version": "v26.2.4"
+  },
+  "context_budget": {
+    "bounded_probe_bytes": 512,
+    "bounded_probe_truncated": true,
+    "bounded_probe_used": 512,
+    "default_budget_bytes": 65536,
+    "final_context_bytes_used": 1099,
+    "status": "PASS"
+  },
+  "diversity": {
+    "candidates_after_diversity": 2,
+    "final_ordered_evidence_ids": [
+      "evidence:b3e68d8bff3ce7137a7452379c0820daf83988654f478bfa2f475cf749088485",
+      "evidence:2b591c24a79852b684ad1bbadc62df554b1e6d0ef5f1b79c7cd301f3d0770ed9"
+    ],
+    "policy_digest": "cb866069ba046ece02c6ca047a6a2bcd0c170418a5bdc383be511b0fbaa824a9",
+    "status": "PASS"
+  },
+  "evidence_bundle": {
+    "answer_status": "BLOCKED_NO_VERIFIED_EVIDENCE",
+    "bundle_hash": "96338f1ce66875a7698f0135f51a90da06e8d8e6c6b1425f2e39ab0c89cfae7c",
+    "bundle_id": "evidence-bundle:96338f1ce66875a7698f0135f51a90da06e8d8e6c6b1425f2e39ab0c89cfae7c",
+    "deterministic_replay": "PASS",
+    "evidence_status": "SUFFICIENT",
+    "item_count": 2,
+    "persistence": "NOT_APPLICABLE_STEP4_REQUIRES_EXISTING_KERNEL_RUN_BINDING",
+    "persistence_replay": "NOT_APPLICABLE",
+    "retrieval_coverage": "COMPLETE"
+  },
+  "fusion": {
+    "candidates_after_dedup": 2,
+    "candidates_before_dedup": 7,
+    "exact_priority": "PASS",
+    "fixed_point_fusion": "PASS",
+    "input_order_independence": "PASS",
+    "metadata_conflict_negative": "PASS",
+    "score_matrix": [
+      {
+        "evidence_id": "evidence:b3e68d8bff3ce7137a7452379c0820daf83988654f478bfa2f475cf749088485",
+        "fused_score": 409836062,
+        "match_class": 0,
+        "modalities": [
+          "STATUTE_SECTION",
+          "EXACT_IDENTIFIER",
+          "FULL_TEXT",
+          "VECTOR",
+          "KEYWORD"
+        ],
+        "modality_ranks": {
+          "EXACT_IDENTIFIER": 1,
+          "FULL_TEXT": 1,
+          "KEYWORD": 1,
+          "STATUTE_SECTION": 1,
+          "VECTOR": 1
+        }
+      },
+      {
+        "evidence_id": "evidence:2b591c24a79852b684ad1bbadc62df554b1e6d0ef5f1b79c7cd301f3d0770ed9",
+        "fused_score": 177419354,
+        "match_class": 1,
+        "modalities": [
+          "EXACT_IDENTIFIER",
+          "VECTOR"
+        ],
+        "modality_ranks": {
+          "EXACT_IDENTIFIER": 2,
+          "VECTOR": 2
+        }
+      }
+    ],
+    "shared_bindings": "PASS",
+    "upstream_hash_verification": "PASS"
+  },
+  "hard_filter_negatives": {
+    "cross_hat": "PASS_STEP18_STEP19_SQL_AND_STEP20_UNIT",
+    "cross_tenant": "PASS_STEP18_STEP19_SQL_AND_STEP20_UNIT",
+    "source_authority_is_rank_boost": false,
+    "unpublished": "PASS",
+    "vector_similarity_is_authority": false,
+    "weak_authority": "PASS",
+    "wrong_model_digest": "PASS"
+  },
+  "ranking_policy": {
+    "modality_weights": {
+      "EXACT_IDENTIFIER": 8,
+      "FULL_TEXT": 4,
+      "KEYWORD": 2,
+      "STATUTE_SECTION": 8,
+      "VECTOR": 3
+    },
+    "native_float_hash_material": false,
+    "policy_digest": "337196da5feab11a72b611cbc043507a238a88dd25396f8c9bcd7c081ff0c715",
+    "policy_id": "hybrid-retrieval-ranking-1a",
+    "policy_version": "1",
+    "rrf_k": 60,
+    "rrf_scale": 1000000000
+  },
+  "real_inputs": {
+    "bounded_provisions": 2,
+    "external_volume_verified": true,
+    "local_offline_model": "PASS",
+    "official_identifier": "BJNR1330A0023",
+    "runtime_versions": {
+      "certifi": "2026.7.22",
+      "charset-normalizer": "3.4.9",
+      "filelock": "3.29.0",
+      "fsspec": "2026.4.0",
+      "hf-xet": "1.6.0",
+      "huggingface-hub": "0.33.4",
+      "idna": "3.18",
+      "jinja2": "3.1.6",
+      "markupsafe": "3.0.3",
+      "mpmath": "1.3.0",
+      "networkx": "3.6.1",
+      "numpy": "2.5.1",
+      "packaging": "26.3",
+      "pip": "24.0",
+      "pyyaml": "6.0.3",
+      "regex": "2026.7.19",
+      "requests": "2.34.2",
+      "safetensors": "0.5.3",
+      "setuptools": "78.1.0",
+      "sympy": "1.14.0",
+      "tokenizers": "0.21.2",
+      "torch": "2.7.1+cpu",
+      "tqdm": "4.70.0",
+      "transformers": "4.53.3",
+      "typing-extensions": "4.15.0",
+      "urllib3": "2.7.0"
+    },
+    "source_id": "de-federal-gii-bjnr1330a0023",
+    "step16_fixture": "PASS",
+    "step16_source_writes": 0,
+    "step19_model_id": "intfloat/multilingual-e5-small",
+    "step19_model_revision": "fd1525a9fd15316a2d503bf26ab031a61d056e98",
+    "version_identity": "legal-version-001123facb9c2ff3c2b693b2f2b6b2946511457bbbf5f7d9ddd1047c5e181e95"
+  },
+  "resource_bounds": {
+    "maximum_bundle_items": 40,
+    "maximum_canonical_bundle_bytes": 524288,
+    "maximum_context_budget_bytes": 262144,
+    "maximum_exact_priority_items": 8,
+    "maximum_excerpt_bytes_per_item": 8192,
+    "maximum_items_per_knowledge_version": 4,
+    "maximum_items_per_source": 3,
+    "maximum_merged_candidates": 500,
+    "maximum_upstream_results_per_modality": 100
+  },
+  "schema_version": "1.0.0",
+  "status": "PASS",
+  "step": "STEP_20_HYBRID_RETRIEVAL_EVIDENCE_BUNDLE_DETERMINISTIC_RANKING_1A",
+  "step17_route": {
+    "effective_scope_hash": "6a0f252e34b18fe24fd67fdf0410d97a866f0783ef2f53f93b2fc5505970e830",
+    "route_hash": "225f9d37eb06adaafbb389fcfc2e8d972af31c495fde081221b2ac47f0571d94",
+    "selected_hat_id": "german-law",
+    "selected_hat_version": "1.0.0",
+    "selected_manifest_digest": "ab6ff572596993d63fdfd148207fcb4593f2672583f9d8dbedcc8f7e0f246109",
+    "tenant_id": "memory-patch-validation-tenant",
+    "user_id": "step20-validation-user"
+  },
+  "step18_inputs": {
+    "EXACT_IDENTIFIER": {
+      "candidate_count": 2,
+      "request_hash": "2c657452a5b06049cf3994c7ee857f2c5d630f5678e7a755419ef045d70745b2",
+      "result_hash": "7ce4cf7cb9931c82a8623776fd712d3bda849faebed8481dae7227908df58411"
+    },
+    "FULL_TEXT": {
+      "candidate_count": 1,
+      "request_hash": "09d265dc917aa256e3580a37ff153f50f2e42b84378b54a72c8474c61228bdfb",
+      "result_hash": "af4229fe6d303d82ecf6de45380e2de86b31217f122639b0083ac1dfd94886c0"
+    },
+    "KEYWORD": {
+      "candidate_count": 1,
+      "request_hash": "df8c5e2ba829ecc71174ac13100278a6725adaaa09a439c11bb5a5f4b85a614a",
+      "result_hash": "d6b3ae7385e2a734615929298ff1cd84c0a6e65cb19b5dab1842def2047ddea4"
+    },
+    "STATUTE_SECTION": {
+      "candidate_count": 1,
+      "request_hash": "3584fba8f0dd7c0fb85d5d6f3c6732bc9c80a7e5bf2216d32ebe042ff6924573",
+      "result_hash": "7cd15c460f79784f2f6a2019c90dbf987c68d7b3777de0027946f13bab7dcd56"
+    }
+  },
+  "step19_input": {
+    "candidate_count": 2,
+    "metric": "UNIT_NORMALIZED_L2",
+    "model_digest": "aa68fc625f243f0e9c5f97aa9a7d3b7963c7dfdd10ca645d0782f3d8e8c77070",
+    "request_hash": "5e65b631d63b4c6a1a8527a5be595017d003782af4fa214de38244139d4b6dd6",
+    "result_hash": "7eceb0f8e0ac0d4e49296d3dfdd800f96361ecd340364c3ee168cbff6a580c98"
+  },
+  "validation_digest": "5ca142199abec4b9f29943627ae98d86139dab137070b2ea7a7f9fb6180d068d"
+}

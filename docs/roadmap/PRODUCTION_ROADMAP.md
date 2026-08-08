@@ -77,7 +77,13 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   scope, RLS/FORCE RLS, real-model capability proof, and disposable
   CockroachDB validation are closed by the intended Step 19 commit once it is
   reachable on `origin/main`.
-- `Step 20: NOT STARTED`.
+- `Step 20: COMPLETE AND PUSHED at actual closure commit`.
+  Verified Step 18/19 inputs, exact lineage deduplication, fixed integer
+  fusion, deterministic diversity, provider-neutral context bytes, immutable
+  Evidence Bundle identity, hard authority/isolation revalidation, and
+  controlled real-input/disposable validation are closed by the intended
+  Step 20 commit once it is reachable on `origin/main`.
+- `Step 21: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -389,8 +395,19 @@ Zbudować deterministyczne wybranie HAT-u, twarde scope filters i Evidence Bundl
   [live evidence](../evidence/retrieval/step19-embedding-vector-validation.json),
   [rekord zamknięcia](../audits/STEP_19_EMBEDDING_VECTOR_RETRIEVAL_CLOSURE_1A.md).
 
-- [ ] **Step 20 — Hybrid Retrieval, Evidence Bundle and Deterministic Ranking 1A**
+- [x] **Step 20 — Hybrid Retrieval, Evidence Bundle and Deterministic Ranking 1A**
   Łączenie exact, full-text i vector candidates, hard filters przed finalnym dopuszczeniem, deterministic ordering, diversity, context budget i zamrożony Evidence Bundle.
+  `Step 20: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje bezpośrednią weryfikację hash/binding Step 18 i Step 19,
+  exact-lineage deduplication, fixed-point RRF z exact priority, bounded
+  deterministic diversity, provider-neutral UTF-8 byte budget, immutable
+  Evidence Bundle, ponowną walidację authority/isolation oraz controlled
+  validation z realnymi wynikami Step 18/19 i disposable CockroachDB.
+  [Architektura](../architecture/HYBRID_RETRIEVAL_EVIDENCE_BUNDLE_DETERMINISTIC_RANKING_1A.md),
+  [ADR-027](../adr/ADR-027-hybrid-retrieval-evidence-bundle-deterministic-ranking.md),
+  [runbook](../operations/STEP_20_HYBRID_EVIDENCE_VALIDATION_1A.md),
+  [live evidence](../evidence/retrieval/step20-hybrid-evidence-bundle-validation.json),
+  [rekord zamknięcia](../audits/STEP_20_HYBRID_RETRIEVAL_EVIDENCE_BUNDLE_CLOSURE_1A.md).
 
 - [ ] **Step 21 — Temporal Resolver, Conflict Detection and Freshness Policy 1A**
   Historyczne i bieżące pytania, future-effective, repealed/superseded, conflicting evidence, stale sources, insufficient evidence i completeness fallback.
@@ -570,6 +587,7 @@ Do działania pierwszej pełnej wersji bez elementów dodatkowych konieczne są:
 → 16
 → 17
 → 18
+→ 19
 → 20
 → 21
 → 22

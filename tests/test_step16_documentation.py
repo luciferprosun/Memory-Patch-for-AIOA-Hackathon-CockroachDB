@@ -94,13 +94,16 @@ class Step16DocumentationTests(unittest.TestCase):
         step19 = roadmap[roadmap.index("**Step 19") - 10 : roadmap.index("**Step 19") + 120]
         self.assertIn("[x]", step19)
         step20 = roadmap[roadmap.index("**Step 20") - 10 : roadmap.index("**Step 20") + 120]
-        self.assertIn("[ ]", step20)
+        self.assertIn("[x]", step20)
+        step21 = roadmap[roadmap.index("**Step 21") - 10 : roadmap.index("**Step 21") + 120]
+        self.assertIn("[ ]", step21)
         agents = AGENTS.read_text(encoding="utf-8")
         self.assertIn("Step 16 trusted publication", agents)
         self.assertIn("Step 17 deterministic Axis A routing", agents)
         self.assertIn("Step 18 exact identifiers", agents)
         self.assertIn("Step 19 immutable local-model embeddings", agents)
-        self.assertIn("Step 20: NOT STARTED", agents)
+        self.assertIn("Step 20 verified Step 18/19 input binding", agents)
+        self.assertIn("Step 21: NOT STARTED", agents)
         self.assertIn("Step 16 closure record", README.read_text(encoding="utf-8"))
 
 
