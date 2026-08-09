@@ -65,17 +65,22 @@ class OfflineManifestTests(unittest.TestCase):
         result = migrations.offline_validate()
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["target_version"], "v26.2.4")
-        self.assertEqual(result["migration_count"], 10)
+        self.assertEqual(result["migration_count"], 11)
         self.assertEqual(result["step4_table_count"], 29)
-        self.assertEqual(result["schema_table_count"], 42)
-        self.assertEqual(result["protected_table_count"], 39)
+        self.assertEqual(result["schema_table_count"], 43)
+        self.assertEqual(result["protected_table_count"], 40)
         self.assertEqual(result["embedding_table_count"], 1)
         self.assertEqual(result["vector_boundary"], "STEP19_VECTOR_384_L2_PINNED")
-        self.assertEqual(result["identity_guard_trigger_count"], 6)
+        self.assertEqual(result["identity_guard_trigger_count"], 7)
         self.assertEqual(result["persistence_table_count"], 1)
         self.assertEqual(result["source_registry_table_count"], 3)
         self.assertEqual(result["ingestion_saga_table_count"], 4)
         self.assertEqual(result["parsing_pipeline_table_count"], 3)
+        self.assertEqual(result["personal_memory_table_count"], 1)
+        self.assertEqual(
+            result["personal_memory_boundary"],
+            "STEP27_OWNER_PRIVATE_RLS_FORCE_RLS",
+        )
 
     def test_migration_order_and_ids_are_stable(self) -> None:
         loaded = migrations.load_migrations()
@@ -94,6 +99,7 @@ class OfflineManifestTests(unittest.TestCase):
                 "0008_step11_generic_parsing_pipeline",
                 "0009_step12_hat_registry_runtime_boundary",
                 "0010_step19_embedding_vector_retrieval",
+                "0011_step27_personal_memory_persistence",
             ],
         )
 
@@ -571,7 +577,7 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
         ):
             result = migrations.apply_migrations(client, "mp_step5_noop")
         self.assertEqual(result["applied_count"], 0)
-        self.assertEqual(result["skipped_count"], 10)
+        self.assertEqual(result["skipped_count"], 11)
         client.execute.assert_not_called()
 
     def test_applied_checksum_mismatch_fails_closed(self) -> None:

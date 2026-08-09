@@ -990,9 +990,14 @@ class IntegrityAndMigrationTests(unittest.TestCase):
 
     def test_manifest_declares_exact_step19_checksum(self) -> None:
         manifest = json.loads((ROOT / "sql/cockroachdb/migrations/manifest.json").read_text())
-        final = manifest["migrations"][-1]
-        self.assertEqual(final["migration_id"], "0010_step19_embedding_vector_retrieval")
-        self.assertEqual(final["sha256"], hashlib.sha256(MIGRATION_PATH.read_bytes()).hexdigest())
+        step19 = next(
+            value
+            for value in manifest["migrations"]
+            if value["migration_id"] == "0010_step19_embedding_vector_retrieval"
+        )
+        self.assertEqual(
+            step19["sha256"], hashlib.sha256(MIGRATION_PATH.read_bytes()).hexdigest()
+        )
 
 
 class StepBoundaryTests(unittest.TestCase):

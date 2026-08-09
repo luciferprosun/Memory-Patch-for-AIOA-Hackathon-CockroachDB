@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate and apply the Memory Patch CockroachDB Step 4–6 and 9–11 migrations.
+"""Validate and apply the canonical Memory Patch CockroachDB migration chain.
 
 Ordinary repository tests import this module without opening a socket or
 starting a process. Live actions require ``--allow-live`` and an exact pinned
@@ -65,7 +65,7 @@ PARSING_PIPELINE_MANIFEST_PATH = (
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "8.0.0"
+RUNNER_VERSION = "9.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
@@ -86,6 +86,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step14_",
     "mp_step15_",
     "mp_step19_",
+    "mp_step27_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
@@ -134,6 +135,10 @@ STEP12_MIGRATION_SHA256 = (
 STEP19_MIGRATION_ID = "0010_step19_embedding_vector_retrieval"
 STEP19_MIGRATION_SHA256 = (
     "e335631fb1087d191b775ef6d3fb77ac99156ae83bffd77a77651b75541e3377"
+)
+STEP27_MIGRATION_ID = "0011_step27_personal_memory_persistence"
+STEP27_MIGRATION_SHA256 = (
+    "acbe9f619da87cd77ab2a59eb212693cbbd060ff3b46a318b570a1700c8adaed"
 )
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
 STEP5_CLUSTER_ROLE_END = "-- STEP5_CLUSTER_ROLE_DDL_END"
@@ -1278,6 +1283,49 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
             )
         ) != 1:
             raise MigrationError("Step 19 table set is not exact")
+    elif migration_id == STEP27_MIGRATION_ID:
+        forbidden_patterns = ()
+        for fragment in (
+            "CREATE TABLE memory_patch.personal_memory_quota_policies",
+            "ALTER TABLE memory_patch.personal_memory_spaces",
+            "ALTER TABLE memory_patch.personal_memory_model_bindings",
+            "guard_personal_memory_step27_update",
+            "personal_memory_spaces_s27_state_guard",
+            "personal_memory_quota_policies_owner_fk",
+            "personal_memory_spaces_s27_quota_fk",
+            "personal_memory_model_bindings_s27_typed_tuple",
+            "OWNER TO mp_schema_owner",
+            "GRANT SELECT, INSERT",
+            "ENABLE ROW LEVEL SECURITY",
+            "FORCE ROW LEVEL SECURITY",
+            "CREATE POLICY personal_memory_quota_policies_s27_select",
+            "CREATE POLICY personal_memory_quota_policies_s27_insert",
+            "memory_patch.user_context_matches(tenant_id, owner_user_id)",
+            "ON DELETE RESTRICT",
+        ):
+            if fragment not in sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required Personal Memory fragment: "
+                    f"{fragment}"
+                )
+        if re.search(r"\bTO\s+PUBLIC\b", sql, re.IGNORECASE):
+            raise MigrationError("Step 27 policy or grant targets PUBLIC")
+        if re.search(
+            r"\bUSING\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 27 contains an allow-all RLS policy")
+        if re.search(r"\b(?:BYPASSRLS|CREATE\s+ROLE|ON\s+DELETE\s+CASCADE)\b", sql, re.I):
+            raise MigrationError("Step 27 weakens a database security boundary")
+        if len(
+            re.findall(
+                r"^CREATE TABLE memory_patch\.personal_memory_quota_policies\b",
+                sql,
+                re.MULTILINE,
+            )
+        ) != 1:
+            raise MigrationError("Step 27 table set is not exact")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -1287,11 +1335,11 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 8:
-        raise MigrationError("migration manifest schema_version must be 8")
+    if manifest.get("schema_version") != 9:
+        raise MigrationError("migration manifest schema_version must be 9")
     if (
         manifest.get("manifest_id")
-        != "memory-patch-step19-embedding-vector-retrieval-1a"
+        != "memory-patch-step27-personal-memory-persistence-1a"
     ):
         raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
@@ -1305,7 +1353,7 @@ def load_migrations() -> list[Migration]:
         "WITH_NONATOMIC_CLUSTER_ROLE_DDL_STEP6_ONE_TRANSACTION_"
         "STEP9_ONE_TRANSACTION_STEP10_ONE_TRANSACTION_"
         "STEP11_ONE_TRANSACTION_STEP12_ONE_TRANSACTION_"
-        "STEP19_ONE_TRANSACTION"
+        "STEP19_ONE_TRANSACTION_STEP27_ONE_TRANSACTION"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -1380,6 +1428,8 @@ def load_migrations() -> list[Migration]:
             raise MigrationError("Step 12 checksum differs from the audited migration")
         if migration_id == STEP19_MIGRATION_ID and checksum != STEP19_MIGRATION_SHA256:
             raise MigrationError("Step 19 checksum differs from the audited migration")
+        if migration_id == STEP27_MIGRATION_ID and checksum != STEP27_MIGRATION_SHA256:
+            raise MigrationError("Step 27 checksum differs from the audited migration")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -1398,11 +1448,13 @@ def load_migrations() -> list[Migration]:
         STEP11_MIGRATION_ID,
         STEP12_MIGRATION_ID,
         STEP19_MIGRATION_ID,
+        STEP27_MIGRATION_ID,
     ]
     if identifiers != expected_identifiers:
         raise MigrationError(
             "migration chain is not the exact Step 4 -> Step 5 -> Step 6 -> "
-            "Step 9 -> Step 10 -> Step 11 -> Step 12 -> Step 19 chain"
+            "Step 9 -> Step 10 -> Step 11 -> Step 12 -> Step 19 -> "
+            "Step 27 chain"
         )
     return migrations
 
@@ -2009,6 +2061,11 @@ def offline_validate() -> dict[str, Any]:
         for migration in migrations
         if migration.migration_id == STEP19_MIGRATION_ID
     )
+    step27_sql = next(
+        migration.sql
+        for migration in migrations
+        if migration.migration_id == STEP27_MIGRATION_ID
+    )
     historical_sql = step4_sql + "\n" + step5_sql
     step4_tables = sorted(
         re.findall(
@@ -2088,6 +2145,15 @@ def offline_validate() -> dict[str, Any]:
     )
     if embedding_tables != ["chunk_embeddings"]:
         raise MigrationError("Step 19 embedding table set is not exact")
+    personal_memory_tables = sorted(
+        re.findall(
+            r"^CREATE TABLE memory_patch\.([a-z0-9_]+)",
+            step27_sql,
+            re.MULTILINE,
+        )
+    )
+    if personal_memory_tables != ["personal_memory_quota_policies"]:
+        raise MigrationError("Step 27 Personal Memory table set is not exact")
     created_tables = sorted(
         [
             *step4_tables,
@@ -2097,6 +2163,7 @@ def offline_validate() -> dict[str, Any]:
             *ingestion_saga_tables,
             *parsing_pipeline_tables,
             *embedding_tables,
+            *personal_memory_tables,
         ]
     )
     created_indexes = sorted(
@@ -2436,6 +2503,36 @@ def offline_validate() -> dict[str, Any]:
             re.MULTILINE,
         ) is None:
             raise MigrationError(f"Step 19 policy is missing: {policy}")
+    step27_enabled = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"ENABLE ROW LEVEL SECURITY;",
+            step27_sql,
+        )
+    )
+    step27_forced = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"FORCE ROW LEVEL SECURITY;",
+            step27_sql,
+        )
+    )
+    if step27_enabled != {"personal_memory_quota_policies"}:
+        raise MigrationError("Step 27 RLS coverage is incomplete")
+    if step27_forced != {"personal_memory_quota_policies"}:
+        raise MigrationError("Step 27 FORCE RLS coverage is incomplete")
+    for policy, command in (
+        ("personal_memory_quota_policies_s27_select", "SELECT"),
+        ("personal_memory_quota_policies_s27_insert", "INSERT"),
+    ):
+        if re.search(
+            rf"CREATE POLICY {policy}\s+"
+            r"ON memory_patch\.personal_memory_quota_policies\s+"
+            rf"FOR {command}\s+TO mp_app_runtime",
+            step27_sql,
+            re.MULTILINE,
+        ) is None:
+            raise MigrationError(f"Step 27 policy is missing: {policy}")
     return {
         "migration_count": len(migrations),
         "migration_ids": [migration.migration_id for migration in migrations],
@@ -2446,6 +2543,7 @@ def offline_validate() -> dict[str, Any]:
         "ingestion_saga_table_count": len(ingestion_saga_tables),
         "parsing_pipeline_table_count": len(parsing_pipeline_tables),
         "embedding_table_count": len(embedding_tables),
+        "personal_memory_table_count": len(personal_memory_tables),
         "step4_table_count": len(step4_tables),
         "protected_table_count": (
             len(protected)
@@ -2454,9 +2552,10 @@ def offline_validate() -> dict[str, Any]:
             + len(ingestion_saga_tables)
             + len(parsing_pipeline_tables)
             + len(embedding_tables)
+            + len(personal_memory_tables)
         ),
         "identity_guard_trigger_count": (
-            len(guard_triggers) + 2 + len(step10_triggers)
+            len(guard_triggers) + 2 + len(step10_triggers) + 1
         ),
         "explicit_index_count": (
             len(created_indexes) + len(persistence_indexes) + len(parsing_indexes)
@@ -2464,6 +2563,7 @@ def offline_validate() -> dict[str, Any]:
         "status": "PASS",
         "target_version": pin["exact_version"],
         "vector_boundary": "STEP19_VECTOR_384_L2_PINNED",
+        "personal_memory_boundary": "STEP27_OWNER_PRIVATE_RLS_FORCE_RLS",
     }
 
 
@@ -2904,6 +3004,9 @@ def assert_step5_security_catalog(
             "ON procedure.oid = trigger.tgfoid "
             "WHERE namespace.nspname = 'memory_patch' "
             "AND target.relname IN ('memory_items', 'personal_memory_spaces') "
+            "AND trigger.tgname IN ("
+            "'memory_items_s5_identity_guard', "
+            "'personal_memory_spaces_s5_identity_guard') "
             "AND NOT trigger.tgisinternal "
             "ORDER BY trigger.tgname",
         )
@@ -3457,6 +3560,104 @@ def assert_step11_security_catalog(
     }
 
 
+def assert_step27_security_catalog(
+    client: SqlClient,
+    database: str,
+) -> dict[str, Any]:
+    """Verify the new owner-private table and lifecycle guard exactly."""
+
+    table_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT c.relname AS table_name, c.relrowsecurity, "
+            "c.relforcerowsecurity, owner.rolname AS owner_role "
+            "FROM pg_catalog.pg_class AS c "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = c.relnamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = c.relowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND c.relname = 'personal_memory_quota_policies' "
+            "AND c.relkind = 'r'",
+        )
+    )
+    expected_table = [
+        {
+            "table_name": "personal_memory_quota_policies",
+            "relrowsecurity": "t",
+            "relforcerowsecurity": "t",
+            "owner_role": "mp_schema_owner",
+        }
+    ]
+    if table_rows != expected_table:
+        raise MigrationError("Step 27 table ownership or RLS state differs")
+    policy_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT policyname, cmd, roles, qual, with_check "
+            "FROM pg_catalog.pg_policies "
+            "WHERE schemaname = 'memory_patch' "
+            "AND tablename = 'personal_memory_quota_policies' "
+            "ORDER BY policyname",
+        )
+    )
+    expected_policies = {
+        "personal_memory_quota_policies_s27_insert": "INSERT",
+        "personal_memory_quota_policies_s27_select": "SELECT",
+    }
+    if {
+        row["policyname"]: row["cmd"].upper() for row in policy_rows
+    } != expected_policies:
+        raise MigrationError("Step 27 policy set differs")
+    for row in policy_rows:
+        if "mp_app_runtime" not in row["roles"]:
+            raise MigrationError("Step 27 policy lacks runtime role")
+        if row["cmd"].upper() == "SELECT" and not row["qual"]:
+            raise MigrationError("Step 27 SELECT policy lacks USING")
+        if row["cmd"].upper() == "INSERT" and not row["with_check"]:
+            raise MigrationError("Step 27 INSERT policy lacks WITH CHECK")
+    grants = parse_tsv(
+        client.execute(
+            database,
+            "SELECT privilege_type FROM information_schema.table_privileges "
+            "WHERE table_schema = 'memory_patch' "
+            "AND table_name = 'personal_memory_quota_policies' "
+            "AND grantee = 'mp_app_runtime' ORDER BY privilege_type",
+        )
+    )
+    if [row["privilege_type"] for row in grants] != ["INSERT", "SELECT"]:
+        raise MigrationError("Step 27 runtime grants are not least privilege")
+    trigger_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT trigger.tgname AS trigger_name, "
+            "procedure.proname AS function_name "
+            "FROM pg_catalog.pg_trigger AS trigger "
+            "JOIN pg_catalog.pg_class AS target ON target.oid = trigger.tgrelid "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = target.relnamespace "
+            "JOIN pg_catalog.pg_proc AS procedure "
+            "ON procedure.oid = trigger.tgfoid "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND target.relname = 'personal_memory_spaces' "
+            "AND trigger.tgname = 'personal_memory_spaces_s27_state_guard' "
+            "AND NOT trigger.tgisinternal",
+        )
+    )
+    if trigger_rows != [
+        {
+            "trigger_name": "personal_memory_spaces_s27_state_guard",
+            "function_name": "guard_personal_memory_step27_update",
+        }
+    ]:
+        raise MigrationError("Step 27 lifecycle guard differs")
+    return {
+        "policy_count": len(policy_rows),
+        "protected_table_count": 1,
+        "runtime_table_grant_count": len(grants),
+        "trigger_count": len(trigger_rows),
+    }
+
+
 def apply_migrations(
     client: SqlClient,
     database: str,
@@ -3552,6 +3753,14 @@ def apply_migrations(
                 "BEGIN;\n" + database_sql + "\nCOMMIT;",
                 timeout=timeout,
             )
+            database_sql = ""
+        elif migration.migration_id == STEP27_MIGRATION_ID:
+            client.execute(
+                database,
+                "BEGIN;\n" + database_sql + "\nCOMMIT;",
+                timeout=timeout,
+            )
+            assert_step27_security_catalog(client, database)
             database_sql = ""
         migration_record_sql = (
             "INSERT INTO memory_patch.schema_migrations "
@@ -3664,11 +3873,12 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
             "hat_registry_events",
             "hat_runtime_bindings",
             "chunk_embeddings",
+            "personal_memory_quota_policies",
         ]
     )
     if catalog["tables"] != expected_tables:
         raise MigrationError(
-            "live catalog table set differs from Step 4–6/9–12/19 manifests"
+            "live catalog table set differs from the Step 4–27 chain"
         )
     indexes = set(catalog["explicit_indexes"])
     required_persistence_indexes = {

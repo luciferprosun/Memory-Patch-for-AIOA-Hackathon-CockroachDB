@@ -715,16 +715,18 @@ class DocumentationClosureTests(unittest.TestCase):
                 for phrase in phrases:
                     self.assertIn(phrase, text)
 
-    def test_roadmap_and_agents_close_only_step26(self) -> None:
+    def test_roadmap_and_agents_close_step27_only(self) -> None:
         roadmap = (ROOT / "docs/roadmap/PRODUCTION_ROADMAP.md").read_text(
             encoding="utf-8"
         )
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("[x] **Step 26", roadmap)
-        self.assertIn("[ ] **Step 27", roadmap)
-        self.assertIn("Step 27: NOT STARTED", roadmap)
+        self.assertIn("[x] **Step 27", roadmap)
+        self.assertIn("[ ] **Step 28", roadmap)
+        self.assertIn("Step 28: NOT STARTED", roadmap)
         self.assertIn("Step 26 complete upstream integrity binding", agents)
-        self.assertIn("`Step 27: NOT STARTED`", agents)
+        self.assertIn("Step 27 owner-private empty Personal Memory HAT slots", agents)
+        self.assertIn("`Step 28: NOT STARTED`", agents)
 
 
 if __name__ == "__main__":

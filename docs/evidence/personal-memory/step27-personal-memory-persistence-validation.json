@@ -1,0 +1,121 @@
+{
+  "archive": {
+    "distinct_from_delete": true,
+    "validated": true
+  },
+  "authority": {
+    "approval_authority": false,
+    "execution_authority": false,
+    "gemma_hard_dependency": false,
+    "model_authority": false,
+    "personal_memory_canonical_evidence": false,
+    "personal_memory_hat_executable": false,
+    "verified_answer_auto_write": false
+  },
+  "cleanup": {
+    "database_removed": true,
+    "force_kill_used": false,
+    "pid_exited": true,
+    "ports_closed": true,
+    "role_removed": true,
+    "temporary_store_removed": true
+  },
+  "configuration_digest": "ad93498f2f2b4240b3f2ec4f4dcb363d54d62f5f0328177f67c0b1727a8dc987",
+  "contracts": {
+    "export": "personal-memory-owner-export-1a",
+    "model_binding": "personal-memory-model-binding-1a",
+    "quota": "personal-memory-quota-policy-1a",
+    "slot": "personal-memory-hat-slot-1a"
+  },
+  "database": {
+    "binary_sha256": "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf",
+    "migration": "0011_step27_personal_memory_persistence.sql",
+    "migration_count": 11,
+    "replay_skipped_count": 11,
+    "rls": {
+      "force_rls_enabled": true,
+      "rls_enabled": true,
+      "tables": [
+        "personal_memory_model_bindings",
+        "personal_memory_quota_policies",
+        "personal_memory_spaces"
+      ]
+    },
+    "version": "v26.2.4"
+  },
+  "delete": {
+    "delete_request_only": false,
+    "deleted_row_retained": true,
+    "implementation": "TWO_STAGE_LOGICAL_TOMBSTONE",
+    "physical_delete": false
+  },
+  "effect_bounds": {
+    "aws_mutations": 0,
+    "external_actions": 0,
+    "model_calls": 0,
+    "provider_calls": 0,
+    "s3_mutations": 0,
+    "web_calls": 0
+  },
+  "empty_usage": {
+    "memory_item_count": 0,
+    "patch_count": 0,
+    "stored_bytes": 0
+  },
+  "export": {
+    "canonical_json": true,
+    "export_digest": "1876e0e3cc1b461b987615f3b770c4df24d5badadd4b52a1be9237d3d946f0e1",
+    "fake_patch_content": false,
+    "owner_scoped": true,
+    "schema_version": "personal-memory-owner-export-1a"
+  },
+  "idempotent_replay": {
+    "owner_export": "PASS",
+    "slot_create": "PASS"
+  },
+  "later_step_boundaries": {
+    "active_patch_retrieval": 0,
+    "approvals": 0,
+    "critic_bridge": 0,
+    "patch_activations": 0,
+    "patch_proposals": 0,
+    "shared_promotion": 0,
+    "step28_started": false
+  },
+  "model_binding_matrix": {
+    "binding_count": 2,
+    "binding_hashes": [
+      "804c0b21a5b45976a36027982b91075d855fd4eea7283c055db2683e84ef08dd",
+      "2c5cd7a8bb69c834a10169a2e44802be92499c43ce6b59582dc335ff7bf65443"
+    ],
+    "credentials_stored": false,
+    "provider_model_neutral": true
+  },
+  "owner_isolation": {
+    "cross_tenant_visible_rows": 0,
+    "cross_user_visible_rows": 0,
+    "owner_visible_rows": 1
+  },
+  "quota_matrix": {
+    "binding_limit": "REJECTED_AT_THIRD_BINDING",
+    "cross_user_usage_counted": false,
+    "exact_total_space_limit": "PASS",
+    "over_total_space_limit": "REJECTED",
+    "under_limit": "PASS"
+  },
+  "quota_policy_digest": "dd6997a92ea50bb9cfc945fa1f6dc16b6145529d050022c263b08b5afcb0eeb1",
+  "schema_version": "step27-personal-memory-validation-1a",
+  "slot_hash": "d144e303b2aaf8cf4af4a6b6d71bf4254e39b08fc38721d762e3f9093a219873",
+  "start_sha": "31b23f662be329a1e70440e50a50f41d2550b89c",
+  "state_transition_matrix": [
+    "CONFIGURED",
+    "ACTIVE",
+    "SUSPENDED",
+    "ARCHIVED",
+    "DELETED_PENDING",
+    "DELETED"
+  ],
+  "status": "PASS",
+  "step": 27,
+  "validation_digest": "cfe60d0e2079cc755fa532e8660c98d733c6c2c4a989522f1ac50f00511759dd"
+}

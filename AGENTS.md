@@ -156,7 +156,13 @@ At roadmap adoption and in subsequent audited closure records:
   bounded-failure outputs, and controlled offline validation are complete in
   its intended closure commit. It is completion evidence only after that
   commit is reachable on `origin/main`.
-- `Step 27: NOT STARTED`. Step 26 completion does not authorize Step 27.
+- Step 27 owner-private empty Personal Memory HAT slots, versioned
+  configuration/lifecycle, hard quotas, provider-neutral model bindings,
+  Step 4/5/6 durable idempotency, RLS/FORCE RLS owner isolation, canonical
+  configuration export, two-stage logical delete, and controlled disposable
+  CockroachDB validation are complete in its intended closure commit. It is
+  completion evidence only after that commit is reachable on `origin/main`.
+- `Step 28: NOT STARTED`. Step 27 completion does not authorize Step 28.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

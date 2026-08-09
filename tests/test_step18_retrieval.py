@@ -854,7 +854,11 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "- [ ] **Step 27 — Personal Memory HAT Persistence, Quotas and Model Bindings 1A**",
+            "- [x] **Step 27 — Personal Memory HAT Persistence, Quotas and Model Bindings 1A**",
+            roadmap,
+        )
+        self.assertIn(
+            "- [ ] **Step 28 — Knowledge Hub and Critic Prompt Loop Correction Candidate Bridge 1A**",
             roadmap,
         )
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
@@ -867,7 +871,8 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("Step 24 verified frozen Step 23 input binding", agents)
         self.assertIn("Step 25 verified Correction Packet integrity gating", agents)
         self.assertIn("Step 26 complete upstream integrity binding", agents)
-        self.assertIn("Step 27: NOT STARTED", agents)
+        self.assertIn("Step 27 owner-private empty Personal Memory HAT slots", agents)
+        self.assertIn("Step 28: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

@@ -117,7 +117,13 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   one same-packet retry with full re-verification, deterministic review and
   bounded-failure outputs, and offline controlled validation are closed by
   the intended Step 26 commit once it is reachable on `origin/main`.
-- `Step 27: NOT STARTED`.
+- `Step 27: COMPLETE AND PUSHED at actual closure commit`.
+  Owner-private empty Personal Memory HAT slots, versioned configuration and
+  lifecycle, hard quota policy, provider-neutral model bindings, database
+  owner isolation, archive/export/two-stage logical delete, migration replay,
+  and controlled CockroachDB validation are closed by the intended Step 27
+  commit once it is reachable on `origin/main`.
+- `Step 28: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -562,8 +568,20 @@ Udowodnić rzeczywistą korektę modelu, bez ukrywania błędnej odpowiedzi i be
 
 Dać użytkownikowi pulę prywatnych HAT-ów, w których zatwierdzone korekty stają się trwałą, model-independent pamięcią AIOA.
 
-- [ ] **Step 27 — Personal Memory HAT Persistence, Quotas and Model Bindings 1A**
+- [x] **Step 27 — Personal Memory HAT Persistence, Quotas and Model Bindings 1A**
   Puste sloty, konfiguracja, aktywacja, quota policy, model bindings, owner isolation, archive/export/delete contracts i brak zależności pamięci od Gemmy.
+  `Step 27: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje Step 1 contract reuse, immutable owner-bound empty slot,
+  explicit configuration/lifecycle commands, hard transactional quotas,
+  provider/model-neutral exact bindings, Step 4/5/6 persistence and
+  idempotency reuse, migration 0011, database RLS/FORCE RLS owner isolation,
+  canonical configuration export, two-stage logical delete, Gemma
+  independence i zero patch/approval/activation/retrieval authority.
+  [Architektura](../architecture/PERSONAL_MEMORY_HAT_PERSISTENCE_QUOTAS_MODEL_BINDINGS_1A.md),
+  [ADR-034](../adr/ADR-034-personal-memory-hat-persistence.md),
+  [runbook](../operations/STEP_27_PERSONAL_MEMORY_VALIDATION_1A.md),
+  [validation evidence](../evidence/personal-memory/step27-personal-memory-persistence-validation.json),
+  [rekord zamknięcia](../audits/STEP_27_PERSONAL_MEMORY_HAT_PERSISTENCE_CLOSURE_1A.md).
 
 - [ ] **Step 28 — Knowledge Hub and Critic Prompt Loop Correction Candidate Bridge 1A**
   Critic Loop i Kernel mogą zgłaszać Correction Candidate Envelope, ale nie aprobować, commitować ani aktywować pamięci.

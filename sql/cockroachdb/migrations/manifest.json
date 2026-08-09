@@ -1,6 +1,6 @@
 {
   "cluster_role_policy": "IDEMPOTENT_CLUSTER_SCOPED_ROLE_DDL_MAY_OUTLIVE_A_FAILED_DATABASE_MIGRATION",
-  "manifest_id": "memory-patch-step19-embedding-vector-retrieval-1a",
+  "manifest_id": "memory-patch-step27-personal-memory-persistence-1a",
   "migrations": [
     {
       "filename": "0001_step4_identity_and_hat_scopes.sql",
@@ -51,11 +51,16 @@
       "filename": "0010_step19_embedding_vector_retrieval.sql",
       "migration_id": "0010_step19_embedding_vector_retrieval",
       "sha256": "e335631fb1087d191b775ef6d3fb77ac99156ae83bffd77a77651b75541e3377"
+    },
+    {
+      "filename": "0011_step27_personal_memory_persistence.sql",
+      "migration_id": "0011_step27_personal_memory_persistence",
+      "sha256": "acbe9f619da87cd77ab2a59eb212693cbbd060ff3b46a318b570a1700c8adaed"
     }
   ],
-  "runner_version": "8.0.0",
-  "schema_version": 8,
+  "runner_version": "9.0.0",
+  "schema_version": 9,
   "target_database": "CockroachDB",
   "target_version": "v26.2.4",
-  "transaction_policy": "STEP4_ONE_TRANSACTION_STEP5_NINE_IDEMPOTENT_DATABASE_PHASES_WITH_NONATOMIC_CLUSTER_ROLE_DDL_STEP6_ONE_TRANSACTION_STEP9_ONE_TRANSACTION_STEP10_ONE_TRANSACTION_STEP11_ONE_TRANSACTION_STEP12_ONE_TRANSACTION_STEP19_ONE_TRANSACTION"
+  "transaction_policy": "STEP4_ONE_TRANSACTION_STEP5_NINE_IDEMPOTENT_DATABASE_PHASES_WITH_NONATOMIC_CLUSTER_ROLE_DDL_STEP6_ONE_TRANSACTION_STEP9_ONE_TRANSACTION_STEP10_ONE_TRANSACTION_STEP11_ONE_TRANSACTION_STEP12_ONE_TRANSACTION_STEP19_ONE_TRANSACTION_STEP27_ONE_TRANSACTION"
 }
