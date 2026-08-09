@@ -1,0 +1,110 @@
+{
+  "allowed_candidate_origins": [
+    "CRITIC_PROMPT_LOOP",
+    "KNOWLEDGE_KERNEL"
+  ],
+  "candidate_lifecycle_state": "DETECTED",
+  "fixed_roles": [
+    "mp_app_runtime",
+    "mp_request_context_setter",
+    "mp_schema_owner",
+    "mp_security_owner"
+  ],
+  "helper_functions": [
+    {
+      "function": "step28_candidate_slot_is_eligible",
+      "owner_role": "mp_schema_owner",
+      "runtime_privileges": [
+        "EXECUTE"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step28_candidate_target_matches",
+      "owner_role": "mp_schema_owner",
+      "runtime_privileges": [
+        "EXECUTE"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step28_personal_hat_scope_id",
+      "owner_role": "mp_schema_owner",
+      "runtime_privileges": [
+        "EXECUTE"
+      ],
+      "security_type": "INVOKER"
+    }
+  ],
+  "manifest_id": "memory-patch-step28-correction-candidate-security-1a",
+  "quota_guard": {
+    "byte_limit": 8388608,
+    "count_limit": 128,
+    "function": "enforce_step28_candidate_quota",
+    "function_owner_role": "mp_schema_owner",
+    "function_runtime_privileges": [],
+    "function_security_type": "INVOKER",
+    "lock_column": "candidate_quota_epoch",
+    "trigger": "memory_patch_proposals_s28_candidate_quota",
+    "usage_authority": "EXACT_PERSISTED_CORRECTION_CANDIDATE_ROWS"
+  },
+  "runtime_update_delete": false,
+  "schema_version": 1,
+  "slot_authority": {
+    "authority_columns": [
+      "hat_scope_id",
+      "slot_hash"
+    ],
+    "legacy_null_intake": "DENY_UNTIL_ORDINARY_SLOT_UPDATE_SEALS",
+    "owner_role": "mp_schema_owner",
+    "policies": {
+      "insert": "personal_memory_spaces_s5_insert",
+      "select": "personal_memory_spaces_s5_select",
+      "update": "personal_memory_spaces_s5_update"
+    },
+    "runtime_privileges": [
+      "INSERT",
+      "SELECT",
+      "UPDATE"
+    ],
+    "scope_derivation_function": "step28_personal_hat_scope_id",
+    "table": "personal_memory_spaces",
+    "update_guard_function": "guard_step28_slot_authority_update",
+    "update_guard_trigger": "personal_memory_spaces_s28_authority_guard"
+  },
+  "tables": [
+    {
+      "delete_policy": null,
+      "force_rls": true,
+      "insert_policy": "hat_scopes_s28_personal_insert",
+      "owner_role": "mp_schema_owner",
+      "rls_enabled": true,
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "hat_scopes_s5_select",
+      "table": "hat_scopes",
+      "tenant_column": "tenant_id",
+      "update_policy": null,
+      "user_owner_column": "owner_user_id"
+    },
+    {
+      "delete_policy": null,
+      "force_rls": true,
+      "insert_policy": "memory_patch_proposals_s28_insert",
+      "owner_role": "mp_schema_owner",
+      "rls_enabled": true,
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "memory_patch_proposals_s5_select",
+      "table": "memory_patch_proposals",
+      "tenant_column": "tenant_id",
+      "update_policy": null,
+      "user_owner_column": "owner_user_id"
+    }
+  ],
+  "target_cockroachdb_version": "v26.2.4"
+}

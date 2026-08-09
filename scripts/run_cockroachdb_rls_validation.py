@@ -807,7 +807,11 @@ def security_catalog(
     root: migrations.SqlClient,
     database: str,
 ) -> dict[str, Any]:
-    summary = migrations.assert_step5_security_catalog(root, database)
+    summary = migrations.assert_step5_security_catalog(
+        root,
+        database,
+        include_step28_delta=True,
+    )
     table_rows = migrations.parse_tsv(
         root.execute(
             database,

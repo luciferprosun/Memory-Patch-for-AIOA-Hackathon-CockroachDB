@@ -123,7 +123,13 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   owner isolation, archive/export/two-stage logical delete, migration replay,
   and controlled CockroachDB validation are closed by the intended Step 27
   commit once it is reachable on `origin/main`.
-- `Step 28: NOT STARTED`.
+- `Step 28: COMPLETE AND PUSHED at actual closure commit`.
+  Owner- and slot-bound Correction Candidate Envelopes, exact Kernel/Critic
+  producer boundaries, `DETECTED`-only durable intake, hash-bound lineage,
+  hard candidate quotas, exact replay/deduplication, RLS/FORCE RLS isolation,
+  and controlled CockroachDB validation are closed by the intended Step 28
+  commit once it is reachable on `origin/main`.
+- `Step 29: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -583,8 +589,21 @@ Dać użytkownikowi pulę prywatnych HAT-ów, w których zatwierdzone korekty st
   [validation evidence](../evidence/personal-memory/step27-personal-memory-persistence-validation.json),
   [rekord zamknięcia](../audits/STEP_27_PERSONAL_MEMORY_HAT_PERSISTENCE_CLOSURE_1A.md).
 
-- [ ] **Step 28 — Knowledge Hub and Critic Prompt Loop Correction Candidate Bridge 1A**
+- [x] **Step 28 — Knowledge Hub and Critic Prompt Loop Correction Candidate Bridge 1A**
   Critic Loop i Kernel mogą zgłaszać Correction Candidate Envelope, ale nie aprobować, commitować ani aktywować pamięci.
+  `Step 28: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje immutable/hash-bound candidate envelope, exact
+  owner/tenant/slot/model/route/result lineage, wyłącznie producentów
+  `KNOWLEDGE_KERNEL` i `CRITIC_PROMPT_LOOP`, stan `DETECTED`, durable
+  insert/read reuse istniejącego carrier table, migration 0012,
+  RLS/FORCE RLS, hard quota, idempotent replay, deterministic exact dedup,
+  syntetyczny Critic fixture oraz zero proposal/evidence-validation/approval/
+  commit/activation/retrieval/canonical-evidence authority.
+  [Architektura](../architecture/KNOWLEDGE_HUB_CRITIC_CORRECTION_CANDIDATE_BRIDGE_1A.md),
+  [ADR-035](../adr/ADR-035-correction-candidate-bridge.md),
+  [runbook](../operations/STEP_28_CORRECTION_CANDIDATE_BRIDGE_VALIDATION_1A.md),
+  [validation evidence](../evidence/personal-memory/step28-correction-candidate-bridge-validation.json),
+  [rekord zamknięcia](../audits/STEP_28_KNOWLEDGE_HUB_CRITIC_CANDIDATE_BRIDGE_CLOSURE_1A.md).
 
 - [ ] **Step 29 — Personal Memory Patch Proposal and Evidence Validation 1A**
   `DETECTED → PROPOSED → EVIDENCE_BOUND → VALIDATED → AWAITING_APPROVAL`, dedup, conflict check, stale evidence check i owner scope.

@@ -858,7 +858,11 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "- [ ] **Step 28 — Knowledge Hub and Critic Prompt Loop Correction Candidate Bridge 1A**",
+            "- [x] **Step 28 — Knowledge Hub and Critic Prompt Loop Correction Candidate Bridge 1A**",
+            roadmap,
+        )
+        self.assertIn(
+            "- [ ] **Step 29 — Personal Memory Patch Proposal and Evidence Validation 1A**",
             roadmap,
         )
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
@@ -872,7 +876,8 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("Step 25 verified Correction Packet integrity gating", agents)
         self.assertIn("Step 26 complete upstream integrity binding", agents)
         self.assertIn("Step 27 owner-private empty Personal Memory HAT slots", agents)
-        self.assertIn("Step 28: NOT STARTED", agents)
+        self.assertIn("Step 28 owner- and slot-bound Correction Candidate", agents)
+        self.assertIn("Step 29: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

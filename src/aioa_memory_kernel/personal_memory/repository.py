@@ -25,7 +25,6 @@ from .models import (
     PersonalMemoryModelBinding,
     PersonalMemoryQuotaPolicyRecord,
     PersonalMemoryQuotaUsageView,
-    personal_memory_configuration_digest,
     personal_memory_hat_scope_id,
 )
 
@@ -36,7 +35,8 @@ SLOT_COLUMNS = (
     "space.created_at, space.updated_at, space.export_requested_at, "
     "space.deletion_requested_at, space.deleted_at, space.state_version, "
     "space.configuration_version, space.quota_policy_id, "
-    "space.quota_policy_digest, space.configuration_digest"
+    "space.quota_policy_digest, space.configuration_digest, "
+    "space.hat_scope_id, space.slot_hash"
 )
 
 BINDING_COLUMNS = (
@@ -241,6 +241,14 @@ def slot_from_row(
         ) from error
     if record.configuration_digest != row.get("configuration_digest"):
         raise IntegrityError("persisted Personal Memory configuration digest mismatch")
+    persisted_scope = row.get("hat_scope_id")
+    persisted_slot_hash = row.get("slot_hash")
+    if (persisted_scope is None) is not (persisted_slot_hash is None):
+        raise IntegrityError("persisted Personal Memory authority tuple is partial")
+    if persisted_scope is not None and persisted_scope != record.hat_scope_id:
+        raise IntegrityError("persisted Personal Memory HAT scope mismatch")
+    if persisted_slot_hash is not None and persisted_slot_hash != record.slot_hash:
+        raise IntegrityError("persisted Personal Memory slot hash mismatch")
     return record
 
 
@@ -408,14 +416,25 @@ class PersonalMemoryCockroachRepository:
         quota_policy: PersonalMemoryQuotaPolicyRecord,
         created_at: datetime,
     ) -> PersonalMemoryHatSlot:
-        configuration_digest = personal_memory_configuration_digest(
+        slot = PersonalMemoryHatSlot(
+            schema_version=STEP27_SCHEMA_VERSION,
             tenant_id=tenant_id,
             owner_user_id=owner_user_id,
             personal_memory_space_id=personal_memory_space_id,
+            hat_scope_id=personal_memory_hat_scope_id(
+                tenant_id,
+                owner_user_id,
+                personal_memory_space_id,
+            ),
+            state=PersonalMemorySpaceState.EMPTY,
             display_name=None,
             quota_policy_id=quota_policy.quota_policy_id,
             quota_policy_digest=quota_policy.policy_digest,
             model_bindings=(),
+            state_version=0,
+            configuration_version=0,
+            created_at=created_at,
+            updated_at=created_at,
         )
         row = transaction.fetch_one(
             """
@@ -424,10 +443,11 @@ class PersonalMemoryCockroachRepository:
               state, display_name, created_at, updated_at,
               export_requested_at, deletion_requested_at, deleted_at,
               state_version, configuration_version, quota_policy_id,
-              quota_policy_digest, configuration_digest
+              quota_policy_digest, configuration_digest, hat_scope_id,
+              slot_hash
             ) VALUES (
               %s, %s, %s, %s, 'EMPTY', NULL, %s, %s,
-              NULL, NULL, NULL, 0, 0, %s, %s, %s
+              NULL, NULL, NULL, 0, 0, %s, %s, %s, %s, %s
             )
             ON CONFLICT DO NOTHING
             RETURNING tenant_id
@@ -441,7 +461,9 @@ class PersonalMemoryCockroachRepository:
                 created_at,
                 quota_policy.quota_policy_id,
                 quota_policy.policy_digest,
-                configuration_digest,
+                slot.configuration_digest,
+                slot.hat_scope_id,
+                slot.slot_hash,
             ),
         )
         if row is None:
@@ -579,14 +601,24 @@ class PersonalMemoryCockroachRepository:
         deletion_requested_at: datetime | None,
         deleted_at: datetime | None,
     ) -> PersonalMemoryHatSlot:
-        configuration_digest = personal_memory_configuration_digest(
+        updated_slot = PersonalMemoryHatSlot(
+            schema_version=current.schema_version,
             tenant_id=current.tenant_id,
             owner_user_id=current.owner_user_id,
             personal_memory_space_id=current.personal_memory_space_id,
+            hat_scope_id=current.hat_scope_id,
+            state=state,
             display_name=display_name,
             quota_policy_id=quota_policy.quota_policy_id,
             quota_policy_digest=quota_policy.policy_digest,
             model_bindings=model_bindings,
+            state_version=state_version,
+            configuration_version=configuration_version,
+            created_at=current.created_at,
+            updated_at=changed_at,
+            export_requested_at=export_requested_at,
+            deletion_requested_at=deletion_requested_at,
+            deleted_at=deleted_at,
         )
         row = transaction.fetch_one(
             """
@@ -601,13 +633,17 @@ class PersonalMemoryCockroachRepository:
                    configuration_version = %s,
                    quota_policy_id = %s,
                    quota_policy_digest = %s,
-                   configuration_digest = %s
+                   configuration_digest = %s,
+                   hat_scope_id = %s,
+                   slot_hash = %s
              WHERE tenant_id = %s
                AND user_id = %s
                AND personal_memory_space_id = %s
                AND state_version = %s
                AND configuration_version = %s
                AND configuration_digest = %s
+               AND (hat_scope_id = %s OR hat_scope_id IS NULL)
+               AND (slot_hash = %s OR slot_hash IS NULL)
             RETURNING tenant_id
             """,
             (
@@ -621,13 +657,17 @@ class PersonalMemoryCockroachRepository:
                 configuration_version,
                 quota_policy.quota_policy_id,
                 quota_policy.policy_digest,
-                configuration_digest,
+                updated_slot.configuration_digest,
+                updated_slot.hat_scope_id,
+                updated_slot.slot_hash,
                 current.tenant_id,
                 current.owner_user_id,
                 current.personal_memory_space_id,
                 current.state_version,
                 current.configuration_version,
                 current.configuration_digest,
+                current.hat_scope_id,
+                current.slot_hash,
             ),
         )
         if row is None:

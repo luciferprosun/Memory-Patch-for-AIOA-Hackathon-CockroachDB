@@ -62,10 +62,16 @@ PARSING_PIPELINE_MANIFEST_PATH = (
     / "cockroachdb"
     / "parsing-pipeline-security-1a.json"
 )
+CORRECTION_CANDIDATE_SECURITY_MANIFEST_PATH = (
+    REPOSITORY_ROOT
+    / "config"
+    / "cockroachdb"
+    / "correction-candidate-security-1a.json"
+)
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "9.0.0"
+RUNNER_VERSION = "10.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
@@ -87,6 +93,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step15_",
     "mp_step19_",
     "mp_step27_",
+    "mp_step28_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
@@ -140,6 +147,27 @@ STEP27_MIGRATION_ID = "0011_step27_personal_memory_persistence"
 STEP27_MIGRATION_SHA256 = (
     "acbe9f619da87cd77ab2a59eb212693cbbd060ff3b46a318b570a1700c8adaed"
 )
+STEP28_MIGRATION_ID = "0012_step28_correction_candidate_bridge"
+STEP28_MIGRATION_SHA256 = (
+    "28c11f7f60e92ce9a0bae80f5704b0d0d3e93d670c1e2e3388f4c4aee9c80903"
+)
+STEP28_FUNCTION_SIGNATURES = {
+    "enforce_step28_candidate_quota": "enforce_step28_candidate_quota()",
+    "guard_step28_slot_authority_update": (
+        "guard_step28_slot_authority_update()"
+    ),
+    "step28_personal_hat_scope_id": (
+        "step28_personal_hat_scope_id(text, text, text)"
+    ),
+    "step28_candidate_slot_is_eligible": (
+        "step28_candidate_slot_is_eligible(text, text, text, text)"
+    ),
+    "step28_candidate_target_matches": (
+        "step28_candidate_target_matches(text, text, text, text, text, "
+        "int8, int8, text, text, text, text, text, text, int8, text, text, "
+        "text, text, bool)"
+    ),
+}
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
 STEP5_CLUSTER_ROLE_END = "-- STEP5_CLUSTER_ROLE_DDL_END"
 STEP5_DATABASE_PHASE_MARKERS = tuple(
@@ -1326,6 +1354,95 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
             )
         ) != 1:
             raise MigrationError("Step 27 table set is not exact")
+    elif migration_id == STEP28_MIGRATION_ID:
+        forbidden_patterns = ()
+        for fragment in (
+            "DROP CONSTRAINT memory_patch_proposals_origin",
+            "ADD CONSTRAINT memory_patch_proposals_origin",
+            "'KNOWLEDGE_KERNEL'",
+            "step28_candidate_slot_is_eligible",
+            "step28_candidate_target_matches",
+            "step28_personal_hat_scope_id",
+            "enforce_step28_candidate_quota",
+            "guard_step28_slot_authority_update",
+            "candidate_quota_epoch",
+            "personal_memory_spaces_s28_authority_tuple",
+            "hat_scope_id = memory_patch.step28_personal_hat_scope_id(",
+            "space.hat_scope_id = p_hat_scope_id",
+            "space.slot_hash = p_slot_hash",
+            "HAVING count(*) >= 128",
+            "octet_length((NEW).proposed_content::STRING) > 8388608",
+            "> 8388608 - octet_length((NEW).proposed_content::STRING)",
+            "BEFORE INSERT ON memory_patch.memory_patch_proposals",
+            "memory_patch_proposals_s28_candidate_quota",
+            "personal_memory_spaces_s28_authority_guard",
+            "SECURITY INVOKER",
+            "OWNER TO mp_schema_owner",
+            "REVOKE ALL ON FUNCTION",
+            "GRANT EXECUTE ON FUNCTION",
+            "space.state IN ('CONFIGURED', 'ACTIVE')",
+            "GRANT INSERT ON TABLE",
+            "REVOKE UPDATE, DELETE ON TABLE",
+            "ENABLE ROW LEVEL SECURITY",
+            "FORCE ROW LEVEL SECURITY",
+            "CREATE POLICY hat_scopes_s28_personal_insert",
+            "CREATE POLICY memory_patch_proposals_s28_insert",
+            "origin IN ('KNOWLEDGE_KERNEL', 'CRITIC_PROMPT_LOOP')",
+            "lifecycle_state = 'DETECTED'",
+            "approval_requirement = 'OWNER'",
+            "requested_trust_class = 'MODEL_EXPERIENCE_HINT'",
+            "content_kind = 'MODEL_EXPERIENCE'",
+            "proposed_content ->> 'contract_type' = 'CorrectionCandidateEnvelope'",
+            "proposed_content ->> 'schema_version' = '1.0.0'",
+            "proposal_id = proposed_content ->> 'candidate_id'",
+            "content_hash = proposed_content ->> 'envelope_hash'",
+            "'target_slot_binding'",
+            "'available_evidence_references'",
+            "'effective_scope'",
+            "scope_dimensions = (",
+            "origin = (",
+            "binding.binding_digest = p_model_binding_hash",
+            "p_binding_mode = 'EXACT_MODEL'",
+            "p_model_binding_enabled IS TRUE",
+            "memory_patch.user_context_matches",
+        ):
+            if fragment not in sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required candidate fragment: {fragment}"
+                )
+        if re.search(r"\bTO\s+PUBLIC\b", sql, re.IGNORECASE):
+            raise MigrationError("Step 28 policy or grant targets PUBLIC")
+        if re.search(
+            r"\b(?:USING|WITH\s+CHECK)\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 28 contains an allow-all RLS policy")
+        if re.search(
+            r"\b(?:BYPASSRLS|CREATE\s+ROLE|ON\s+DELETE\s+CASCADE)\b",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 28 weakens a database security boundary")
+        if re.search(
+            r"^\s*(?:CREATE\s+TABLE|DELETE\s+FROM|TRUNCATE|DROP\s+TABLE)\b",
+            sql,
+            re.IGNORECASE | re.MULTILINE,
+        ):
+            raise MigrationError("Step 28 exceeds the bounded existing-table delta")
+        if re.search(
+            r"^\s*UPDATE\s+memory_patch\.(?!personal_memory_spaces\b)",
+            sql,
+            re.IGNORECASE | re.MULTILINE,
+        ):
+            raise MigrationError("Step 28 updates a non-slot authority table")
+        if re.search(
+            r"^CREATE POLICY (?!hat_scopes_s28_personal_insert\b|"
+            r"memory_patch_proposals_s28_insert\b)",
+            sql,
+            re.MULTILINE,
+        ):
+            raise MigrationError("Step 28 policy set is not exact")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -1335,11 +1452,11 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 9:
-        raise MigrationError("migration manifest schema_version must be 9")
+    if manifest.get("schema_version") != 10:
+        raise MigrationError("migration manifest schema_version must be 10")
     if (
         manifest.get("manifest_id")
-        != "memory-patch-step27-personal-memory-persistence-1a"
+        != "memory-patch-step28-correction-candidate-bridge-1a"
     ):
         raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
@@ -1353,7 +1470,8 @@ def load_migrations() -> list[Migration]:
         "WITH_NONATOMIC_CLUSTER_ROLE_DDL_STEP6_ONE_TRANSACTION_"
         "STEP9_ONE_TRANSACTION_STEP10_ONE_TRANSACTION_"
         "STEP11_ONE_TRANSACTION_STEP12_ONE_TRANSACTION_"
-        "STEP19_ONE_TRANSACTION_STEP27_ONE_TRANSACTION"
+        "STEP19_ONE_TRANSACTION_STEP27_ONE_TRANSACTION_"
+        "STEP28_ONE_TRANSACTION"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -1430,6 +1548,8 @@ def load_migrations() -> list[Migration]:
             raise MigrationError("Step 19 checksum differs from the audited migration")
         if migration_id == STEP27_MIGRATION_ID and checksum != STEP27_MIGRATION_SHA256:
             raise MigrationError("Step 27 checksum differs from the audited migration")
+        if migration_id == STEP28_MIGRATION_ID and checksum != STEP28_MIGRATION_SHA256:
+            raise MigrationError("Step 28 checksum differs from the audited migration")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -1449,12 +1569,13 @@ def load_migrations() -> list[Migration]:
         STEP12_MIGRATION_ID,
         STEP19_MIGRATION_ID,
         STEP27_MIGRATION_ID,
+        STEP28_MIGRATION_ID,
     ]
     if identifiers != expected_identifiers:
         raise MigrationError(
             "migration chain is not the exact Step 4 -> Step 5 -> Step 6 -> "
             "Step 9 -> Step 10 -> Step 11 -> Step 12 -> Step 19 -> "
-            "Step 27 chain"
+            "Step 27 -> Step 28 chain"
         )
     return migrations
 
@@ -2017,6 +2138,147 @@ def load_parsing_pipeline_manifest() -> dict[str, Any]:
     return manifest
 
 
+def load_correction_candidate_security_manifest() -> dict[str, Any]:
+    manifest = load_json(CORRECTION_CANDIDATE_SECURITY_MANIFEST_PATH)
+    if set(manifest) != {
+        "allowed_candidate_origins",
+        "candidate_lifecycle_state",
+        "fixed_roles",
+        "helper_functions",
+        "manifest_id",
+        "quota_guard",
+        "runtime_update_delete",
+        "schema_version",
+        "slot_authority",
+        "tables",
+        "target_cockroachdb_version",
+    }:
+        raise MigrationError("candidate security manifest shape is invalid")
+    if manifest.get("schema_version") != 1:
+        raise MigrationError("candidate security manifest schema_version must be 1")
+    if (
+        manifest.get("manifest_id")
+        != "memory-patch-step28-correction-candidate-security-1a"
+    ):
+        raise MigrationError("candidate security manifest identity mismatch")
+    if manifest.get("target_cockroachdb_version") != PINNED_VERSION:
+        raise MigrationError("candidate security manifest version pin mismatch")
+    if manifest.get("fixed_roles") != [
+        "mp_app_runtime",
+        "mp_request_context_setter",
+        "mp_schema_owner",
+        "mp_security_owner",
+    ]:
+        raise MigrationError("candidate security fixed role set differs")
+    if manifest.get("allowed_candidate_origins") != [
+        "CRITIC_PROMPT_LOOP",
+        "KNOWLEDGE_KERNEL",
+    ]:
+        raise MigrationError("candidate producer set is not exact")
+    if manifest.get("candidate_lifecycle_state") != "DETECTED":
+        raise MigrationError("candidate lifecycle boundary is not DETECTED")
+    if manifest.get("runtime_update_delete") is not False:
+        raise MigrationError("candidate runtime UPDATE/DELETE must remain denied")
+    functions = manifest.get("helper_functions")
+    if functions != [
+        {
+            "function": "step28_candidate_slot_is_eligible",
+            "owner_role": "mp_schema_owner",
+            "runtime_privileges": ["EXECUTE"],
+            "security_type": "INVOKER",
+        },
+        {
+            "function": "step28_candidate_target_matches",
+            "owner_role": "mp_schema_owner",
+            "runtime_privileges": ["EXECUTE"],
+            "security_type": "INVOKER",
+        },
+        {
+            "function": "step28_personal_hat_scope_id",
+            "owner_role": "mp_schema_owner",
+            "runtime_privileges": ["EXECUTE"],
+            "security_type": "INVOKER",
+        },
+    ]:
+        raise MigrationError("candidate helper-function boundary is not exact")
+    quota_guard = manifest.get("quota_guard")
+    if quota_guard != {
+        "byte_limit": 8 * 1024 * 1024,
+        "count_limit": 128,
+        "function": "enforce_step28_candidate_quota",
+        "function_owner_role": "mp_schema_owner",
+        "function_runtime_privileges": [],
+        "function_security_type": "INVOKER",
+        "lock_column": "candidate_quota_epoch",
+        "trigger": "memory_patch_proposals_s28_candidate_quota",
+        "usage_authority": "EXACT_PERSISTED_CORRECTION_CANDIDATE_ROWS",
+    }:
+        raise MigrationError("candidate database quota guard is not exact")
+    slot_authority = manifest.get("slot_authority")
+    if slot_authority != {
+        "authority_columns": ["hat_scope_id", "slot_hash"],
+        "legacy_null_intake": "DENY_UNTIL_ORDINARY_SLOT_UPDATE_SEALS",
+        "owner_role": "mp_schema_owner",
+        "policies": {
+            "insert": "personal_memory_spaces_s5_insert",
+            "select": "personal_memory_spaces_s5_select",
+            "update": "personal_memory_spaces_s5_update",
+        },
+        "runtime_privileges": ["INSERT", "SELECT", "UPDATE"],
+        "scope_derivation_function": "step28_personal_hat_scope_id",
+        "table": "personal_memory_spaces",
+        "update_guard_function": "guard_step28_slot_authority_update",
+        "update_guard_trigger": "personal_memory_spaces_s28_authority_guard",
+    }:
+        raise MigrationError("candidate slot authority is not exact")
+    tables = manifest.get("tables")
+    if not isinstance(tables, list) or [
+        row.get("table") for row in tables if isinstance(row, dict)
+    ] != ["hat_scopes", "memory_patch_proposals"]:
+        raise MigrationError("candidate security table delta is not exact")
+    required_fields = {
+        "delete_policy",
+        "force_rls",
+        "insert_policy",
+        "owner_role",
+        "rls_enabled",
+        "runtime_privileges",
+        "select_policy",
+        "table",
+        "tenant_column",
+        "update_policy",
+        "user_owner_column",
+    }
+    expected_policies = {
+        "hat_scopes": (
+            "hat_scopes_s5_select",
+            "hat_scopes_s28_personal_insert",
+        ),
+        "memory_patch_proposals": (
+            "memory_patch_proposals_s5_select",
+            "memory_patch_proposals_s28_insert",
+        ),
+    }
+    for table in tables:
+        if not isinstance(table, dict) or set(table) != required_fields:
+            raise MigrationError("candidate security table shape is invalid")
+        name = table["table"]
+        if (
+            table["tenant_column"] != "tenant_id"
+            or table["user_owner_column"] != "owner_user_id"
+            or table["owner_role"] != "mp_schema_owner"
+            or table["rls_enabled"] is not True
+            or table["force_rls"] is not True
+            or table["runtime_privileges"] != ["INSERT", "SELECT"]
+            or (table["select_policy"], table["insert_policy"])
+            != expected_policies[name]
+            or table["update_policy"] is not None
+            or table["delete_policy"] is not None
+        ):
+            raise MigrationError(f"unsafe candidate security decision: {name}")
+    return manifest
+
+
 def offline_validate() -> dict[str, Any]:
     pin = load_version_pin()
     migrations = load_migrations()
@@ -2026,6 +2288,7 @@ def offline_validate() -> dict[str, Any]:
     source_registry_manifest = load_source_registry_manifest()
     ingestion_saga_manifest = load_ingestion_saga_manifest()
     parsing_pipeline_manifest = load_parsing_pipeline_manifest()
+    candidate_security_manifest = load_correction_candidate_security_manifest()
     step4_sql = "\n".join(
         migration.sql
         for migration in migrations
@@ -2065,6 +2328,11 @@ def offline_validate() -> dict[str, Any]:
         migration.sql
         for migration in migrations
         if migration.migration_id == STEP27_MIGRATION_ID
+    )
+    step28_sql = next(
+        migration.sql
+        for migration in migrations
+        if migration.migration_id == STEP28_MIGRATION_ID
     )
     historical_sql = step4_sql + "\n" + step5_sql
     step4_tables = sorted(
@@ -2533,6 +2801,52 @@ def offline_validate() -> dict[str, Any]:
             re.MULTILINE,
         ) is None:
             raise MigrationError(f"Step 27 policy is missing: {policy}")
+    if re.search(
+        r"^CREATE TABLE memory_patch\.",
+        step28_sql,
+        re.MULTILINE,
+    ):
+        raise MigrationError("Step 28 must reuse the existing proposal table")
+    step28_enabled = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"ENABLE ROW LEVEL SECURITY;",
+            step28_sql,
+        )
+    )
+    step28_forced = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"FORCE ROW LEVEL SECURITY;",
+            step28_sql,
+        )
+    )
+    expected_candidate_tables = {
+        table["table"] for table in candidate_security_manifest["tables"]
+    }
+    if step28_enabled != expected_candidate_tables:
+        raise MigrationError("Step 28 RLS reassertion coverage is incomplete")
+    if step28_forced != expected_candidate_tables:
+        raise MigrationError("Step 28 FORCE RLS reassertion coverage is incomplete")
+    for table in candidate_security_manifest["tables"]:
+        policy = table["insert_policy"]
+        if re.search(
+            rf"CREATE POLICY {re.escape(policy)}\s+"
+            rf"ON memory_patch\.{re.escape(table['table'])}\s+"
+            r"FOR INSERT\s+TO mp_app_runtime\s+WITH CHECK",
+            step28_sql,
+            re.MULTILINE,
+        ) is None:
+            raise MigrationError(f"Step 28 policy is missing: {policy}")
+    if (
+        "lifecycle_state = 'DETECTED'" not in step28_sql
+        or "origin IN ('KNOWLEDGE_KERNEL', 'CRITIC_PROMPT_LOOP')"
+        not in step28_sql
+        or "space.state IN ('CONFIGURED', 'ACTIVE')" not in step28_sql
+        or "content_hash = proposed_content ->> 'envelope_hash'" not in step28_sql
+        or "requested_trust_class = 'MODEL_EXPERIENCE_HINT'" not in step28_sql
+    ):
+        raise MigrationError("Step 28 candidate boundary is incomplete")
     return {
         "migration_count": len(migrations),
         "migration_ids": [migration.migration_id for migration in migrations],
@@ -2564,6 +2878,9 @@ def offline_validate() -> dict[str, Any]:
         "target_version": pin["exact_version"],
         "vector_boundary": "STEP19_VECTOR_384_L2_PINNED",
         "personal_memory_boundary": "STEP27_OWNER_PRIVATE_RLS_FORCE_RLS",
+        "correction_candidate_boundary": (
+            "STEP28_DETECTED_OWNER_PRIVATE_INSERT_ONLY"
+        ),
     }
 
 
@@ -2836,6 +3153,8 @@ def split_step5_database_phases(database_sql: str) -> list[str]:
 def assert_step5_security_catalog(
     client: SqlClient,
     database: str,
+    *,
+    include_step28_delta: bool = False,
 ) -> dict[str, Any]:
     manifest = load_security_manifest()
     protected_rows = [
@@ -2894,6 +3213,14 @@ def assert_step5_security_catalog(
         for command, policy_name in table["policies"].items():
             if policy_name is not None:
                 expected_policies[policy_name] = (table["table"], command.upper())
+    if include_step28_delta:
+        candidate_manifest = load_correction_candidate_security_manifest()
+        expected_policies.update(
+            {
+                table["insert_policy"]: (table["table"], "INSERT")
+                for table in candidate_manifest["tables"]
+            }
+        )
     policy_catalog = parse_tsv(
         client.execute(
             database,
@@ -2974,6 +3301,13 @@ def assert_step5_security_catalog(
         for row in manifest["tables"]
         for privilege in row["runtime_grants"]
     }
+    if include_step28_delta:
+        expected_runtime_grants.update(
+            {
+                (table["table"], "INSERT")
+                for table in load_correction_candidate_security_manifest()["tables"]
+            }
+        )
     runtime_grants = parse_tsv(
         client.execute(
             database,
@@ -3658,6 +3992,271 @@ def assert_step27_security_catalog(
     }
 
 
+def _validate_step28_function_grants(
+    *,
+    database: str,
+    function_name: str,
+    owner_role: str,
+    rows: list[dict[str, str]],
+    runtime_privileges: Sequence[str] = ("EXECUTE",),
+) -> int:
+    """Validate Cockroach-native direct UDF grants, including grant options."""
+
+    expected_signature = STEP28_FUNCTION_SIGNATURES.get(function_name)
+    expected_columns = {
+        "database_name",
+        "schema_name",
+        "routine_id",
+        "routine_signature",
+        "grantee",
+        "privilege_type",
+        "is_grantable",
+    }
+    if expected_signature is None or not rows or any(
+        set(row) != expected_columns for row in rows
+    ):
+        raise MigrationError("Step 28 helper-function grant catalog is invalid")
+    routine_ids = {row["routine_id"] for row in rows}
+    if (
+        len(routine_ids) != 1
+        or not next(iter(routine_ids)).isdigit()
+        or any(
+            row["database_name"] != database
+            or row["schema_name"] != "memory_patch"
+            or row["routine_signature"] != expected_signature
+            for row in rows
+        )
+    ):
+        raise MigrationError("Step 28 helper-function grant identity differs")
+    actual_grants = {
+        (row["grantee"], row["privilege_type"], row["is_grantable"])
+        for row in rows
+    }
+    expected_grants = {
+        ("admin", "ALL", "t"),
+        (owner_role, "ALL", "t"),
+        ("root", "ALL", "t"),
+    }
+    expected_grants.update(
+        ("mp_app_runtime", privilege, "f")
+        for privilege in runtime_privileges
+    )
+    if len(rows) != len(expected_grants) or actual_grants != expected_grants:
+        raise MigrationError("Step 28 helper-function grants differ")
+    return len(runtime_privileges)
+
+
+def assert_step28_security_catalog(
+    client: SqlClient,
+    database: str,
+) -> dict[str, Any]:
+    """Verify the bounded INSERT-only candidate delta on existing tables."""
+
+    manifest = load_correction_candidate_security_manifest()
+    tables = manifest["tables"]
+    slot_authority = manifest["slot_authority"]
+    catalog_tables = [
+        *tables,
+        {
+            "table": slot_authority["table"],
+            "owner_role": slot_authority["owner_role"],
+        },
+    ]
+    names = sorted(table["table"] for table in catalog_tables)
+    quoted = ", ".join(sql_literal(name) for name in names)
+    table_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT c.relname AS table_name, c.relrowsecurity, "
+            "c.relforcerowsecurity, owner.rolname AS owner_role "
+            "FROM pg_catalog.pg_class AS c "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = c.relnamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = c.relowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            f"AND c.relname IN ({quoted}) AND c.relkind = 'r' "
+            "ORDER BY c.relname",
+        )
+    )
+    expected_tables = [
+        {
+            "table_name": table["table"],
+            "relrowsecurity": "t",
+            "relforcerowsecurity": "t",
+            "owner_role": table["owner_role"],
+        }
+        for table in sorted(catalog_tables, key=lambda row: row["table"])
+    ]
+    if table_rows != expected_tables:
+        raise MigrationError("Step 28 table ownership or RLS state differs")
+    policy_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT tablename, policyname, cmd, roles, qual, with_check "
+            "FROM pg_catalog.pg_policies "
+            "WHERE schemaname = 'memory_patch' "
+            f"AND tablename IN ({quoted}) ORDER BY tablename, policyname",
+        )
+    )
+    expected_policies = {
+        table["select_policy"]: (table["table"], "SELECT") for table in tables
+    }
+    expected_policies.update(
+        {
+            table["insert_policy"]: (table["table"], "INSERT")
+            for table in tables
+        }
+    )
+    expected_policies.update(
+        {
+            policy_name: (slot_authority["table"], command.upper())
+            for command, policy_name in slot_authority["policies"].items()
+        }
+    )
+    actual_policies = {
+        row["policyname"]: (row["tablename"], row["cmd"].upper())
+        for row in policy_rows
+    }
+    if actual_policies != expected_policies:
+        raise MigrationError("Step 28 final candidate policy set differs")
+    for row in policy_rows:
+        if "mp_app_runtime" not in row["roles"]:
+            raise MigrationError("Step 28 policy lacks runtime role")
+        if row["cmd"].upper() == "SELECT" and not row["qual"]:
+            raise MigrationError("Step 28 SELECT policy lacks USING")
+        if row["cmd"].upper() == "INSERT" and not row["with_check"]:
+            raise MigrationError("Step 28 INSERT policy lacks WITH CHECK")
+    grant_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT table_name, privilege_type "
+            "FROM information_schema.table_privileges "
+            "WHERE table_schema = 'memory_patch' "
+            "AND grantee = 'mp_app_runtime' "
+            f"AND table_name IN ({quoted}) ORDER BY table_name, privilege_type",
+        )
+    )
+    expected_grants = sorted(
+        [
+            (table["table"], privilege)
+            for table in tables
+            for privilege in table["runtime_privileges"]
+        ]
+        + [
+            (slot_authority["table"], privilege)
+            for privilege in slot_authority["runtime_privileges"]
+        ]
+    )
+    actual_grants = [
+        (row["table_name"], row["privilege_type"]) for row in grant_rows
+    ]
+    if actual_grants != expected_grants:
+        raise MigrationError("Step 28 runtime grants are not least privilege")
+    quota_guard = manifest["quota_guard"]
+    function_manifest = [
+        *manifest["helper_functions"],
+        {
+            "function": quota_guard["function"],
+            "owner_role": quota_guard["function_owner_role"],
+            "runtime_privileges": quota_guard["function_runtime_privileges"],
+            "security_type": quota_guard["function_security_type"],
+        },
+        {
+            "function": slot_authority["update_guard_function"],
+            "owner_role": slot_authority["owner_role"],
+            "runtime_privileges": [],
+            "security_type": "INVOKER",
+        },
+    ]
+    function_names = [row["function"] for row in function_manifest]
+    quoted_functions = ", ".join(
+        sql_literal(name) for name in function_names
+    )
+    function_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT procedure.proname AS function_name, "
+            "owner.rolname AS owner_role, procedure.prosecdef "
+            "FROM pg_catalog.pg_proc AS procedure "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = procedure.pronamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = procedure.proowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            f"AND procedure.proname IN ({quoted_functions}) "
+            "ORDER BY procedure.proname",
+        )
+    )
+    expected_functions = [
+        {
+            "function_name": row["function"],
+            "owner_role": row["owner_role"],
+            "prosecdef": "f",
+        }
+        for row in sorted(function_manifest, key=lambda value: value["function"])
+    ]
+    if function_rows != expected_functions:
+        raise MigrationError("Step 28 helper-function ownership or mode differs")
+    runtime_function_grant_count = 0
+    for function in function_manifest:
+        function_name = function["function"]
+        if function_name not in STEP28_FUNCTION_SIGNATURES:
+            raise MigrationError("Step 28 helper-function identity differs")
+        rows = parse_tsv(
+            client.execute(
+                database,
+                "SHOW GRANTS ON FUNCTION memory_patch." + function_name,
+            )
+        )
+        runtime_function_grant_count += _validate_step28_function_grants(
+            database=database,
+            function_name=function_name,
+            owner_role=function["owner_role"],
+            rows=rows,
+            runtime_privileges=function["runtime_privileges"],
+        )
+    trigger_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT trigger.tgname AS trigger_name, "
+            "target.relname AS table_name, procedure.proname AS function_name "
+            "FROM pg_catalog.pg_trigger AS trigger "
+            "JOIN pg_catalog.pg_class AS target ON target.oid = trigger.tgrelid "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = target.relnamespace "
+            "JOIN pg_catalog.pg_proc AS procedure "
+            "ON procedure.oid = trigger.tgfoid "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND trigger.tgname IN ("
+            f"{sql_literal(quota_guard['trigger'])}, "
+            f"{sql_literal(slot_authority['update_guard_trigger'])}) "
+            "AND NOT trigger.tgisinternal ORDER BY trigger.tgname",
+        )
+    )
+    expected_triggers = [
+        {
+            "trigger_name": quota_guard["trigger"],
+            "table_name": "memory_patch_proposals",
+            "function_name": quota_guard["function"],
+        },
+        {
+            "trigger_name": slot_authority["update_guard_trigger"],
+            "table_name": slot_authority["table"],
+            "function_name": slot_authority["update_guard_function"],
+        },
+    ]
+    if trigger_rows != expected_triggers:
+        raise MigrationError("Step 28 authority/quota trigger set differs")
+    return {
+        "helper_function_count": len(function_rows),
+        "policy_count": len(policy_rows),
+        "protected_table_count": len(table_rows),
+        "runtime_function_grant_count": runtime_function_grant_count,
+        "runtime_table_grant_count": len(grant_rows),
+        "runtime_update_delete": False,
+        "trigger_count": len(trigger_rows),
+    }
+
+
 def apply_migrations(
     client: SqlClient,
     database: str,
@@ -3761,6 +4360,14 @@ def apply_migrations(
                 timeout=timeout,
             )
             assert_step27_security_catalog(client, database)
+            database_sql = ""
+        elif migration.migration_id == STEP28_MIGRATION_ID:
+            client.execute(
+                database,
+                "BEGIN;\n" + database_sql + "\nCOMMIT;",
+                timeout=timeout,
+            )
+            assert_step28_security_catalog(client, database)
             database_sql = ""
         migration_record_sql = (
             "INSERT INTO memory_patch.schema_migrations "
@@ -3878,7 +4485,7 @@ def assert_catalog(catalog: Mapping[str, Any]) -> None:
     )
     if catalog["tables"] != expected_tables:
         raise MigrationError(
-            "live catalog table set differs from the Step 4–27 chain"
+            "live catalog table set differs from the Step 4–28 chain"
         )
     indexes = set(catalog["explicit_indexes"])
     required_persistence_indexes = {
@@ -4451,6 +5058,10 @@ def run_live_validation(
             != step11_security_b["security_digest"]
         ):
             raise MigrationError("Step 11 security reproduction digest differs")
+        step28_security_a = assert_step28_security_catalog(client, database_a)
+        step28_security_b = assert_step28_security_catalog(client, database_b)
+        if step28_security_a != step28_security_b:
+            raise MigrationError("Step 28 security reproduction differs")
         if len(applied_migrations(client, database_a)) != migration_count:
             raise MigrationError("invalid data probes changed migration bookkeeping")
         live_result = {
@@ -4475,6 +5086,7 @@ def run_live_validation(
             "step9_security": step9_security_a,
             "step10_security": step10_security_a,
             "step11_security": step11_security_a,
+            "step28_security": step28_security_a,
             "status": "PASS",
         }
     finally:

@@ -65,7 +65,7 @@ class OfflineManifestTests(unittest.TestCase):
         result = migrations.offline_validate()
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["target_version"], "v26.2.4")
-        self.assertEqual(result["migration_count"], 11)
+        self.assertEqual(result["migration_count"], 12)
         self.assertEqual(result["step4_table_count"], 29)
         self.assertEqual(result["schema_table_count"], 43)
         self.assertEqual(result["protected_table_count"], 40)
@@ -80,6 +80,10 @@ class OfflineManifestTests(unittest.TestCase):
         self.assertEqual(
             result["personal_memory_boundary"],
             "STEP27_OWNER_PRIVATE_RLS_FORCE_RLS",
+        )
+        self.assertEqual(
+            result["correction_candidate_boundary"],
+            "STEP28_DETECTED_OWNER_PRIVATE_INSERT_ONLY",
         )
 
     def test_migration_order_and_ids_are_stable(self) -> None:
@@ -100,6 +104,7 @@ class OfflineManifestTests(unittest.TestCase):
                 "0009_step12_hat_registry_runtime_boundary",
                 "0010_step19_embedding_vector_retrieval",
                 "0011_step27_personal_memory_persistence",
+                "0012_step28_correction_candidate_bridge",
             ],
         )
 
@@ -126,9 +131,120 @@ class OfflineManifestTests(unittest.TestCase):
             migrations.SCHEMA_MANIFEST_PATH,
             migrations.SECURITY_MANIFEST_PATH,
             migrations.SOURCE_REGISTRY_MANIFEST_PATH,
+            migrations.CORRECTION_CANDIDATE_SECURITY_MANIFEST_PATH,
         ):
             value = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(path.read_bytes(), migrations.canonical_json_bytes(value))
+
+    def test_step28_native_function_grants_are_exact(self) -> None:
+        database = "mp_step28_unit"
+        runtime_functions = {
+            "step28_candidate_slot_is_eligible",
+            "step28_candidate_target_matches",
+            "step28_personal_hat_scope_id",
+        }
+        for ordinal, (function_name, signature) in enumerate(
+            migrations.STEP28_FUNCTION_SIGNATURES.items(),
+            start=100174,
+        ):
+            runtime_privileges = (
+                ("EXECUTE",) if function_name in runtime_functions else ()
+            )
+            rows = [
+                {
+                    "database_name": database,
+                    "schema_name": "memory_patch",
+                    "routine_id": str(ordinal),
+                    "routine_signature": signature,
+                    "grantee": grantee,
+                    "privilege_type": privilege,
+                    "is_grantable": grantable,
+                }
+                for grantee, privilege, grantable in (
+                    ("admin", "ALL", "t"),
+                    ("mp_schema_owner", "ALL", "t"),
+                    ("root", "ALL", "t"),
+                )
+            ]
+            rows.extend(
+                {
+                    "database_name": database,
+                    "schema_name": "memory_patch",
+                    "routine_id": str(ordinal),
+                    "routine_signature": signature,
+                    "grantee": "mp_app_runtime",
+                    "privilege_type": privilege,
+                    "is_grantable": "f",
+                }
+                for privilege in runtime_privileges
+            )
+            with self.subTest(function_name=function_name):
+                self.assertEqual(
+                    migrations._validate_step28_function_grants(
+                        database=database,
+                        function_name=function_name,
+                        owner_role="mp_schema_owner",
+                        rows=rows,
+                        runtime_privileges=runtime_privileges,
+                    ),
+                    len(runtime_privileges),
+                )
+
+    def test_step28_function_grants_fail_closed(self) -> None:
+        database = "mp_step28_unit"
+        function_name = "step28_candidate_slot_is_eligible"
+        signature = migrations.STEP28_FUNCTION_SIGNATURES[function_name]
+        exact_rows = [
+            {
+                "database_name": database,
+                "schema_name": "memory_patch",
+                "routine_id": "100174",
+                "routine_signature": signature,
+                "grantee": grantee,
+                "privilege_type": privilege,
+                "is_grantable": grantable,
+            }
+            for grantee, privilege, grantable in (
+                ("admin", "ALL", "t"),
+                ("mp_app_runtime", "EXECUTE", "f"),
+                ("mp_schema_owner", "ALL", "t"),
+                ("root", "ALL", "t"),
+            )
+        ]
+        unsafe_variants = {
+            "public_execute": [
+                *exact_rows,
+                {
+                    **exact_rows[1],
+                    "grantee": "public",
+                },
+            ],
+            "context_setter_execute": [
+                *exact_rows,
+                {
+                    **exact_rows[1],
+                    "grantee": "mp_request_context_setter",
+                },
+            ],
+            "runtime_grant_option": [
+                exact_rows[0],
+                {**exact_rows[1], "is_grantable": "t"},
+                *exact_rows[2:],
+            ],
+            "wrong_signature": [
+                {**row, "routine_signature": "other(text)"}
+                for row in exact_rows
+            ],
+        }
+        for label, rows in unsafe_variants.items():
+            with self.subTest(label=label):
+                with self.assertRaises(migrations.MigrationError):
+                    migrations._validate_step28_function_grants(
+                        database=database,
+                        function_name=function_name,
+                        owner_role="mp_schema_owner",
+                        rows=rows,
+                    )
 
     def test_version_pin_is_exact(self) -> None:
         pin = migrations.load_version_pin()
@@ -577,7 +693,7 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
         ):
             result = migrations.apply_migrations(client, "mp_step5_noop")
         self.assertEqual(result["applied_count"], 0)
-        self.assertEqual(result["skipped_count"], 11)
+        self.assertEqual(result["skipped_count"], 12)
         client.execute.assert_not_called()
 
     def test_applied_checksum_mismatch_fails_closed(self) -> None:

@@ -162,7 +162,14 @@ At roadmap adoption and in subsequent audited closure records:
   configuration export, two-stage logical delete, and controlled disposable
   CockroachDB validation are complete in its intended closure commit. It is
   completion evidence only after that commit is reachable on `origin/main`.
-- `Step 28: NOT STARTED`. Step 27 completion does not authorize Step 28.
+- Step 28 owner- and slot-bound Correction Candidate Envelopes, exact Kernel
+  and Critic Prompt Loop producer boundaries, `DETECTED`-only durable intake,
+  hash-bound lineage, hard candidate quotas, idempotent exact replay,
+  deterministic exact deduplication, RLS/FORCE RLS isolation, and controlled
+  disposable CockroachDB validation are complete in its intended closure
+  commit. It is completion evidence only after that commit is reachable on
+  `origin/main`.
+- `Step 29: NOT STARTED`. Step 28 completion does not authorize Step 29.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
+import inspect
 import json
 import re
 import unittest
@@ -17,6 +18,7 @@ from tests._support import REPOSITORY_ROOT
 from aioa_memory_kernel.contracts.enums import PersonalMemorySpaceState
 from aioa_memory_kernel.contracts.exceptions import (
     ContractValidationError,
+    IntegrityError,
     QuotaExceeded,
 )
 from aioa_memory_kernel.contracts.personal_memory import (
@@ -55,6 +57,10 @@ from aioa_memory_kernel.personal_memory import (
     verify_receipt_hash,
     verify_slot_hash,
     verify_usage_hash,
+)
+from aioa_memory_kernel.personal_memory.repository import (
+    PersonalMemoryCockroachRepository,
+    slot_from_row,
 )
 
 
@@ -147,6 +153,36 @@ def empty_slot(
         created_at=at,
         updated_at=at,
     )
+
+
+def persisted_slot_row(
+    slot: PersonalMemoryHatSlot,
+    *,
+    hat_scope_id: str | None | object = ...,
+    slot_hash: str | None | object = ...,
+) -> dict[str, object]:
+    """Render the Step 27 slot columns, including the Step 28 authority tuple."""
+
+    return {
+        "tenant_id": slot.tenant_id,
+        "user_id": slot.owner_user_id,
+        "personal_memory_space_id": slot.personal_memory_space_id,
+        "schema_version": slot.schema_version,
+        "state": slot.state.value,
+        "display_name": slot.display_name,
+        "created_at": slot.created_at,
+        "updated_at": slot.updated_at,
+        "export_requested_at": slot.export_requested_at,
+        "deletion_requested_at": slot.deletion_requested_at,
+        "deleted_at": slot.deleted_at,
+        "state_version": slot.state_version,
+        "configuration_version": slot.configuration_version,
+        "quota_policy_id": slot.quota_policy_id,
+        "quota_policy_digest": slot.quota_policy_digest,
+        "configuration_digest": slot.configuration_digest,
+        "hat_scope_id": slot.hat_scope_id if hat_scope_id is ... else hat_scope_id,
+        "slot_hash": slot.slot_hash if slot_hash is ... else slot_hash,
+    }
 
 
 class FakeIdempotency:
@@ -816,6 +852,46 @@ class ServiceLifecycleTests(unittest.TestCase):
             )
 
 
+class PersistedSlotAuthorityTests(unittest.TestCase):
+    def test_exact_persisted_scope_and_slot_hash_rehydrate(self) -> None:
+        slot = empty_slot()
+        self.assertEqual(slot_from_row(persisted_slot_row(slot), ()), slot)
+
+    def test_legacy_null_authority_tuple_reads_but_remains_unsealed(self) -> None:
+        slot = empty_slot()
+        restored = slot_from_row(
+            persisted_slot_row(slot, hat_scope_id=None, slot_hash=None),
+            (),
+        )
+        self.assertEqual(restored.hat_scope_id, slot.hat_scope_id)
+        self.assertEqual(restored.slot_hash, slot.slot_hash)
+
+    def test_partial_or_mismatched_authority_tuple_fails_closed(self) -> None:
+        slot = empty_slot()
+        invalid_rows = (
+            persisted_slot_row(slot, hat_scope_id=None),
+            persisted_slot_row(slot, slot_hash=None),
+            persisted_slot_row(slot, hat_scope_id="personal-hat-scope-" + "0" * 64),
+            persisted_slot_row(slot, slot_hash="0" * 64),
+        )
+        for row in invalid_rows:
+            with self.subTest(
+                hat_scope_id=row["hat_scope_id"],
+                slot_hash=row["slot_hash"],
+            ):
+                with self.assertRaises(IntegrityError):
+                    slot_from_row(row, ())
+
+    def test_repository_materializes_and_lazily_seals_canonical_authority(self) -> None:
+        source = inspect.getsource(PersonalMemoryCockroachRepository)
+        self.assertIn("configuration_digest, hat_scope_id,", source)
+        self.assertIn("slot.configuration_digest", source)
+        self.assertIn("slot.hat_scope_id", source)
+        self.assertIn("slot.slot_hash", source)
+        self.assertIn("AND (hat_scope_id = %s OR hat_scope_id IS NULL)", source)
+        self.assertIn("AND (slot_hash = %s OR slot_hash IS NULL)", source)
+
+
 class DatabaseAndBoundaryStaticTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
@@ -888,9 +964,11 @@ class DatabaseAndBoundaryStaticTests(unittest.TestCase):
         self.assertNotIn("os.system", self.package_text)
         self.assertNotIn("shell=True", self.package_text)
 
-    def test_later_step_types_are_absent(self) -> None:
+    def test_step29_and_later_types_are_absent(self) -> None:
         for forbidden in (
-            "CorrectionCandidateEnvelope",
+            "PersonalMemoryPatchProposal",
+            "EVIDENCE_BOUND",
+            "AWAITING_APPROVAL",
             "activate_patch",
             "active_patch_retrieval",
             "shared_promotion",
@@ -956,13 +1034,16 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         )
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("[x] **Step 27", roadmap)
-        self.assertIn("[ ] **Step 28", roadmap)
-        self.assertIn("Step 28: NOT STARTED", roadmap)
+        self.assertIn("[x] **Step 28", roadmap)
+        self.assertIn("Step 28: COMPLETE AND PUSHED", roadmap)
+        self.assertIn("[ ] **Step 29", roadmap)
+        self.assertIn("Step 29: NOT STARTED", roadmap)
         self.assertIn(
             "Step 27 owner-private empty Personal Memory HAT slots",
             agents,
         )
-        self.assertIn("`Step 28: NOT STARTED`", agents)
+        self.assertIn("Step 28 owner- and slot-bound Correction Candidate", agents)
+        self.assertIn("`Step 29: NOT STARTED`", agents)
 
 
 if __name__ == "__main__":
