@@ -302,7 +302,8 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 15 temporal and jurisdictional normalization",
             "`Step 16: Step 16 trusted publication complete and pushed at actual closure",
             "Step 17 deterministic Axis A routing",
-            "Step 21 completion does not authorize Step 22.",
+            "Step 22 provider-neutral original-query-only",
+            "Step 22 completion does not authorize Step 23.",
         ):
             self.assertIn(required, text)
 

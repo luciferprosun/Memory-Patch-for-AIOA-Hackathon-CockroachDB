@@ -362,6 +362,47 @@ class KernelRunRecord:
 
 
 @dataclass(frozen=True, slots=True)
+class DraftRecord:
+    """Immutable row contract for the existing Step 4 drafts table."""
+
+    tenant_id: str
+    draft_id: str
+    kernel_run_id: str
+    draft_stage: int
+    content_sha256: str
+    immutable_content_reference: str
+    created_at: datetime
+
+    def __post_init__(self) -> None:
+        for field in ("tenant_id", "draft_id", "kernel_run_id"):
+            object.__setattr__(
+                self,
+                field,
+                _text(getattr(self, field), field, 255),
+            )
+        if self.draft_stage != 1:
+            raise PersistenceConfigurationError(
+                "Step 22 persistence accepts Draft V1 only",
+                sanitized_code="INVALID_DRAFT_STAGE",
+            )
+        object.__setattr__(
+            self,
+            "content_sha256",
+            _digest(self.content_sha256, "content_sha256"),
+        )
+        object.__setattr__(
+            self,
+            "immutable_content_reference",
+            _text(
+                self.immutable_content_reference,
+                "immutable_content_reference",
+                140_000,
+            ),
+        )
+        object.__setattr__(self, "created_at", _utc(self.created_at, "created_at"))
+
+
+@dataclass(frozen=True, slots=True)
 class SourceSnapshotRecord:
     tenant_id: str
     snapshot_id: str

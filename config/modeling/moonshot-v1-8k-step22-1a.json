@@ -1,0 +1,19 @@
+{
+  "adapter_version": "moonshot-chat-completions-1a",
+  "api_origin": "https://api.moonshot.ai",
+  "chat_completions_path": "/v1/chat/completions",
+  "code_execution_disabled": true,
+  "config_digest": "ca5c504cc4f174b7e73089adf3de43badaabe07cb10121e988699d14caf4ada5",
+  "context_window_tokens": 8192,
+  "credential_environment_variable": "MOONSHOT_API_KEY",
+  "endpoint_class": "moonshot-public-chat-completions-v1",
+  "function_calling_disabled": true,
+  "immutable_model_revision": false,
+  "model_declared_version": "moonshot-v1-8k",
+  "model_id": "moonshot-v1-8k",
+  "model_registry_owner": "moonshot",
+  "provider_id": "moonshot-ai",
+  "schema_version": "1.0.0",
+  "tooling_disabled": true,
+  "web_browsing_disabled": true
+}

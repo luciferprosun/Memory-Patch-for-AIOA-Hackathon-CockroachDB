@@ -125,7 +125,13 @@ At roadmap adoption and in subsequent audited closure records:
   completeness fallback, and offline real/synthetic validation are complete
   in its intended closure commit. It is completion evidence only after that
   commit is reachable on `origin/main`.
-- `Step 22: NOT STARTED`. Step 21 completion does not authorize Step 22.
+- Step 22 provider-neutral original-query-only Draft V1 generation, pinned
+  hosted provider/model identity, evidence-leakage prevention, tool and
+  credential isolation, bounded timeout/retry, exact Draft V1 byte/hash
+  identity, existing Step 4 draft persistence, and controlled validation are
+  complete in its intended closure commit. It is completion evidence only
+  after that commit is reachable on `origin/main`.
+- `Step 23: NOT STARTED`. Step 22 completion does not authorize Step 23.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

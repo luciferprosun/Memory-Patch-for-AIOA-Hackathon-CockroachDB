@@ -88,7 +88,13 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   preservation, policy-driven freshness, canonical evidence states, bounded
   same-scope fallback, and offline validation are closed by the intended Step
   21 commit once it is reachable on `origin/main`.
-- `Step 22: NOT STARTED`.
+- `Step 22: COMPLETE AND PUSHED at actual closure commit`.
+  Provider-neutral original-query-only Draft V1 generation, pinned hosted
+  provider/model identity, evidence-leakage prevention, bounded timeout/retry,
+  exact Draft V1 byte/hash identity, existing Step 4 draft persistence,
+  credential/tool isolation, and controlled validation are closed by the
+  intended Step 22 commit once it is reachable on `origin/main`.
+- `Step 23: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -446,8 +452,19 @@ Dla dowolnego obsługiwanego pytania Kernel zwraca:
 
 Udowodnić rzeczywistą korektę modelu, bez ukrywania błędnej odpowiedzi i bez zwracania nieweryfikowalnego Draft V2.
 
-- [ ] **Step 22 — Provider-Neutral Model Adapter and Draft V1 1A**
+- [x] **Step 22 — Provider-Neutral Model Adapter and Draft V1 1A**
   Oryginalne pytanie bez correction evidence, model metadata, timeout/retry, Draft V1 hash i brak dostępu modelu do bazy lub authority credentials.
+  `Step 22: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje pinned provider/model configuration, provider-neutral
+  interface, original-query-only prompt projection, sentinel evidence-leakage
+  negative, tools disabled, isolated credentials, bounded timeout/retry,
+  immutable Draft V1 text/hash, reuse istniejącego Step 4 draft persistence,
+  tenant/user isolation i kontrolowaną walidację bez authority escalation.
+  [Architektura](../architecture/PROVIDER_NEUTRAL_MODEL_ADAPTER_DRAFT_V1_1A.md),
+  [ADR-029](../adr/ADR-029-provider-neutral-evidence-blind-draft-v1.md),
+  [runbook](../operations/STEP_22_MODEL_DRAFT_V1_VALIDATION_1A.md),
+  [validation evidence](../evidence/modeling/step22-provider-neutral-draft-v1-validation.json),
+  [rekord zamknięcia](../audits/STEP_22_PROVIDER_NEUTRAL_MODEL_DRAFT_V1_CLOSURE_1A.md).
 
 - [ ] **Step 23 — Claim Extraction and Evidence Binding 1A**
   Claims z Draft V1, span references, claim IDs, evidence mappings, `SUPPORTED / REFUTED / UNVERIFIED` candidates i zamrożenie tego, co faktycznie trafi do packetu.

@@ -13,6 +13,7 @@ from aioa_memory_kernel.contracts.serialization import canonical_json
 from .errors import ImmutableRecordConflictError, PersistenceConfigurationError
 from .models import (
     AuditEventRecord,
+    DraftRecord,
     EvidenceItemRecord,
     KernelRunRecord,
     SourceSnapshotRecord,
@@ -171,6 +172,86 @@ class CockroachPersistenceRepository:
             ),
             expected=expected,
             conflict_code="SOURCE_SNAPSHOT_IMMUTABLE_CONFLICT",
+        )
+
+    def get_draft_record(
+        self,
+        transaction: TransactionProtocol,
+        *,
+        tenant_id: str,
+        draft_id: str,
+    ) -> Row | None:
+        if not isinstance(tenant_id, str) or not tenant_id:
+            raise PersistenceConfigurationError(
+                "tenant identity is invalid",
+                sanitized_code="INVALID_DRAFT_LOOKUP",
+            )
+        if not isinstance(draft_id, str) or not draft_id:
+            raise PersistenceConfigurationError(
+                "draft identity is invalid",
+                sanitized_code="INVALID_DRAFT_LOOKUP",
+            )
+        return transaction.fetch_one(
+            """
+                SELECT tenant_id, draft_id, kernel_run_id, draft_stage,
+                       content_sha256, immutable_content_reference, created_at
+                  FROM memory_patch.drafts
+                 WHERE tenant_id = %s AND draft_id = %s
+            """,
+            (tenant_id, draft_id),
+        )
+
+    def put_draft(
+        self,
+        transaction: TransactionProtocol,
+        record: DraftRecord,
+    ) -> Row:
+        if not isinstance(record, DraftRecord):
+            raise PersistenceConfigurationError(
+                "draft record has the wrong type",
+                sanitized_code="INVALID_RECORD_TYPE",
+            )
+        columns = (
+            "tenant_id, draft_id, kernel_run_id, draft_stage, content_sha256, "
+            "immutable_content_reference, created_at"
+        )
+        expected = {
+            "tenant_id": record.tenant_id,
+            "draft_id": record.draft_id,
+            "kernel_run_id": record.kernel_run_id,
+            "draft_stage": record.draft_stage,
+            "content_sha256": record.content_sha256,
+            "immutable_content_reference": record.immutable_content_reference,
+            "created_at": record.created_at,
+        }
+        return self._put_immutable(
+            transaction,
+            select_sql=f"""
+                SELECT {columns}
+                  FROM memory_patch.drafts
+                 WHERE tenant_id = %s AND draft_id = %s
+            """,
+            select_parameters=(record.tenant_id, record.draft_id),
+            insert_sql=f"""
+                INSERT INTO memory_patch.drafts (
+                  tenant_id, draft_id, kernel_run_id, draft_stage,
+                  content_sha256, immutable_content_reference, created_at
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ON CONFLICT DO NOTHING
+                RETURNING {columns}
+            """,
+            insert_parameters=(
+                record.tenant_id,
+                record.draft_id,
+                record.kernel_run_id,
+                record.draft_stage,
+                record.content_sha256,
+                record.immutable_content_reference,
+                record.created_at,
+            ),
+            expected=expected,
+            conflict_code="DRAFT_IMMUTABLE_CONFLICT",
         )
 
     def put_evidence_item(
