@@ -1289,6 +1289,56 @@ def verify_verification_summary_hash(value: DraftV2VerificationSummary) -> None:
     verify_canonical_hash(value, value.summary_hash, exclude_fields=("summary_hash",))
 
 
+def verify_draft_v2_pipeline_result_hash(value: DraftV2PipelineResult) -> None:
+    """Verify the complete Step 25 envelope before a final-output decision.
+
+    Step 25 originally verified every nested record while constructing the
+    envelope.  Step 26 is a later trust boundary, so it also needs an exported
+    verifier for an envelope that may have crossed a persistence or process
+    boundary.
+    """
+
+    if not isinstance(value, DraftV2PipelineResult):
+        raise ContractValidationError("value must be a DraftV2PipelineResult")
+    verify_draft_v2_hash(value.draft_v2)
+    if value.generation_result is not None:
+        verify_draft_v2_generation_result_hash(value.generation_result)
+        if (
+            value.generation_result.result_hash
+            != value.draft_v2.generation_result_hash
+            or value.generation_result.response_text != value.draft_v2.draft_text
+        ):
+            raise IntegrityError("generation result is detached from Draft V2")
+    for claim in value.ordered_claims:
+        verify_draft_v2_claim_hash(claim)
+    for verification in value.ordered_claim_verifications:
+        verify_layered_claim_verification_hash(verification)
+    verify_verification_summary_hash(value.verification_summary)
+    expected = canonical_sha256(
+        {
+            "draft_v2_hash": value.draft_v2.draft_v2_hash,
+            "generation_result_hash": (
+                value.generation_result.result_hash
+                if value.generation_result is not None
+                else None
+            ),
+            "ordered_claim_hashes": tuple(
+                item.claim_hash for item in value.ordered_claims
+            ),
+            "ordered_verification_hashes": tuple(
+                item.verification_hash
+                for item in value.ordered_claim_verifications
+            ),
+            "verification_summary_hash": value.verification_summary.summary_hash,
+            "replayed": value.replayed,
+            "persisted": value.persisted,
+        }
+    )
+    require_sha256_hex(value.result_hash, "result_hash")
+    if expected != value.result_hash:
+        raise IntegrityError("Draft V2 pipeline result hash mismatch")
+
+
 __all__ = [
     "CheckResult",
     "CorrectionComplianceStatus",
@@ -1332,6 +1382,7 @@ __all__ = [
     "verify_draft_v2_generation_request_hash",
     "verify_draft_v2_generation_result_hash",
     "verify_draft_v2_hash",
+    "verify_draft_v2_pipeline_result_hash",
     "verify_layered_claim_verification_hash",
     "verify_semantic_signal_hash",
     "verify_verification_summary_hash",

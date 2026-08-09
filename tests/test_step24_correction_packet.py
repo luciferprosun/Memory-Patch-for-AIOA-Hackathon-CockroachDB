@@ -524,13 +524,18 @@ class DocumentationClosureTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "- [ ] **Step 26 — Verified Answer Assembly and Fail-Closed Output 1A**",
+            "- [x] **Step 26 — Verified Answer Assembly and Fail-Closed Output 1A**",
+            roadmap,
+        )
+        self.assertIn(
+            "- [ ] **Step 27 — Personal Memory HAT Persistence, Quotas and Model Bindings 1A**",
             roadmap,
         )
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("Step 24 verified frozen Step 23 input binding", agents)
         self.assertIn("Step 25 verified Correction Packet integrity gating", agents)
-        self.assertIn("Step 26: NOT STARTED", agents)
+        self.assertIn("Step 26 complete upstream integrity binding", agents)
+        self.assertIn("Step 27: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

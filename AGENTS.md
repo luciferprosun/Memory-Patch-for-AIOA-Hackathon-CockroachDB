@@ -150,7 +150,13 @@ At roadmap adoption and in subsequent audited closure records:
   signals, hash-bound claim verdicts and summary, and controlled offline
   validation are complete in its intended closure commit. It is completion
   evidence only after that commit is reachable on `origin/main`.
-- `Step 26: NOT STARTED`. Step 25 completion does not authorize Step 26.
+- Step 26 complete upstream integrity binding, exact verified-Draft-V2 answer
+  assembly, final policy/evidence ceilings, HAT_ENFORCE no-Draft-V1-fallback,
+  one same-packet retry with full Step 25 re-verification, typed review and
+  bounded-failure outputs, and controlled offline validation are complete in
+  its intended closure commit. It is completion evidence only after that
+  commit is reachable on `origin/main`.
+- `Step 27: NOT STARTED`. Step 26 completion does not authorize Step 27.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

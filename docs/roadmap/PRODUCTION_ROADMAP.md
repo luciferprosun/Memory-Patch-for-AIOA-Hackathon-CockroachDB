@@ -111,7 +111,13 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   claim spans, layered deterministic and semantic-candidate verification,
   fixed claim verdicts, summary states, and offline controlled validation are
   closed by the intended Step 25 commit once it is reachable on `origin/main`.
-- `Step 26: NOT STARTED`.
+- `Step 26: COMPLETE AND PUSHED at actual closure commit`.
+  Complete Step 17/20/21/24/25 integrity binding, exact Verified Answer
+  assembly, final policy/evidence ceilings, HAT_ENFORCE no-Draft-V1-fallback,
+  one same-packet retry with full re-verification, deterministic review and
+  bounded-failure outputs, and offline controlled validation are closed by
+  the intended Step 26 commit once it is reachable on `origin/main`.
+- `Step 27: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -525,8 +531,20 @@ Udowodnić rzeczywistą korektę modelu, bez ukrywania błędnej odpowiedzi i be
   [validation evidence](../evidence/modeling/step25-draft-v2-layered-verifier-validation.json),
   [rekord zamknięcia](../audits/STEP_25_DRAFT_V2_LAYERED_CLAIM_VERIFIER_CLOSURE_1A.md).
 
-- [ ] **Step 26 — Verified Answer Assembly and Fail-Closed Output 1A**
+- [x] **Step 26 — Verified Answer Assembly and Fail-Closed Output 1A**
   Zwrócenie tylko zweryfikowanej odpowiedzi; dla `HAT_ENFORCE` brak fallbacku do znanego błędnego Draft V1; retry raz, potem human review lub bounded failure.
+  `Step 26: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje complete upstream hash/identity gate, immutable exact
+  Draft V2 `VerifiedAnswer`, deterministic policy/evidence ceilings,
+  packet-bound citations and claim coverage, structurally forbidden Draft V1
+  fallback, one same-packet/no-new-evidence retry, full Step 25 re-verification,
+  typed review/failure outputs, explicit no-migration persistence decision i
+  zero approval/execution/Personal Memory authority.
+  [Architektura](../architecture/VERIFIED_ANSWER_ASSEMBLY_FAIL_CLOSED_OUTPUT_1A.md),
+  [ADR-033](../adr/ADR-033-verified-answer-fail-closed-output.md),
+  [runbook](../operations/STEP_26_VERIFIED_ANSWER_VALIDATION_1A.md),
+  [validation evidence](../evidence/modeling/step26-verified-answer-fail-closed-validation.json),
+  [rekord zamknięcia](../audits/STEP_26_VERIFIED_ANSWER_FAIL_CLOSED_OUTPUT_CLOSURE_1A.md).
 
 ### Gate fazy 6
 

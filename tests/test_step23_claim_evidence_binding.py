@@ -466,7 +466,7 @@ class DocumentationClosureTests(unittest.TestCase):
         for unsafe in ("/media/", "/home/", "authorization", "aws_secret_access_key"):
             self.assertNotIn(unsafe, rendered)
 
-    def test_closure_documents_and_roadmap_preserve_step24_boundary(self) -> None:
+    def test_closure_documents_and_roadmap_preserve_step27_boundary(self) -> None:
         required = {
             "docs/architecture/CLAIM_EXTRACTION_EVIDENCE_BINDING_1A.md": ("Unicode code", "Step 24 is NOT STARTED"),
             "docs/adr/ADR-030-claim-extraction-evidence-binding.md": ("deterministically bind", "Step 24: NOT STARTED"),
@@ -481,12 +481,14 @@ class DocumentationClosureTests(unittest.TestCase):
         self.assertIn("- [x] **Step 23 — Claim Extraction and Evidence Binding 1A**", roadmap)
         self.assertIn("- [x] **Step 24 — Correction Packet Construction and Integrity 1A**", roadmap)
         self.assertIn("- [x] **Step 25 — Draft V2 Generation and Layered Claim Verifier 1A**", roadmap)
-        self.assertIn("- [ ] **Step 26 — Verified Answer Assembly and Fail-Closed Output 1A**", roadmap)
+        self.assertIn("- [x] **Step 26 — Verified Answer Assembly and Fail-Closed Output 1A**", roadmap)
+        self.assertIn("- [ ] **Step 27 — Personal Memory HAT Persistence, Quotas and Model Bindings 1A**", roadmap)
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("Step 23 exact-span deterministic claim extraction", agents)
         self.assertIn("Step 24 verified frozen Step 23 input binding", agents)
         self.assertIn("Step 25 verified Correction Packet integrity gating", agents)
-        self.assertIn("Step 26: NOT STARTED", agents)
+        self.assertIn("Step 26 complete upstream integrity binding", agents)
+        self.assertIn("Step 27: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

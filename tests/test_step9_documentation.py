@@ -306,7 +306,8 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 23 exact-span deterministic claim extraction",
             "Step 24 verified frozen Step 23 input binding",
             "Step 25 verified Correction Packet integrity gating",
-            "Step 25 completion does not authorize Step 26.",
+            "Step 26 complete upstream integrity binding",
+            "Step 26 completion does not authorize Step 27.",
         ):
             self.assertIn(required, text)
 

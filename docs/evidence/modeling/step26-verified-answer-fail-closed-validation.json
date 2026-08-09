@@ -1,0 +1,96 @@
+{
+  "approval_actions": 0,
+  "authority_and_isolation": {
+    "approval_authority": false,
+    "cross_hat_negative": "PASS_UNIT_TEST",
+    "cross_tenant_negative": "PASS_UNIT_TEST",
+    "cross_user_negative": "PASS_UNIT_TEST",
+    "execution_authority": false,
+    "model_authority": false,
+    "verifier_authority": false
+  },
+  "cleanup": "NOT_REQUIRED_NO_EXTERNAL_RUNTIME",
+  "effect_bounds": {
+    "approval_actions": 0,
+    "aws_mutations": 0,
+    "execution_actions": 0,
+    "new_retrieval": 0,
+    "personal_memory_writes": 0,
+    "provider_calls": 2,
+    "provider_calls_fake_only": true,
+    "s3_mutations": 0,
+    "web_calls": 0
+  },
+  "execution_actions": 0,
+  "fail_closed": {
+    "bounded_failure_hash": "235fb3f1954d6d6f75ab7e4603785b85f63b91d1370bbd418aad81344a640552",
+    "citation_tamper_negative": "PASS",
+    "hat_enforce_draft_v1_fallback": false,
+    "human_review_result_hash": "8e2c826dd6399516101b3308ad8f118c076e7caf6e4333ee69f53e464920dc5e",
+    "unverified_draft_v2_returned": false,
+    "verification_summary_tamper_negative": "PASS"
+  },
+  "persistence": {
+    "decision": "STEP26_IMMUTABLE_RUNTIME_OUTPUT_NO_SAFE_STEP4_TABLE",
+    "migration_added": false,
+    "retry_draft_persisted": false
+  },
+  "personal_memory_writes": 0,
+  "policy_and_evidence_matrix": {
+    "block_answer": "BLOCKED_POLICY",
+    "conflicting": "HUMAN_REVIEW_REQUIRED",
+    "insufficient": "INSUFFICIENT_EVIDENCE",
+    "require_confirmation": "CONFIRMATION_REQUIRED",
+    "stale": "STALE_EVIDENCE",
+    "verified": "VERIFIED_ANSWER"
+  },
+  "real_pipeline_fixture": "PASS_STEP20_THROUGH_STEP25_TYPED_CONTRACTS",
+  "retry": {
+    "failure": "FAILED",
+    "failure_attempt_count": 1,
+    "full_reverification": true,
+    "maximum": 1,
+    "new_evidence": false,
+    "real_provider": "UNAVAILABLE_NOT_REQUIRED_CANONICAL_STEP22_QUOTA_BOUNDARY",
+    "same_correction_packet": true,
+    "second_retry": false,
+    "success": "SUCCEEDED",
+    "success_attempt_count": 1,
+    "success_retry_draft_v2_hash": "e493377fc68fc3b219c1881ae499366d99b4a726452fd368590719750fef0a4d"
+  },
+  "schema_version": "1.0.0",
+  "start_sha": "be3b206f95ac9723727a167929f0450f0ef1d887",
+  "status": "PASS",
+  "step": "STEP_26_VERIFIED_ANSWER_ASSEMBLY_FAIL_CLOSED_OUTPUT_1A",
+  "step27_started": false,
+  "synthetic_edge_fixtures": "PASS_DETERMINISTIC_BOUNDED",
+  "upstream_identity": {
+    "correction_packet_hash": "400e77797a94873c4f4a57b1773bb8efa2207fff9f470ebb38d5f7893e028fc1",
+    "draft_v1_hash": "415c967a49d46fc7e9c37a2c99b493e58db74ce239509fa03d3c5e74ff4b467d",
+    "draft_v2_hash": "3a311d5b7f418bd151ef58db14f2090a245d70eb76e9fe556690d8ccd7442758",
+    "evidence_bundle_hash": "d8b7eb87dda383caa497b73024c0a1c803d5f9c5c8aac3849dea5805b6eac6ec",
+    "evidence_status": "SUFFICIENT",
+    "knowledge_policy_decision": "ALLOW_ANSWER",
+    "knowledge_route": "HAT_ENFORCE",
+    "route_hash": "c9bd6745693fa188bbcdb693ddd2749e61db34a2cd21644a5844ee28a2d8a8b5",
+    "step25_validation_digest": "901ca0803b20bec323a7818daf653278eec4c92342f3a8f80853e66e6b57427b",
+    "temporal_result_hash": "9037aed7f4990c1df4095a525c7c7a174c0586356540a722e17b0245f0e282fb",
+    "verification_summary_hash": "61c6200325ede24f7645c8e08d20a23037d9c06e1ced4efb3a0cd0e4ed839cf8"
+  },
+  "validation_digest": "69c490fb5b9de6457a828db99bfdd39ba21d717cf2cba27b49e29dd476b688d5",
+  "verified_answer": {
+    "answer_byte_length": 30,
+    "answer_hash": "a604331dd69b371958de11fb9a19375907ee972ee56e3f6fc9baeae54d3a2a4a",
+    "answer_text_sha256": "c187b47762cd638b3153e03a772db8bf9de9c56709d73803695a2caa3fa19539",
+    "citation_count": 1,
+    "limitations": [
+      "COMPLETE_IS_BOUNDED_TO_VERIFIED_STEP20_INPUTS",
+      "NO_ANSWER_GENERATION",
+      "NO_AUTHORITY_ESCALATION",
+      "SOURCE_AUTHORITY_UNCHANGED"
+    ],
+    "output_status": "VERIFIED_ANSWER",
+    "text_equals_verified_draft_v2": true,
+    "verified_claim_count": 1
+  }
+}
