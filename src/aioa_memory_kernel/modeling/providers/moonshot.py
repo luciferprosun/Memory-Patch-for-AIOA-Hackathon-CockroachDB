@@ -22,9 +22,11 @@ from ..models import (
     ProviderIdentity,
     ProviderResponse,
     ProviderSpec,
+    ProviderTextRequest,
     TimeoutPolicy,
     load_approved_provider_spec,
     verify_provider_call_request_hash,
+    verify_provider_text_request_hash,
 )
 
 
@@ -143,15 +145,18 @@ class MoonshotDraftV1Adapter:
 
     def generate(
         self,
-        request: ProviderCallRequest,
+        request: ProviderCallRequest | ProviderTextRequest,
         timeout_policy: TimeoutPolicy,
     ) -> ProviderResponse:
-        if not isinstance(request, ProviderCallRequest) or not isinstance(
-            timeout_policy, TimeoutPolicy
-        ):
+        if not isinstance(request, (ProviderCallRequest, ProviderTextRequest)) or not isinstance(timeout_policy, TimeoutPolicy):
             raise ModelAdapterError(ModelReasonCode.MODEL_REQUEST_INVALID)
         try:
-            verify_provider_call_request_hash(request)
+            if isinstance(request, ProviderCallRequest):
+                verify_provider_call_request_hash(request)
+                user_content = request.original_query
+            else:
+                verify_provider_text_request_hash(request)
+                user_content = request.user_content
         except (ContractValidationError, IntegrityError) as exc:
             raise ModelAdapterError(ModelReasonCode.MODEL_REQUEST_INVALID) from exc
         if request.provider_identity != self._identity:
@@ -162,7 +167,7 @@ class MoonshotDraftV1Adapter:
             "model": self._spec.model_id,
             "messages": [
                 {"role": "system", "content": request.system_instruction},
-                {"role": "user", "content": request.original_query},
+                {"role": "user", "content": user_content},
             ],
             "temperature": float(Decimal(parameters.temperature)),
             "top_p": float(Decimal(parameters.top_p)),

@@ -480,11 +480,13 @@ class DocumentationClosureTests(unittest.TestCase):
         roadmap = (ROOT / "docs/roadmap/PRODUCTION_ROADMAP.md").read_text(encoding="utf-8")
         self.assertIn("- [x] **Step 23 — Claim Extraction and Evidence Binding 1A**", roadmap)
         self.assertIn("- [x] **Step 24 — Correction Packet Construction and Integrity 1A**", roadmap)
-        self.assertIn("- [ ] **Step 25 — Draft V2 Generation and Layered Claim Verifier 1A**", roadmap)
+        self.assertIn("- [x] **Step 25 — Draft V2 Generation and Layered Claim Verifier 1A**", roadmap)
+        self.assertIn("- [ ] **Step 26 — Verified Answer Assembly and Fail-Closed Output 1A**", roadmap)
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("Step 23 exact-span deterministic claim extraction", agents)
         self.assertIn("Step 24 verified frozen Step 23 input binding", agents)
-        self.assertIn("Step 25: NOT STARTED", agents)
+        self.assertIn("Step 25 verified Correction Packet integrity gating", agents)
+        self.assertIn("Step 26: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

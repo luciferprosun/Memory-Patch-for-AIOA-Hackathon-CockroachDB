@@ -10,6 +10,7 @@ from .models import (
     ProviderCallRequest,
     ProviderIdentity,
     ProviderResponse,
+    ProviderTextRequest,
     TimeoutPolicy,
 )
 
@@ -23,6 +24,20 @@ class DraftV1Provider(Protocol):
     def generate(
         self,
         request: ProviderCallRequest,
+        timeout_policy: TimeoutPolicy,
+    ) -> ProviderResponse:
+        ...
+
+
+class TextGenerationProvider(Protocol):
+    """The same Step 22 pinned text-only provider for later bounded prompts."""
+
+    def provider_identity(self) -> ProviderIdentity:
+        ...
+
+    def generate(
+        self,
+        request: ProviderTextRequest,
         timeout_policy: TimeoutPolicy,
     ) -> ProviderResponse:
         ...
@@ -49,4 +64,9 @@ class TrustedClock(Protocol):
         ...
 
 
-__all__ = ["DraftV1Provider", "DraftV1Store", "TrustedClock"]
+__all__ = [
+    "DraftV1Provider",
+    "DraftV1Store",
+    "TextGenerationProvider",
+    "TrustedClock",
+]

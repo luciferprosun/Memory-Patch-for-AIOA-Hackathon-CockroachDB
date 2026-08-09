@@ -973,7 +973,11 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "- [ ] **Step 25 — Draft V2 Generation and Layered Claim Verifier 1A**",
+            "- [x] **Step 25 — Draft V2 Generation and Layered Claim Verifier 1A**",
+            roadmap,
+        )
+        self.assertIn(
+            "- [ ] **Step 26 — Verified Answer Assembly and Fail-Closed Output 1A**",
             roadmap,
         )
         agents = (REPOSITORY_ROOT / "AGENTS.md").read_text(encoding="utf-8")
@@ -983,7 +987,8 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("Step 22 provider-neutral original-query-only", agents)
         self.assertIn("Step 23 exact-span deterministic claim extraction", agents)
         self.assertIn("Step 24 verified frozen Step 23 input binding", agents)
-        self.assertIn("Step 25: NOT STARTED", agents)
+        self.assertIn("Step 25 verified Correction Packet integrity gating", agents)
+        self.assertIn("Step 26: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

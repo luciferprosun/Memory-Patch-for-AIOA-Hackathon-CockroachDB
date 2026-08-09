@@ -105,7 +105,13 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   separate HMAC-SHA-256 integrity receipts, replay/tamper proof, and explicit
   persistence deferral are closed by the intended Step 24 commit once it is
   reachable on `origin/main`.
-- `Step 25: NOT STARTED`.
+- `Step 25: COMPLETE AND PUSHED at actual closure commit`.
+  Verified packet/HMAC gating, Draft V2 generation through the existing
+  tool-less provider boundary, immutable stage-2 persistence, reused exact
+  claim spans, layered deterministic and semantic-candidate verification,
+  fixed claim verdicts, summary states, and offline controlled validation are
+  closed by the intended Step 25 commit once it is reachable on `origin/main`.
+- `Step 26: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -505,8 +511,19 @@ Udowodnić rzeczywistą korektę modelu, bez ukrywania błędnej odpowiedzi i be
   [validation evidence](../evidence/modeling/step24-correction-packet-validation.json),
   [rekord zamknięcia](../audits/STEP_24_CORRECTION_PACKET_CONSTRUCTION_INTEGRITY_CLOSURE_1A.md).
 
-- [ ] **Step 25 — Draft V2 Generation and Layered Claim Verifier 1A**
+- [x] **Step 25 — Draft V2 Generation and Layered Claim Verifier 1A**
   Draft V1 + packet → Draft V2; schema checks, deterministic fact/date/source checks, semantic claim verification i brak automatycznego zaufania do modelu-verifiera.
+  `Step 25: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje packet hash/HMAC gate przed model call, reuse Step 22
+  provider boundary bez tools, immutable Draft V2 i existing Step 4 stage-2
+  persistence, Step 23 exact spans, deterministic packet/fact/date/source/
+  citation/evidence layers, bounded semantic candidate signals, deterministic
+  failure precedence, typed claim verdicts i hash-bound verification summary.
+  [Architektura](../architecture/DRAFT_V2_GENERATION_LAYERED_CLAIM_VERIFIER_1A.md),
+  [ADR-032](../adr/ADR-032-draft-v2-layered-claim-verifier.md),
+  [runbook](../operations/STEP_25_DRAFT_V2_LAYERED_VERIFIER_VALIDATION_1A.md),
+  [validation evidence](../evidence/modeling/step25-draft-v2-layered-verifier-validation.json),
+  [rekord zamknięcia](../audits/STEP_25_DRAFT_V2_LAYERED_CLAIM_VERIFIER_CLOSURE_1A.md).
 
 - [ ] **Step 26 — Verified Answer Assembly and Fail-Closed Output 1A**
   Zwrócenie tylko zweryfikowanej odpowiedzi; dla `HAT_ENFORCE` brak fallbacku do znanego błędnego Draft V1; retry raz, potem human review lub bounded failure.

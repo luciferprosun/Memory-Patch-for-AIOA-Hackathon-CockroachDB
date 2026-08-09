@@ -14,6 +14,7 @@ from .errors import ImmutableRecordConflictError, PersistenceConfigurationError
 from .models import (
     AuditEventRecord,
     DraftRecord,
+    DraftV2Record,
     EvidenceItemRecord,
     KernelRunRecord,
     SourceSnapshotRecord,
@@ -204,9 +205,9 @@ class CockroachPersistenceRepository:
     def put_draft(
         self,
         transaction: TransactionProtocol,
-        record: DraftRecord,
+        record: DraftRecord | DraftV2Record,
     ) -> Row:
-        if not isinstance(record, DraftRecord):
+        if not isinstance(record, (DraftRecord, DraftV2Record)):
             raise PersistenceConfigurationError(
                 "draft record has the wrong type",
                 sanitized_code="INVALID_RECORD_TYPE",

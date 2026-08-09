@@ -10,6 +10,7 @@ from .models import (
     DraftGenerationReceipt,
     DraftV1,
     GenerationParameters,
+    MAXIMUM_PROVIDER_USER_CONTENT_UTF8_BYTES,
     ModelAdapterError,
     ModelGenerationRequest,
     ModelGenerationResult,
@@ -19,6 +20,7 @@ from .models import (
     ProviderIdentity,
     ProviderResponse,
     ProviderSpec,
+    ProviderTextRequest,
     TimeoutPolicy,
     decode_draft_reference,
     derive_draft_id,
@@ -32,9 +34,10 @@ from .models import (
     verify_provider_call_request_hash,
     verify_provider_identity_hash,
     verify_provider_response_hash,
+    verify_provider_text_request_hash,
 )
 from .prompt import build_provider_call_request
-from .protocols import DraftV1Provider, DraftV1Store, TrustedClock
+from .protocols import DraftV1Provider, DraftV1Store, TextGenerationProvider, TrustedClock
 from .service import DraftV1Service, SystemUTCClock
 
 
@@ -51,6 +54,7 @@ __all__ = [
     "DraftV1Service",
     "DraftV1Store",
     "GenerationParameters",
+    "MAXIMUM_PROVIDER_USER_CONTENT_UTF8_BYTES",
     "ModelAdapterError",
     "ModelGenerationRequest",
     "ModelGenerationResult",
@@ -60,8 +64,10 @@ __all__ = [
     "ProviderIdentity",
     "ProviderResponse",
     "ProviderSpec",
+    "ProviderTextRequest",
     "SystemUTCClock",
     "TimeoutPolicy",
+    "TextGenerationProvider",
     "TrustedClock",
     "build_provider_call_request",
     "decode_draft_reference",
@@ -76,4 +82,5 @@ __all__ = [
     "verify_provider_call_request_hash",
     "verify_provider_identity_hash",
     "verify_provider_response_hash",
+    "verify_provider_text_request_hash",
 ]

@@ -143,7 +143,14 @@ At roadmap adoption and in subsequent audited closure records:
   validation, and explicit no-migration persistence deferral are complete in
   its intended closure commit. It is completion evidence only after that
   commit is reachable on `origin/main`.
-- `Step 25: NOT STARTED`. Step 24 completion does not authorize Step 25.
+- Step 25 verified Correction Packet integrity gating, exact Draft V2
+  generation through the Step 22 tool-less provider boundary, existing Step 4
+  stage-2 persistence, reused Step 23 exact-span extraction, deterministic
+  packet/fact/date/source/citation/evidence layers, non-authoritative semantic
+  signals, hash-bound claim verdicts and summary, and controlled offline
+  validation are complete in its intended closure commit. It is completion
+  evidence only after that commit is reachable on `origin/main`.
+- `Step 26: NOT STARTED`. Step 25 completion does not authorize Step 26.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

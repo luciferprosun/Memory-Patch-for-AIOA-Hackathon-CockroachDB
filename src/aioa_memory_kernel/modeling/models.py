@@ -61,6 +61,7 @@ DEFAULT_MAX_ATTEMPTS = 2
 MAXIMUM_MAX_ATTEMPTS = 2
 DEFAULT_RETRY_DELAY_MILLISECONDS = 250
 MAXIMUM_ORIGINAL_QUERY_UTF8_BYTES = 4096
+MAXIMUM_PROVIDER_USER_CONTENT_UTF8_BYTES = 24 * 1024
 MAXIMUM_DRAFT_UTF8_BYTES = 64 * 1024
 MAXIMUM_USAGE_METADATA_BYTES = 4096
 MAXIMUM_PERSISTED_DRAFT_ENVELOPE_BYTES = 96 * 1024
@@ -550,6 +551,61 @@ class ProviderCallRequest:
 
 
 @dataclass(frozen=True, slots=True)
+class ProviderTextRequest:
+    """Additive text-only provider request reused by later drafting stages.
+
+    Step 22's evidence-blind ``ProviderCallRequest`` remains unchanged.  This
+    request provides the same pinned, tool-less provider capability while
+    binding a purpose-specific user payload with a larger but fixed bound.
+    """
+
+    provider_identity: ProviderIdentity
+    purpose: str
+    prompt_template_id: str
+    prompt_template_digest: str
+    system_instruction: str
+    user_content: str
+    user_content_digest: str
+    generation_parameters: GenerationParameters
+    request_hash: str = field(init=False)
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.provider_identity, ProviderIdentity):
+            raise ContractValidationError("provider_identity must be typed")
+        _logical_id(self.purpose, "purpose")
+        _logical_id(self.prompt_template_id, "prompt_template_id")
+        require_sha256_hex(self.prompt_template_digest, "prompt_template_digest")
+        _content(self.system_instruction, "system_instruction", 2048)
+        _content(
+            self.user_content,
+            "user_content",
+            MAXIMUM_PROVIDER_USER_CONTENT_UTF8_BYTES,
+        )
+        require_sha256_hex(self.user_content_digest, "user_content_digest")
+        if self.user_content_digest != _raw_sha256(self.user_content):
+            raise IntegrityError("provider user-content digest mismatch")
+        if not isinstance(self.generation_parameters, GenerationParameters):
+            raise ContractValidationError("generation_parameters must be typed")
+        object.__setattr__(
+            self,
+            "request_hash",
+            canonical_sha256(
+                {
+                    "provider_identity_digest": self.provider_identity.identity_digest,
+                    "purpose": self.purpose,
+                    "prompt_template_id": self.prompt_template_id,
+                    "prompt_template_digest": self.prompt_template_digest,
+                    "system_instruction_sha256": _raw_sha256(self.system_instruction),
+                    "user_content_digest": self.user_content_digest,
+                    "generation_parameters_digest": (
+                        self.generation_parameters.parameters_digest
+                    ),
+                }
+            ),
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class ModelGenerationRequest:
     request_id: str
     tenant_id: str
@@ -959,6 +1015,28 @@ def verify_provider_call_request_hash(value: ProviderCallRequest) -> None:
         raise IntegrityError("provider call request hash mismatch")
 
 
+def verify_provider_text_request_hash(value: ProviderTextRequest) -> None:
+    if not isinstance(value, ProviderTextRequest):
+        raise ContractValidationError("provider text request must be typed")
+    expected = canonical_sha256(
+        {
+            "provider_identity_digest": value.provider_identity.identity_digest,
+            "purpose": value.purpose,
+            "prompt_template_id": value.prompt_template_id,
+            "prompt_template_digest": value.prompt_template_digest,
+            "system_instruction_sha256": _raw_sha256(value.system_instruction),
+            "user_content_digest": value.user_content_digest,
+            "generation_parameters_digest": (
+                value.generation_parameters.parameters_digest
+            ),
+        }
+    )
+    if value.request_hash != expected:
+        raise IntegrityError("provider text request hash mismatch")
+    if value.user_content_digest != _raw_sha256(value.user_content):
+        raise IntegrityError("provider user-content digest mismatch")
+
+
 def verify_generation_request_hash(value: ModelGenerationRequest) -> None:
     verify_canonical_hash(
         value,
@@ -1048,6 +1126,7 @@ __all__ = [
     "DraftV1",
     "GenerationParameters",
     "MAXIMUM_DRAFT_UTF8_BYTES",
+    "MAXIMUM_PROVIDER_USER_CONTENT_UTF8_BYTES",
     "ModelAdapterError",
     "ModelGenerationRequest",
     "ModelGenerationResult",
@@ -1059,6 +1138,7 @@ __all__ = [
     "ProviderIdentity",
     "ProviderResponse",
     "ProviderSpec",
+    "ProviderTextRequest",
     "STEP22_SCHEMA_VERSION",
     "TimeoutPolicy",
     "decode_draft_reference",
@@ -1073,4 +1153,5 @@ __all__ = [
     "verify_provider_call_request_hash",
     "verify_provider_identity_hash",
     "verify_provider_response_hash",
+    "verify_provider_text_request_hash",
 ]
