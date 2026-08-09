@@ -307,7 +307,7 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 24 verified frozen Step 23 input binding",
             "Step 25 verified Correction Packet integrity gating",
             "Step 26 complete upstream integrity binding",
-            "Step 28 completion does not authorize Step 29.",
+            "Step 29 completion does not authorize Step 30.",
         ):
             self.assertIn(required, text)
 

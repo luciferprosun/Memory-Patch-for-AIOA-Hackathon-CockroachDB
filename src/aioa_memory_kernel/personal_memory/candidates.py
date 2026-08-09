@@ -1553,6 +1553,16 @@ def _target_binding_from_jsonb(value: object) -> CorrectionCandidateTargetBindin
     return result
 
 
+def parse_correction_candidate_target_binding(
+    value: object,
+) -> CorrectionCandidateTargetBinding:
+    """Strictly reconstruct the reusable Step 28 target snapshot."""
+
+    result = _target_binding_from_jsonb(value)
+    verify_correction_candidate_target_binding(result)
+    return result
+
+
 def _lineage_from_jsonb(value: object) -> CorrectionCandidateRouteResultLineage:
     names = frozenset(CorrectionCandidateRouteResultLineage.__dataclass_fields__)
     data = _mapping(value, names, "candidate lineage")
@@ -1748,6 +1758,7 @@ __all__ = [
     "parse_correction_candidate_envelope",
     "parse_correction_candidate_intake_receipt",
     "parse_correction_candidate_submission",
+    "parse_correction_candidate_target_binding",
     "verify_correction_candidate_envelope",
     "verify_correction_candidate_intake_policy",
     "verify_correction_candidate_intake_receipt",

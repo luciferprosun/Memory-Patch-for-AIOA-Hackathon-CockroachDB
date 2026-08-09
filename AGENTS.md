@@ -169,7 +169,15 @@ At roadmap adoption and in subsequent audited closure records:
   disposable CockroachDB validation are complete in its intended closure
   commit. It is completion evidence only after that commit is reachable on
   `origin/main`.
-- `Step 29: NOT STARTED`. Step 28 completion does not authorize Step 29.
+- Step 29 owner-scoped Personal Memory Patch Proposals, exact
+  `DETECTED -> PROPOSED -> EVIDENCE_BOUND -> VALIDATED -> AWAITING_APPROVAL`
+  transitions, immutable canonical-evidence binding, deterministic dedup,
+  conflict, freshness and temporal gates, quota/model-binding revalidation,
+  migration 0013, RLS/FORCE RLS owner isolation, and controlled disposable
+  CockroachDB validation are complete in its intended closure commit. It is
+  completion evidence only after that commit is reachable on `origin/main`.
+- `Step 29: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 30: NOT STARTED`. Step 29 completion does not authorize Step 30.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

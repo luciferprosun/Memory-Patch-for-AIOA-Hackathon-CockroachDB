@@ -129,7 +129,15 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   hard candidate quotas, exact replay/deduplication, RLS/FORCE RLS isolation,
   and controlled CockroachDB validation are closed by the intended Step 28
   commit once it is reachable on `origin/main`.
-- `Step 29: NOT STARTED`.
+- `Step 29: COMPLETE AND PUSHED at actual closure commit`.
+  Owner-scoped Personal Memory Patch Proposals, the exact
+  `DETECTED -> PROPOSED -> EVIDENCE_BOUND -> VALIDATED -> AWAITING_APPROVAL`
+  progression, immutable canonical-evidence binding, deterministic
+  deduplication/conflict/freshness gates, transactional quota and state
+  guards, RLS/FORCE RLS isolation, and controlled CockroachDB validation are
+  closed by the intended Step 29 commit once it is reachable on
+  `origin/main`.
+- `Step 30: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -605,8 +613,20 @@ Dać użytkownikowi pulę prywatnych HAT-ów, w których zatwierdzone korekty st
   [validation evidence](../evidence/personal-memory/step28-correction-candidate-bridge-validation.json),
   [rekord zamknięcia](../audits/STEP_28_KNOWLEDGE_HUB_CRITIC_CANDIDATE_BRIDGE_CLOSURE_1A.md).
 
-- [ ] **Step 29 — Personal Memory Patch Proposal and Evidence Validation 1A**
+- [x] **Step 29 — Personal Memory Patch Proposal and Evidence Validation 1A**
   `DETECTED → PROPOSED → EVIDENCE_BOUND → VALIDATED → AWAITING_APPROVAL`, dedup, conflict check, stale evidence check i owner scope.
+  `Step 29: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje immutable/hash-bound proposal, exact reuse Step 28
+  candidate i Step 27 target binding, canonical Step 20/21/23/24/26 evidence
+  lineage, no-skip state machine, deterministic dedup/conflict/freshness/
+  temporal gates, quota and model-binding revalidation, immutable validation
+  receipt, migration 0013, RLS/FORCE RLS, owner isolation, controlled
+  CockroachDB validation oraz zero approval/commit/activation authority.
+  [Architektura](../architecture/PERSONAL_MEMORY_PATCH_PROPOSAL_EVIDENCE_VALIDATION_1A.md),
+  [ADR-036](../adr/ADR-036-personal-memory-patch-proposal-validation.md),
+  [runbook](../operations/STEP_29_PERSONAL_MEMORY_PATCH_VALIDATION_1A.md),
+  [validation evidence](../evidence/personal-memory/step29-personal-memory-patch-validation.json),
+  [rekord zamknięcia](../audits/STEP_29_PERSONAL_MEMORY_PATCH_PROPOSAL_VALIDATION_CLOSURE_1A.md).
 
 - [ ] **Step 30 — User Approval, Commit Helper and Activation 1A**
   Oddzielne approval i technical commit, revalidation hashy, dedicated credentials, replay protection, `APPROVED → COMMITTED → ACTIVE`.

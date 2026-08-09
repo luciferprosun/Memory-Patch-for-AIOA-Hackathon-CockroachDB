@@ -72,6 +72,7 @@ class MemoryTargetScope(StableStringEnum):
 
 
 class ProposalOrigin(StableStringEnum):
+    KNOWLEDGE_KERNEL = "KNOWLEDGE_KERNEL"
     KNOWLEDGE_HUB = "KNOWLEDGE_HUB"
     CRITIC_PROMPT_LOOP = "CRITIC_PROMPT_LOOP"
     MODEL_VERIFIER = "MODEL_VERIFIER"

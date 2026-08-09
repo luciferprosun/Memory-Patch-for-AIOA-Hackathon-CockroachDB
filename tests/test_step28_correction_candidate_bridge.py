@@ -540,6 +540,10 @@ class CorrectionCandidateContractTests(unittest.TestCase):
             "proposed_content": correction_candidate_envelope_to_jsonb(value),
             "lifecycle_state": "DETECTED",
             "content_hash": value.envelope_hash,
+            "step29_candidate_hash": value.submission.candidate.content_hash,
+            "step29_target_binding_hash": (
+                value.submission.target_slot_binding.target_binding_hash
+            ),
         }
         self.assertEqual(candidate_envelope_from_row(row), value)
         with self.assertRaises(IntegrityError):
@@ -979,10 +983,10 @@ class CorrectionCandidatePersistenceBoundaryTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        self.assertEqual(manifest["schema_version"], 10)
-        self.assertEqual(manifest["runner_version"], "10.0.0")
-        self.assertEqual(len(manifest["migrations"]), 12)
-        latest = manifest["migrations"][-1]
+        self.assertEqual(manifest["schema_version"], 11)
+        self.assertEqual(manifest["runner_version"], "11.0.0")
+        self.assertEqual(len(manifest["migrations"]), 13)
+        latest = manifest["migrations"][11]
         self.assertEqual(latest["migration_id"], "0012_step28_correction_candidate_bridge")
         migration_bytes = (
             ROOT / "sql/cockroachdb/migrations" / latest["filename"]
@@ -1172,10 +1176,12 @@ class CorrectionCandidateAuthorityAndClosureTests(unittest.TestCase):
         )
         self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 28 — ")
         self.assertIn("`Step 28: COMPLETE AND PUSHED at actual closure commit`", roadmap)
-        self.assertRegex(roadmap, r"(?m)^- \[ \] \*\*Step 29 — ")
+        self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 29 — ")
+        self.assertRegex(roadmap, r"(?m)^- \[ \] \*\*Step 30 — ")
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertNotIn("`Step 28: NOT STARTED`", agents)
-        self.assertIn("Step 29: NOT STARTED", agents)
+        self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 30: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

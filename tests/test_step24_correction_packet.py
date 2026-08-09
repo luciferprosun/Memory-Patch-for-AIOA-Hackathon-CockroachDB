@@ -536,16 +536,18 @@ class DocumentationClosureTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "- [ ] **Step 29 — Personal Memory Patch Proposal and Evidence Validation 1A**",
+            "- [x] **Step 29 — Personal Memory Patch Proposal and Evidence Validation 1A**",
             roadmap,
         )
+        self.assertIn("- [ ] **Step 30", roadmap)
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("Step 24 verified frozen Step 23 input binding", agents)
         self.assertIn("Step 25 verified Correction Packet integrity gating", agents)
         self.assertIn("Step 26 complete upstream integrity binding", agents)
         self.assertIn("Step 27 owner-private empty Personal Memory HAT slots", agents)
         self.assertIn("Step 28 owner- and slot-bound Correction Candidate", agents)
-        self.assertIn("Step 29: NOT STARTED", agents)
+        self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 30: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

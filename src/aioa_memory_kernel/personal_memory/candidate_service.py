@@ -84,7 +84,7 @@ def _find_binding(
     return matches[0]
 
 
-def _verify_current_target(
+def verify_correction_candidate_target_against_slot(
     envelope: CorrectionCandidateEnvelope,
     slot: PersonalMemoryHatSlot,
 ) -> None:
@@ -234,7 +234,7 @@ class CorrectionCandidateBridgeService:
                 raise CorrectionCandidateIntakeError(
                     CorrectionCandidateReasonCode.TARGET_NOT_FOUND
                 )
-            _verify_current_target(envelope, slot)
+            verify_correction_candidate_target_against_slot(envelope, slot)
 
             stored = self._candidates.get_candidate(
                 transaction,
@@ -335,4 +335,7 @@ class CorrectionCandidateBridgeService:
         )
 
 
-__all__ = ["CorrectionCandidateBridgeService"]
+__all__ = [
+    "CorrectionCandidateBridgeService",
+    "verify_correction_candidate_target_against_slot",
+]

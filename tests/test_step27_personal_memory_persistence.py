@@ -964,14 +964,13 @@ class DatabaseAndBoundaryStaticTests(unittest.TestCase):
         self.assertNotIn("os.system", self.package_text)
         self.assertNotIn("shell=True", self.package_text)
 
-    def test_step29_and_later_types_are_absent(self) -> None:
+    def test_step30_and_later_capabilities_are_absent(self) -> None:
         for forbidden in (
-            "PersonalMemoryPatchProposal",
-            "EVIDENCE_BOUND",
-            "AWAITING_APPROVAL",
             "activate_patch",
             "active_patch_retrieval",
             "shared_promotion",
+            "approval_receipt",
+            "commit_helper",
         ):
             self.assertNotIn(forbidden, self.package_text)
 
@@ -1036,14 +1035,16 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("[x] **Step 27", roadmap)
         self.assertIn("[x] **Step 28", roadmap)
         self.assertIn("Step 28: COMPLETE AND PUSHED", roadmap)
-        self.assertIn("[ ] **Step 29", roadmap)
-        self.assertIn("Step 29: NOT STARTED", roadmap)
+        self.assertIn("[x] **Step 29", roadmap)
+        self.assertIn("Step 29: COMPLETE AND PUSHED", roadmap)
+        self.assertIn("[ ] **Step 30", roadmap)
         self.assertIn(
             "Step 27 owner-private empty Personal Memory HAT slots",
             agents,
         )
         self.assertIn("Step 28 owner- and slot-bound Correction Candidate", agents)
-        self.assertIn("`Step 29: NOT STARTED`", agents)
+        self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
+        self.assertIn("`Step 30: NOT STARTED`", agents)
 
 
 if __name__ == "__main__":

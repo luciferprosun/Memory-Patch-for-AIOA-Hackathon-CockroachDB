@@ -85,6 +85,8 @@ def candidate_envelope_from_row(
         lifecycle_state = str(row["lifecycle_state"])
         content_hash = str(row["content_hash"])
         proposal_id = str(row["proposal_id"])
+        candidate_hash = str(row["step29_candidate_hash"])
+        target_binding_hash = str(row["step29_target_binding_hash"])
     except KeyError as error:
         raise PersistenceConfigurationError(
             "candidate row is incomplete",
@@ -95,6 +97,9 @@ def candidate_envelope_from_row(
     if (
         proposal_id != envelope.candidate_id
         or content_hash != envelope.envelope_hash
+        or candidate_hash != envelope.submission.candidate.content_hash
+        or target_binding_hash
+        != envelope.submission.target_slot_binding.target_binding_hash
         or origin != envelope.submission.candidate.source_component.value
     ):
         raise IntegrityError("persisted candidate carrier is detached from its envelope")
@@ -169,7 +174,8 @@ class CorrectionCandidateCockroachRepository:
         row = transaction.fetch_one(
             """
             SELECT proposal_id, origin, proposed_content,
-                   lifecycle_state, content_hash
+                   lifecycle_state, content_hash, step29_candidate_hash,
+                   step29_target_binding_hash
               FROM memory_patch.memory_patch_proposals
              WHERE tenant_id = %s
                AND owner_user_id = %s
@@ -192,7 +198,8 @@ class CorrectionCandidateCockroachRepository:
         rows = transaction.fetch_all(
             """
             SELECT proposal_id, origin, proposed_content,
-                   lifecycle_state, content_hash
+                   lifecycle_state, content_hash, step29_candidate_hash,
+                   step29_target_binding_hash
               FROM memory_patch.memory_patch_proposals
              WHERE tenant_id = %s
                AND owner_user_id = %s
@@ -262,16 +269,18 @@ class CorrectionCandidateCockroachRepository:
               personal_memory_space_id, origin, proposed_content,
               evidence_references, scope_dimensions, valid_from, valid_until,
               requested_trust_class, approval_requirement, lifecycle_state,
-              content_kind, created_at, content_hash
+              content_kind, created_at, content_hash,
+              step29_candidate_hash, step29_target_binding_hash
             ) VALUES (
               %s, %s, %s, %s, 'USER_PERSONAL_HAT', NULL, %s, %s, %s,
               %s::JSONB, %s::JSONB, %s::JSONB, NULL, NULL,
               'MODEL_EXPERIENCE_HINT', 'OWNER', 'DETECTED',
-              'MODEL_EXPERIENCE', %s, %s
+              'MODEL_EXPERIENCE', %s, %s, %s, %s
             )
             ON CONFLICT DO NOTHING
             RETURNING proposal_id, origin, proposed_content,
-                      lifecycle_state, content_hash
+                      lifecycle_state, content_hash, step29_candidate_hash,
+                      step29_target_binding_hash
             """,
             (
                 candidate.tenant_id,
@@ -286,6 +295,8 @@ class CorrectionCandidateCockroachRepository:
                 canonical_json(submission.lineage.effective_scope),
                 candidate.created_at,
                 envelope.envelope_hash,
+                candidate.content_hash,
+                target.target_binding_hash,
             ),
         )
         if row is not None:

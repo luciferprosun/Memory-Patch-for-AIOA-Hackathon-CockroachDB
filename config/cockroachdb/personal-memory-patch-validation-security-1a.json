@@ -1,0 +1,102 @@
+{
+  "allowed_origins": [
+    "CRITIC_PROMPT_LOOP",
+    "KNOWLEDGE_KERNEL"
+  ],
+  "fixed_roles": [
+    "mp_app_runtime",
+    "mp_request_context_setter",
+    "mp_schema_owner",
+    "mp_security_owner"
+  ],
+  "helper_functions": [
+    {
+      "function": "step29_proposal_target_matches",
+      "owner_role": "mp_schema_owner",
+      "runtime_privileges": [
+        "EXECUTE"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step29_transition_target_matches",
+      "owner_role": "mp_schema_owner",
+      "runtime_privileges": [
+        "EXECUTE"
+      ],
+      "security_type": "INVOKER"
+    }
+  ],
+  "manifest_id": "memory-patch-step29-personal-memory-patch-validation-security-1a",
+  "maximum_lifecycle_state": "AWAITING_APPROVAL",
+  "quota_guard": {
+    "byte_limit": 8388608,
+    "count_limit": 128,
+    "function": "enforce_step29_proposal_quota",
+    "function_owner_role": "mp_schema_owner",
+    "function_runtime_privileges": [],
+    "function_security_type": "INVOKER",
+    "lock_column": "candidate_quota_epoch",
+    "trigger": "memory_patch_proposals_s29_quota",
+    "trigger_events": [
+      "INSERT",
+      "UPDATE"
+    ],
+    "usage_authority": "EXACT_PERSISTED_STEP29_PROPOSAL_ROWS"
+  },
+  "schema_version": 1,
+  "tables": [
+    {
+      "delete_policy": null,
+      "force_rls": true,
+      "insert_policies": [
+        "memory_patch_proposals_s28_insert",
+        "memory_patch_proposals_s29_insert"
+      ],
+      "owner_role": "mp_schema_owner",
+      "rls_enabled": true,
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "select_policy": "memory_patch_proposals_s5_select",
+      "table": "memory_patch_proposals",
+      "tenant_column": "tenant_id",
+      "update_policy": "memory_patch_proposals_s29_update",
+      "user_owner_column": "owner_user_id"
+    },
+    {
+      "delete_policy": null,
+      "force_rls": true,
+      "insert_policies": [
+        "patch_transition_records_s29_insert"
+      ],
+      "owner_role": "mp_schema_owner",
+      "rls_enabled": true,
+      "runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "patch_transition_records_s5_select",
+      "table": "patch_transition_records",
+      "tenant_column": "tenant_id",
+      "update_policy": null,
+      "user_owner_column": null
+    }
+  ],
+  "target_cockroachdb_version": "v26.2.4",
+  "transition_edges": [
+    "DETECTED_TO_PROPOSED",
+    "PROPOSED_TO_EVIDENCE_BOUND",
+    "EVIDENCE_BOUND_TO_VALIDATED",
+    "VALIDATED_TO_AWAITING_APPROVAL"
+  ],
+  "transition_guard": {
+    "function": "guard_step29_proposal_transition",
+    "function_owner_role": "mp_schema_owner",
+    "function_runtime_privileges": [],
+    "function_security_type": "INVOKER",
+    "trigger": "memory_patch_proposals_s29_transition_guard"
+  }
+}
