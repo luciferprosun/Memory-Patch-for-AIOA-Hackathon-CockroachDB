@@ -131,7 +131,13 @@ At roadmap adoption and in subsequent audited closure records:
   identity, existing Step 4 draft persistence, and controlled validation are
   complete in its intended closure commit. It is completion evidence only
   after that commit is reachable on `origin/main`.
-- `Step 23: NOT STARTED`. Step 22 completion does not authorize Step 23.
+- Step 23 exact-span deterministic claim extraction, stable claim identity,
+  verified Step 20/21 evidence binding, conservative
+  `SUPPORTED`/`REFUTED`/`UNVERIFIED` candidate semantics, conflict
+  preservation, and immutable packet-input snapshot validation are complete
+  in its intended closure commit. It is completion evidence only after that
+  commit is reachable on `origin/main`.
+- `Step 24: NOT STARTED`. Step 23 completion does not authorize Step 24.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

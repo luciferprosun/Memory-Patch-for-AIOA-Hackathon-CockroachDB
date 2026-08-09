@@ -94,7 +94,12 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   exact Draft V1 byte/hash identity, existing Step 4 draft persistence,
   credential/tool isolation, and controlled validation are closed by the
   intended Step 22 commit once it is reachable on `origin/main`.
-- `Step 23: NOT STARTED`.
+- `Step 23: COMPLETE AND PUSHED at actual closure commit`.
+  Exact-span deterministic claim extraction, stable claim identities,
+  verified Step 20/21 evidence binding, conservative candidate verdicts,
+  conflict preservation, and the immutable packet-input snapshot are closed
+  by the intended Step 23 commit once it is reachable on `origin/main`.
+- `Step 24: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -466,8 +471,19 @@ Udowodnić rzeczywistą korektę modelu, bez ukrywania błędnej odpowiedzi i be
   [validation evidence](../evidence/modeling/step22-provider-neutral-draft-v1-validation.json),
   [rekord zamknięcia](../audits/STEP_22_PROVIDER_NEUTRAL_MODEL_DRAFT_V1_CLOSURE_1A.md).
 
-- [ ] **Step 23 — Claim Extraction and Evidence Binding 1A**
+- [x] **Step 23 — Claim Extraction and Evidence Binding 1A**
   Claims z Draft V1, span references, claim IDs, evidence mappings, `SUPPORTED / REFUTED / UNVERIFIED` candidates i zamrożenie tego, co faktycznie trafi do packetu.
+  `Step 23: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje exact Unicode code-point spans, deterministic claim IDs,
+  typed atomicity/non-factual classification, hash-verified Step 20/21 evidence
+  linkage, strict temporal/source-authority ceilings, conflict preservation,
+  candidate-only `SUPPORTED / REFUTED / UNVERIFIED` semantics oraz immutable
+  `PacketInputSnapshot` bez retrieval widening i bez authority escalation.
+  [Architektura](../architecture/CLAIM_EXTRACTION_EVIDENCE_BINDING_1A.md),
+  [ADR-030](../adr/ADR-030-claim-extraction-evidence-binding.md),
+  [runbook](../operations/STEP_23_CLAIM_EVIDENCE_BINDING_VALIDATION_1A.md),
+  [validation evidence](../evidence/modeling/step23-claim-evidence-binding-validation.json),
+  [rekord zamknięcia](../audits/STEP_23_CLAIM_EXTRACTION_EVIDENCE_BINDING_CLOSURE_1A.md).
 
 - [ ] **Step 24 — Correction Packet Construction and Integrity 1A**
   Canonical JSON, ordered evidence, required corrections, prohibited claims, conflicts, citations, policy, scope, packet hash/HMAC boundary i deterministic replay.

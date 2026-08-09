@@ -570,12 +570,12 @@ class StaticBoundaryTests(unittest.TestCase):
         for forbidden in ("commit_helper", "personal_memory.write", "os.system", "shell=True"):
             self.assertNotIn(forbidden, source)
 
-    def test_step23_contracts_are_not_implemented(self) -> None:
+    def test_step22_modeling_does_not_implement_step23_or_step24_contracts(self) -> None:
         import aioa_memory_kernel.modeling as modeling
 
         for name in ("Claim", "ClaimVerdict", "CorrectionPacket", "DraftV2"):
             self.assertFalse(hasattr(modeling, name))
-        self.assertFalse((ROOT / "src/aioa_memory_kernel/claims").exists())
+        self.assertTrue((ROOT / "src/aioa_memory_kernel/claims").is_dir())
 
     def test_existing_schema_has_draft_fk_rls_and_force_rls(self) -> None:
         step4 = (ROOT / "sql/cockroachdb/migrations/0003_step4_kernel_memory_and_audit_evidence.sql").read_text()

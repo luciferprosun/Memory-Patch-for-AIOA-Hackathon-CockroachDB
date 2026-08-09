@@ -815,7 +815,7 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
             for token in tokens:
                 self.assertIn(token, text, relative)
 
-    def test_roadmap_closes_step22_without_starting_step23(self) -> None:
+    def test_roadmap_closes_step23_without_starting_step24(self) -> None:
         roadmap = (ROOT / "docs/roadmap/PRODUCTION_ROADMAP.md").read_text(encoding="utf-8")
         self.assertIn(
             "- [x] **Step 18 — Exact and Full-Text Retrieval Baseline 1A**",
@@ -838,7 +838,11 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn(
-            "- [ ] **Step 23 — Claim Extraction and Evidence Binding 1A**",
+            "- [x] **Step 23 — Claim Extraction and Evidence Binding 1A**",
+            roadmap,
+        )
+        self.assertIn(
+            "- [ ] **Step 24 — Correction Packet Construction and Integrity 1A**",
             roadmap,
         )
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
@@ -847,7 +851,8 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("Step 20 verified Step 18/19 input binding", agents)
         self.assertIn("Step 21 verified Step 20 bundle binding", agents)
         self.assertIn("Step 22 provider-neutral original-query-only", agents)
-        self.assertIn("Step 23: NOT STARTED", agents)
+        self.assertIn("Step 23 exact-span deterministic claim extraction", agents)
+        self.assertIn("Step 24: NOT STARTED", agents)
 
 
 if __name__ == "__main__":
