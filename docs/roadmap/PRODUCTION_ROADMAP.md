@@ -99,7 +99,13 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   verified Step 20/21 evidence binding, conservative candidate verdicts,
   conflict preservation, and the immutable packet-input snapshot are closed
   by the intended Step 23 commit once it is reachable on `origin/main`.
-- `Step 24: NOT STARTED`.
+- `Step 24: COMPLETE AND PUSHED at actual closure commit`.
+  Frozen Step 23 input verification, deterministic corrections and
+  prohibitions, exact citation/conflict binding, canonical packet identity,
+  separate HMAC-SHA-256 integrity receipts, replay/tamper proof, and explicit
+  persistence deferral are closed by the intended Step 24 commit once it is
+  reachable on `origin/main`.
+- `Step 25: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -485,8 +491,19 @@ Udowodnić rzeczywistą korektę modelu, bez ukrywania błędnej odpowiedzi i be
   [validation evidence](../evidence/modeling/step23-claim-evidence-binding-validation.json),
   [rekord zamknięcia](../audits/STEP_23_CLAIM_EXTRACTION_EVIDENCE_BINDING_CLOSURE_1A.md).
 
-- [ ] **Step 24 — Correction Packet Construction and Integrity 1A**
+- [x] **Step 24 — Correction Packet Construction and Integrity 1A**
   Canonical JSON, ordered evidence, required corrections, prohibited claims, conflicts, citations, policy, scope, packet hash/HMAC boundary i deterministic replay.
+  `Step 24: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje verified `PacketInputSnapshot`, deterministyczne
+  correction/prohibition rules, immutable citation/conflict identities,
+  fixed packet policy, canonical JSON/hash, domain-separated HMAC-SHA-256
+  receipt, byte-identical replay, tamper negatives, brak nowej migracji oraz
+  jawne odroczenie zapisu do skoordynowanej trwałej linii upstream.
+  [Architektura](../architecture/CORRECTION_PACKET_CONSTRUCTION_INTEGRITY_1A.md),
+  [ADR-031](../adr/ADR-031-correction-packet-construction-integrity.md),
+  [runbook](../operations/STEP_24_CORRECTION_PACKET_VALIDATION_1A.md),
+  [validation evidence](../evidence/modeling/step24-correction-packet-validation.json),
+  [rekord zamknięcia](../audits/STEP_24_CORRECTION_PACKET_CONSTRUCTION_INTEGRITY_CLOSURE_1A.md).
 
 - [ ] **Step 25 — Draft V2 Generation and Layered Claim Verifier 1A**
   Draft V1 + packet → Draft V2; schema checks, deterministic fact/date/source checks, semantic claim verification i brak automatycznego zaufania do modelu-verifiera.

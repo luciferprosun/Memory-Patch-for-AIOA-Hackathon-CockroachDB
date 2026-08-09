@@ -304,7 +304,8 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 17 deterministic Axis A routing",
             "Step 22 provider-neutral original-query-only",
             "Step 23 exact-span deterministic claim extraction",
-            "Step 23 completion does not authorize Step 24.",
+            "Step 24 verified frozen Step 23 input binding",
+            "Step 24 completion does not authorize Step 25.",
         ):
             self.assertIn(required, text)
 

@@ -137,7 +137,13 @@ At roadmap adoption and in subsequent audited closure records:
   preservation, and immutable packet-input snapshot validation are complete
   in its intended closure commit. It is completion evidence only after that
   commit is reachable on `origin/main`.
-- `Step 24: NOT STARTED`. Step 23 completion does not authorize Step 24.
+- Step 24 verified frozen Step 23 input binding, deterministic correction and
+  prohibition derivation, citation/conflict preservation, canonical packet
+  JSON/hash, separate HMAC-SHA-256 integrity receipts, replay/tamper
+  validation, and explicit no-migration persistence deferral are complete in
+  its intended closure commit. It is completion evidence only after that
+  commit is reachable on `origin/main`.
+- `Step 25: NOT STARTED`. Step 24 completion does not authorize Step 25.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this
