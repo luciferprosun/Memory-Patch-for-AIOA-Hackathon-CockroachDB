@@ -200,7 +200,14 @@ At roadmap adoption and in subsequent audited closure records:
   validation are complete in its intended closure commit. It is completion
   evidence only after that commit is reachable on `origin/main`.
 - `Step 32: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 33: NOT STARTED`. Step 32 completion does not authorize Step 33.
+- Step 33 typed audit normalization, owner-partitioned append-only hash chains,
+  explicit genesis and transactional sequence heads, deterministic tamper
+  verification, bounded proof-carrying redacted owner export, RLS/FORCE RLS
+  isolation and controlled disposable CockroachDB validation are complete in
+  its intended closure commit. It is completion evidence only after that
+  commit is reachable on `origin/main`.
+- `Step 33: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 34: NOT STARTED`. Step 33 completion does not authorize Step 34.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

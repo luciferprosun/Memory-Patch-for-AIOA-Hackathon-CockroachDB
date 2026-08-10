@@ -1,0 +1,43 @@
+{
+  "append_only": true,
+  "business_authority": false,
+  "chain_hash_algorithm": "SHA-256",
+  "chain_partition_policy": "TENANT_OWNER_PRIVATE_OR_TENANT_SYSTEM",
+  "event_table": {
+    "delete": false,
+    "force_rls": true,
+    "ordinary_privileges": [
+      "INSERT",
+      "SELECT"
+    ],
+    "table": "audit_events",
+    "update": false
+  },
+  "head_table": {
+    "force_rls": true,
+    "ordinary_privileges": [
+      "INSERT",
+      "SELECT",
+      "UPDATE"
+    ],
+    "semantic_history": false,
+    "table": "audit_chain_heads"
+  },
+  "manifest_id": "memory-patch-step33-audit-ledger-security-1a",
+  "normal_runtime_role": "mp_app_runtime",
+  "schema_version": 1,
+  "secret_storage": false,
+  "target_cockroachdb_version": "v26.2.4",
+  "triggers": [
+    {
+      "function": "guard_step33_audit_append_only",
+      "owner_role": "mp_schema_owner",
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "guard_step33_chain_head",
+      "owner_role": "mp_schema_owner",
+      "security_type": "INVOKER"
+    }
+  ]
+}

@@ -761,16 +761,18 @@ class Step32RetrievalPersistenceAndBoundaryTests(unittest.TestCase):
         manifest = json.loads(
             (ROOT / "sql/cockroachdb/migrations/manifest.json").read_text()
         )
-        self.assertEqual(manifest["schema_version"], 13)
-        self.assertEqual(manifest["runner_version"], "13.0.0")
-        self.assertEqual(manifest["migrations"][-1]["migration_id"],
-                         "0015_step32_personal_memory_lifecycle")
+        self.assertEqual(manifest["schema_version"], 14)
+        self.assertEqual(manifest["runner_version"], "14.0.0")
+        step32 = next(
+            item for item in manifest["migrations"]
+            if item["migration_id"] == "0015_step32_personal_memory_lifecycle"
+        )
         sql = (
             ROOT
             / "sql/cockroachdb/migrations"
-            / manifest["migrations"][-1]["filename"]
+            / step32["filename"]
         ).read_bytes()
-        self.assertEqual(manifest["migrations"][-1]["sha256"],
+        self.assertEqual(step32["sha256"],
                          __import__("hashlib").sha256(sql).hexdigest())
 
     def test_no_step33_ui_execution_or_source_publication_runtime(self):
@@ -851,12 +853,14 @@ class Step32DocumentationAndClosureTests(unittest.TestCase):
             "Step 32: COMPLETE AND PUSHED at actual closure commit",
             roadmap,
         )
-        self.assertIn("- [ ] **Step 33", roadmap)
+        self.assertIn("- [x] **Step 33", roadmap)
+        self.assertIn("- [ ] **Step 34", roadmap)
         self.assertIn(
             "Step 32: COMPLETE AND PUSHED at actual closure commit",
             agents,
         )
-        self.assertIn("Step 33: NOT STARTED", agents)
+        self.assertIn("Step 33: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 34: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

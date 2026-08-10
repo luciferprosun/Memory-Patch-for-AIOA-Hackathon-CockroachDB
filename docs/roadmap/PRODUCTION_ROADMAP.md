@@ -158,7 +158,13 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   consent, deterministic de-identification, review-only shared-promotion
   proposals, RLS/FORCE RLS isolation and controlled CockroachDB validation are
   closed by the intended Step 32 commit once it is reachable on `origin/main`.
-- `Step 33: NOT STARTED`.
+- `Step 33: COMPLETE AND PUSHED at actual closure commit`.
+  Typed security-event normalization, owner-partitioned append-only hash
+  chains, explicit genesis, serializable sequence heads, deterministic tamper
+  verification, bounded proof-carrying redacted owner export, RLS/FORCE RLS
+  isolation and controlled CockroachDB validation are closed by the intended
+  Step 33 commit once it is reachable on `origin/main`.
+- `Step 34: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -715,8 +721,21 @@ Dać użytkownikowi pulę prywatnych HAT-ów, w których zatwierdzone korekty st
 
 Pokazać cały Kernel człowiekowi, zapewnić trwały audyt, izolację credentials i kontrolowane zachowanie awaryjne.
 
-- [ ] **Step 33 — Audit Ledger, Hash Chain and Idempotent Export 1A**
-  Append-oriented events, sequence, previous hash, dedup keys, bounded private metadata, at-least-once changefeed handling, gap detection i S3 audit mirror.
+- [x] **Step 33 — Audit Ledger, Hash Chain and Idempotent Export 1A**
+  Typed append-only events, sequence, previous hash, replay keys, bounded
+  private metadata, deterministic gap/tamper detection and redacted audit
+  export with range proof.
+  `Step 33: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje `AuditEventEnvelope`, zamknięte typy zdarzeń i aktorów,
+  jawny genesis, owner-partitioned SHA-256 hash chain, serializable O(1) chain
+  head, idempotent replay i concurrent append, migration 0016, RLS/FORCE RLS,
+  read-only verifier, pełną macierz tamper detection oraz ograniczony,
+  proof-carrying i redacted owner export bez business authority.
+  [Architektura](../architecture/AUDIT_LEDGER_HASH_CHAIN_AUDIT_EXPORT_1A.md),
+  [ADR-040](../adr/ADR-040-append-only-audit-ledger-hash-chain.md),
+  [runbook](../operations/STEP_33_AUDIT_LEDGER_VALIDATION_1A.md),
+  [validation evidence](../evidence/audit/step33-audit-ledger-validation.json),
+  [rekord zamknięcia](../audits/STEP_33_AUDIT_LEDGER_HASH_CHAIN_CLOSURE_1A.md).
 
 - [ ] **Step 34 — Human Review Workspace and Draft Comparison UI 1A**
   Query, route, policy, evidence, Draft V1, Correction Packet, Draft V2, claim verdicts, patch proposal, approval i committed state.

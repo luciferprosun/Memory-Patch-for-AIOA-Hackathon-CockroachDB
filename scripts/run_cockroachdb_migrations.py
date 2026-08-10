@@ -86,10 +86,16 @@ LIFECYCLE_SECURITY_MANIFEST_PATH = (
     / "cockroachdb"
     / "personal-memory-lifecycle-security-1a.json"
 )
+AUDIT_LEDGER_SECURITY_MANIFEST_PATH = (
+    REPOSITORY_ROOT
+    / "config"
+    / "cockroachdb"
+    / "audit-ledger-security-1a.json"
+)
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "13.0.0"
+RUNNER_VERSION = "14.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
@@ -116,6 +122,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step30_",
     "mp_step31_",
     "mp_step32_",
+    "mp_step33_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
@@ -257,6 +264,14 @@ STEP32_FUNCTION_SIGNATURES = {
         "step32_terminal_record_matches(text, text, text, text, text, "
         "timestamptz, text)"
     ),
+}
+STEP33_MIGRATION_ID = "0016_step33_audit_ledger_hash_chain"
+STEP33_MIGRATION_SHA256 = (
+    "5c803f8bc81407aa558bfbed0c7bb862f24f918af07ea732c37b909896075a7c"
+)
+STEP33_FUNCTION_SIGNATURES = {
+    "guard_step33_audit_append_only": "guard_step33_audit_append_only()",
+    "guard_step33_chain_head": "guard_step33_chain_head()",
 }
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
 STEP5_CLUSTER_ROLE_END = "-- STEP5_CLUSTER_ROLE_DDL_END"
@@ -1766,6 +1781,63 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
             re.IGNORECASE,
         ) is None:
             raise MigrationError("Step 32 RLS policy-planning grant is missing")
+    elif migration_id == STEP33_MIGRATION_ID:
+        forbidden_patterns = ()
+        for fragment in (
+            "CREATE TABLE memory_patch.audit_chain_heads",
+            "audit_events_s33_chain_sequence_uq",
+            "audit_events_s33_idempotency_uq",
+            "audit_events_s33_owner_chain_range_idx",
+            "guard_step33_audit_append_only",
+            "guard_step33_chain_head",
+            "MEMORY_PATCH_AUDIT_GENESIS_V1",
+            "MEMORY_PATCH_AUDIT_CHAIN_V1",
+            "audit-event-envelope-1.0.0",
+            "BEFORE UPDATE OR DELETE ON memory_patch.audit_events",
+            "FOR UPDATE TO mp_app_runtime",
+            "REVOKE UPDATE, DELETE ON TABLE memory_patch.audit_events",
+            "GRANT SELECT, INSERT ON TABLE memory_patch.audit_events",
+            "ENABLE ROW LEVEL SECURITY",
+            "FORCE ROW LEVEL SECURITY",
+            "CREATE POLICY audit_chain_heads_s33_select",
+            "CREATE POLICY audit_chain_heads_s33_insert",
+            "CREATE POLICY audit_chain_heads_s33_update",
+            "memory_patch.user_context_matches",
+            "SECURITY INVOKER",
+            "OWNER TO mp_schema_owner",
+        ):
+            if fragment not in sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required Step 33 fragment: {fragment}"
+                )
+        if len(re.findall(r"^CREATE TABLE memory_patch\.", sql, re.MULTILINE)) != 1:
+            raise MigrationError("Step 33 table delta is not exact")
+        if re.search(r"\bTO\s+PUBLIC\b", sql, re.IGNORECASE):
+            raise MigrationError("Step 33 policy or grant targets PUBLIC")
+        if re.search(
+            r"\b(?:USING|WITH\s+CHECK)\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 33 contains an allow-all RLS policy")
+        if re.search(
+            r"\b(?:BYPASSRLS|CREATE\s+ROLE|ON\s+DELETE\s+CASCADE)\b",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 33 weakens a database security boundary")
+        if re.search(
+            r"^\s*(?:DELETE\s+FROM|TRUNCATE|DROP\s+TABLE)\b",
+            sql,
+            re.IGNORECASE | re.MULTILINE,
+        ):
+            raise MigrationError("Step 33 mutates or drops audit history")
+        if re.search(
+            r"review_queue|review_dashboard|review_workspace|personal_memory_ui",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 33 starts a later roadmap boundary")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -1775,11 +1847,11 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 13:
-        raise MigrationError("migration manifest schema_version must be 13")
+    if manifest.get("schema_version") != 14:
+        raise MigrationError("migration manifest schema_version must be 14")
     if (
         manifest.get("manifest_id")
-        != "memory-patch-step32-personal-memory-lifecycle-1a"
+        != "memory-patch-step33-audit-ledger-hash-chain-1a"
     ):
         raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
@@ -1796,7 +1868,7 @@ def load_migrations() -> list[Migration]:
         "STEP19_ONE_TRANSACTION_STEP27_ONE_TRANSACTION_"
         "STEP28_ONE_TRANSACTION_STEP29_ONE_TRANSACTION_"
         "STEP30_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL_"
-        "STEP32_ONE_TRANSACTION"
+        "STEP32_ONE_TRANSACTION_STEP33_ONE_TRANSACTION"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -1881,6 +1953,8 @@ def load_migrations() -> list[Migration]:
             raise MigrationError("Step 30 checksum differs from the audited migration")
         if migration_id == STEP32_MIGRATION_ID and checksum != STEP32_MIGRATION_SHA256:
             raise MigrationError("Step 32 checksum differs from the audited migration")
+        if migration_id == STEP33_MIGRATION_ID and checksum != STEP33_MIGRATION_SHA256:
+            raise MigrationError("Step 33 checksum differs from the audited migration")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -1904,12 +1978,13 @@ def load_migrations() -> list[Migration]:
         STEP29_MIGRATION_ID,
         STEP30_MIGRATION_ID,
         STEP32_MIGRATION_ID,
+        STEP33_MIGRATION_ID,
     ]
     if identifiers != expected_identifiers:
         raise MigrationError(
             "migration chain is not the exact Step 4 -> Step 5 -> Step 6 -> "
             "Step 9 -> Step 10 -> Step 11 -> Step 12 -> Step 19 -> "
-            "Step 27 -> Step 28 -> Step 29 -> Step 30 -> Step 32 chain"
+            "Step 27 -> Step 28 -> Step 29 -> Step 30 -> Step 32 -> Step 33 chain"
         )
     return migrations
 
@@ -3009,6 +3084,70 @@ def load_lifecycle_security_manifest() -> dict[str, Any]:
     return manifest
 
 
+def load_audit_ledger_security_manifest() -> dict[str, Any]:
+    manifest = load_json(AUDIT_LEDGER_SECURITY_MANIFEST_PATH)
+    if set(manifest) != {
+        "append_only",
+        "business_authority",
+        "chain_hash_algorithm",
+        "chain_partition_policy",
+        "event_table",
+        "head_table",
+        "manifest_id",
+        "normal_runtime_role",
+        "schema_version",
+        "secret_storage",
+        "target_cockroachdb_version",
+        "triggers",
+    }:
+        raise MigrationError("Step 33 security manifest shape is invalid")
+    if (
+        manifest.get("schema_version") != 1
+        or manifest.get("manifest_id")
+        != "memory-patch-step33-audit-ledger-security-1a"
+        or manifest.get("target_cockroachdb_version") != PINNED_VERSION
+        or manifest.get("normal_runtime_role") != "mp_app_runtime"
+        or manifest.get("append_only") is not True
+        or manifest.get("business_authority") is not False
+        or manifest.get("secret_storage") is not False
+        or manifest.get("chain_hash_algorithm") != "SHA-256"
+        or manifest.get("chain_partition_policy")
+        != "TENANT_OWNER_PRIVATE_OR_TENANT_SYSTEM"
+    ):
+        raise MigrationError("Step 33 security authority boundary differs")
+    event_table = manifest.get("event_table")
+    head_table = manifest.get("head_table")
+    if event_table != {
+        "force_rls": True,
+        "ordinary_privileges": ["INSERT", "SELECT"],
+        "table": "audit_events",
+        "update": False,
+        "delete": False,
+    }:
+        raise MigrationError("Step 33 audit-event privilege decision differs")
+    if head_table != {
+        "force_rls": True,
+        "ordinary_privileges": ["INSERT", "SELECT", "UPDATE"],
+        "semantic_history": False,
+        "table": "audit_chain_heads",
+    }:
+        raise MigrationError("Step 33 chain-head privilege decision differs")
+    if manifest.get("triggers") != [
+        {
+            "function": "guard_step33_audit_append_only",
+            "owner_role": "mp_schema_owner",
+            "security_type": "INVOKER",
+        },
+        {
+            "function": "guard_step33_chain_head",
+            "owner_role": "mp_schema_owner",
+            "security_type": "INVOKER",
+        },
+    ]:
+        raise MigrationError("Step 33 trigger decision differs")
+    return manifest
+
+
 def offline_validate() -> dict[str, Any]:
     pin = load_version_pin()
     migrations = load_migrations()
@@ -3022,6 +3161,7 @@ def offline_validate() -> dict[str, Any]:
     patch_validation_manifest = load_patch_validation_security_manifest()
     approval_commit_manifest = load_approval_commit_security_manifest()
     lifecycle_security_manifest = load_lifecycle_security_manifest()
+    audit_ledger_security_manifest = load_audit_ledger_security_manifest()
     step4_sql = "\n".join(
         migration.sql
         for migration in migrations
@@ -3081,6 +3221,11 @@ def offline_validate() -> dict[str, Any]:
         migration.sql
         for migration in migrations
         if migration.migration_id == STEP32_MIGRATION_ID
+    )
+    step33_sql = next(
+        migration.sql
+        for migration in migrations
+        if migration.migration_id == STEP33_MIGRATION_ID
     )
     historical_sql = step4_sql + "\n" + step5_sql
     step4_tables = sorted(
@@ -3786,6 +3931,49 @@ def offline_validate() -> dict[str, Any]:
         re.IGNORECASE,
     ) is None:
         raise MigrationError("Step 32 RLS policy-planning grant is missing")
+    step33_tables = set(
+        re.findall(
+            r"^CREATE TABLE memory_patch\.([a-z0-9_]+)",
+            step33_sql,
+            re.MULTILINE,
+        )
+    )
+    if step33_tables != {audit_ledger_security_manifest["head_table"]["table"]}:
+        raise MigrationError("Step 33 table set differs")
+    step33_enabled = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"ENABLE ROW LEVEL SECURITY;",
+            step33_sql,
+        )
+    )
+    step33_forced = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"FORCE ROW LEVEL SECURITY;",
+            step33_sql,
+        )
+    )
+    if step33_enabled != {"audit_events", "audit_chain_heads"} or step33_forced != {
+        "audit_events",
+        "audit_chain_heads",
+    }:
+        raise MigrationError("Step 33 RLS/FORCE RLS coverage is incomplete")
+    if any(
+        fragment not in step33_sql
+        for fragment in (
+            "audit_events_s33_chain_sequence_uq",
+            "audit_events_s33_idempotency_uq",
+            "guard_step33_audit_append_only",
+            "guard_step33_chain_head",
+            "MEMORY_PATCH_AUDIT_GENESIS_V1",
+            "previous_event_hash = (OLD).last_event_hash",
+            "REVOKE UPDATE, DELETE ON TABLE memory_patch.audit_events",
+            "GRANT SELECT, INSERT ON TABLE memory_patch.audit_events",
+            "memory_patch.user_context_matches",
+        )
+    ):
+        raise MigrationError("Step 33 append/hash-chain boundary is incomplete")
     return {
         "migration_count": len(migrations),
         "migration_ids": [migration.migration_id for migration in migrations],
@@ -3798,6 +3986,7 @@ def offline_validate() -> dict[str, Any]:
         "embedding_table_count": len(embedding_tables),
         "personal_memory_table_count": len(personal_memory_tables),
         "step32_lifecycle_table_count": len(step32_tables),
+        "step33_audit_ledger_table_count": len(step33_tables),
         "step4_table_count": len(step4_tables),
         "protected_table_count": (
             len(protected)
@@ -3826,6 +4015,9 @@ def offline_validate() -> dict[str, Any]:
         ),
         "personal_memory_lifecycle_boundary": (
             "STEP32_TERMINAL_OVERLAY_REVIEW_ONLY_SHARED_PROPOSAL"
+        ),
+        "audit_ledger_boundary": (
+            "STEP33_APPEND_ONLY_OWNER_CHAIN_HASH_PROOF_EXPORT"
         ),
     }
 
@@ -6046,6 +6238,158 @@ def assert_step32_security_catalog(
     }
 
 
+def assert_step33_security_catalog(
+    client: SqlClient,
+    database: str,
+) -> dict[str, Any]:
+    """Verify Step 33 append-only privileges, RLS, heads, and guards."""
+
+    load_audit_ledger_security_manifest()
+    tables = ("audit_chain_heads", "audit_events")
+    table_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT c.relname AS table_name, c.relrowsecurity, "
+            "c.relforcerowsecurity, owner.rolname AS owner_role "
+            "FROM pg_catalog.pg_class AS c "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = c.relnamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = c.relowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND c.relname IN ('audit_chain_heads', 'audit_events') "
+            "AND c.relkind = 'r' ORDER BY c.relname",
+        )
+    )
+    if table_rows != [
+        {
+            "table_name": name,
+            "relrowsecurity": "t",
+            "relforcerowsecurity": "t",
+            "owner_role": "mp_schema_owner",
+        }
+        for name in tables
+    ]:
+        raise MigrationError("Step 33 table ownership or RLS differs")
+    grants = parse_tsv(
+        client.execute(
+            database,
+            "SELECT table_name, privilege_type "
+            "FROM information_schema.table_privileges "
+            "WHERE table_schema = 'memory_patch' "
+            "AND grantee = 'mp_app_runtime' "
+            "AND table_name IN ('audit_chain_heads', 'audit_events') "
+            "ORDER BY table_name, privilege_type",
+        )
+    )
+    if [(row["table_name"], row["privilege_type"]) for row in grants] != [
+        ("audit_chain_heads", "INSERT"),
+        ("audit_chain_heads", "SELECT"),
+        ("audit_chain_heads", "UPDATE"),
+        ("audit_events", "INSERT"),
+        ("audit_events", "SELECT"),
+    ]:
+        raise MigrationError("Step 33 runtime table grants differ")
+    policies = parse_tsv(
+        client.execute(
+            database,
+            "SELECT policyname, cmd, roles, qual, with_check "
+            "FROM pg_catalog.pg_policies "
+            "WHERE schemaname = 'memory_patch' "
+            "AND tablename = 'audit_chain_heads' ORDER BY policyname",
+        )
+    )
+    if [row["policyname"] for row in policies] != [
+        "audit_chain_heads_s33_insert",
+        "audit_chain_heads_s33_select",
+        "audit_chain_heads_s33_update",
+    ] or any("mp_app_runtime" not in row["roles"] for row in policies):
+        raise MigrationError("Step 33 chain-head policies differ")
+    function_names = sorted(STEP33_FUNCTION_SIGNATURES)
+    function_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT procedure.proname AS function_name, "
+            "owner.rolname AS owner_role, procedure.prosecdef "
+            "FROM pg_catalog.pg_proc AS procedure "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = procedure.pronamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = procedure.proowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND procedure.proname IN ("
+            + ", ".join(sql_literal(name) for name in function_names)
+            + ") ORDER BY procedure.proname",
+        )
+    )
+    if function_rows != [
+        {
+            "function_name": name,
+            "owner_role": "mp_schema_owner",
+            "prosecdef": "f",
+        }
+        for name in function_names
+    ]:
+        raise MigrationError("Step 33 guard ownership or mode differs")
+    for name in function_names:
+        rows = parse_tsv(
+            client.execute(
+                database,
+                "SHOW GRANTS ON FUNCTION memory_patch." + name,
+            )
+        )
+        expected = {
+            ("admin", "ALL", "t"),
+            ("mp_schema_owner", "ALL", "t"),
+            ("root", "ALL", "t"),
+            ("mp_app_runtime", "EXECUTE", "f"),
+        }
+        actual = {
+            (row["grantee"], row["privilege_type"], row["is_grantable"])
+            for row in rows
+        }
+        if actual != expected or any(
+            row["database_name"] != database
+            or row["schema_name"] != "memory_patch"
+            or row["routine_signature"] != STEP33_FUNCTION_SIGNATURES[name]
+            for row in rows
+        ):
+            raise MigrationError("Step 33 guard grants differ")
+    triggers = parse_tsv(
+        client.execute(
+            database,
+            "SELECT trigger.tgname AS trigger_name, target.relname AS table_name, "
+            "procedure.proname AS function_name "
+            "FROM pg_catalog.pg_trigger AS trigger "
+            "JOIN pg_catalog.pg_class AS target ON target.oid = trigger.tgrelid "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = target.relnamespace "
+            "JOIN pg_catalog.pg_proc AS procedure ON procedure.oid = trigger.tgfoid "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND trigger.tgname IN ('audit_events_s33_append_only', "
+            "'audit_chain_heads_s33_guard') "
+            "AND NOT trigger.tgisinternal ORDER BY trigger.tgname",
+        )
+    )
+    if triggers != [
+        {
+            "trigger_name": "audit_chain_heads_s33_guard",
+            "table_name": "audit_chain_heads",
+            "function_name": "guard_step33_chain_head",
+        },
+        {
+            "trigger_name": "audit_events_s33_append_only",
+            "table_name": "audit_events",
+            "function_name": "guard_step33_audit_append_only",
+        },
+    ]:
+        raise MigrationError("Step 33 trigger catalog differs")
+    return {
+        "append_only": True,
+        "force_rls_table_count": 2,
+        "guard_count": 2,
+        "ordinary_audit_update_delete": False,
+    }
+
+
 def apply_migrations(
     client: SqlClient,
     database: str,
@@ -6211,6 +6555,20 @@ def apply_migrations(
                     sqlstate=exc.sqlstate,
                 ) from exc
             assert_step32_security_catalog(client, database)
+            database_sql = ""
+        elif migration.migration_id == STEP33_MIGRATION_ID:
+            try:
+                client.execute(
+                    database,
+                    "BEGIN;\n" + database_sql + "\nCOMMIT;",
+                    timeout=timeout,
+                )
+            except SqlError as exc:
+                raise SqlError(
+                    f"{migration.migration_id} database transaction failed: {exc}",
+                    sqlstate=exc.sqlstate,
+                ) from exc
+            assert_step33_security_catalog(client, database)
             database_sql = ""
         migration_record_sql = (
             "INSERT INTO memory_patch.schema_migrations "

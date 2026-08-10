@@ -983,9 +983,9 @@ class CorrectionCandidatePersistenceBoundaryTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        self.assertEqual(manifest["schema_version"], 13)
-        self.assertEqual(manifest["runner_version"], "13.0.0")
-        self.assertEqual(len(manifest["migrations"]), 15)
+        self.assertEqual(manifest["schema_version"], 14)
+        self.assertEqual(manifest["runner_version"], "14.0.0")
+        self.assertEqual(len(manifest["migrations"]), 16)
         latest = manifest["migrations"][11]
         self.assertEqual(latest["migration_id"], "0012_step28_correction_candidate_bridge")
         migration_bytes = (
@@ -1180,14 +1180,16 @@ class CorrectionCandidateAuthorityAndClosureTests(unittest.TestCase):
         self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 30 — ")
         self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 31 — ")
         self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 32 — ")
-        self.assertRegex(roadmap, r"(?m)^- \[ \] \*\*Step 33 — ")
+        self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 33 — ")
+        self.assertRegex(roadmap, r"(?m)^- \[ \] \*\*Step 34 — ")
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertNotIn("`Step 28: NOT STARTED`", agents)
         self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 30: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 31: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 32: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 33: NOT STARTED", agents)
+        self.assertIn("Step 33: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 34: NOT STARTED", agents)
 
 
 if __name__ == "__main__":
