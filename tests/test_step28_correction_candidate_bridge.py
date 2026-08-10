@@ -1178,12 +1178,14 @@ class CorrectionCandidateAuthorityAndClosureTests(unittest.TestCase):
         self.assertIn("`Step 28: COMPLETE AND PUSHED at actual closure commit`", roadmap)
         self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 29 — ")
         self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 30 — ")
-        self.assertRegex(roadmap, r"(?m)^- \[ \] \*\*Step 31 — ")
+        self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 31 — ")
+        self.assertRegex(roadmap, r"(?m)^- \[ \] \*\*Step 32 — ")
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertNotIn("`Step 28: NOT STARTED`", agents)
         self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 30: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 31: NOT STARTED", agents)
+        self.assertIn("Step 31: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 32: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

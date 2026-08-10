@@ -185,7 +185,15 @@ At roadmap adoption and in subsequent audited closure records:
   validation are complete in its intended closure commit. It is completion
   evidence only after that commit is reachable on `origin/main`.
 - `Step 30: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 31: NOT STARTED`. Step 30 completion does not authorize Step 31.
+- Step 31 exact Step 30 ACTIVE-only retrieval, full lifecycle receipt/hash
+  reconstruction, owner/tenant/slot RLS isolation, route-scope, temporal and
+  provider-neutral model-binding gates, bounded deterministic context,
+  two-model same-patch reuse, canonical-evidence conflict suppression and
+  controlled disposable CockroachDB validation are complete in its intended
+  closure commit. It is completion evidence only after that commit is
+  reachable on `origin/main`.
+- `Step 31: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 32: NOT STARTED`. Step 31 completion does not authorize Step 32.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

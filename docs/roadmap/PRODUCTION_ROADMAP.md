@@ -144,7 +144,15 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   `AWAITING_APPROVAL -> APPROVED -> COMMITTED -> ACTIVE` progression,
   RLS/FORCE RLS isolation, and controlled CockroachDB validation are closed
   by the intended Step 30 commit once it is reachable on `origin/main`.
-- `Step 31: NOT STARTED`.
+- `Step 31: COMPLETE AND PUSHED at actual closure commit`.
+  Exact Step 30 ACTIVE-only retrieval, full approval/commit/activation
+  lineage verification, owner/tenant/slot RLS isolation, mandatory route
+  scope, temporal and provider-neutral model-binding checks, bounded
+  deterministic context assembly, two-model same-patch reuse, canonical
+  conflict suppression, non-canonical authority separation and controlled
+  CockroachDB validation are closed by the intended Step 31 commit once it is
+  reachable on `origin/main`.
+- `Step 32: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -651,8 +659,21 @@ Dać użytkownikowi pulę prywatnych HAT-ów, w których zatwierdzone korekty st
   [validation evidence](../evidence/personal-memory/step30-user-approval-commit-activation-validation.json),
   [rekord zamknięcia](../audits/STEP_30_USER_APPROVAL_COMMIT_HELPER_ACTIVATION_CLOSURE_1A.md).
 
-- [ ] **Step 31 — Active Patch Retrieval and Cross-Model Reuse 1A**
+- [x] **Step 31 — Active Patch Retrieval and Cross-Model Reuse 1A**
   Użycie aktywnego patcha przy późniejszym pytaniu, scope/temporal checks, ta sama pamięć dla Gemmy lub innego modelu, bez traktowania patcha jako canonical evidence.
+  `Step 31: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje immutable/hash-bound request, assessment, result i
+  private context envelope, pełną Step 29/30 lineage verification,
+  ACTIVE-only owner/tenant/slot RLS retrieval, exact scope/temporal/model
+  binding gates, reuse tego samego patch ID/hash przez dwa provider-neutral
+  modele, odrzucenie niepowiązanego modelu, canonical-conflict suppression,
+  deterministic bounds/order, istniejący indeks bez nowej migracji i zero
+  state mutation/supersession/revocation/shared-promotion authority.
+  [Architektura](../architecture/ACTIVE_PATCH_RETRIEVAL_CROSS_MODEL_REUSE_1A.md),
+  [ADR-038](../adr/ADR-038-active-patch-retrieval-cross-model-reuse.md),
+  [runbook](../operations/STEP_31_ACTIVE_PATCH_RETRIEVAL_VALIDATION_1A.md),
+  [validation evidence](../evidence/personal-memory/step31-active-patch-retrieval-validation.json),
+  [rekord zamknięcia](../audits/STEP_31_ACTIVE_PATCH_RETRIEVAL_CROSS_MODEL_REUSE_CLOSURE_1A.md).
 
 - [ ] **Step 32 — Supersession, Revocation, Export, Deletion and Shared Promotion 1A**
   Konflikt z nowszą wiedzą, stale marking, supersession, revocation, user export/delete oraz osobny, de-identyfikowany personal-to-shared review flow.

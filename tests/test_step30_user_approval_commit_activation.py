@@ -694,9 +694,11 @@ class Step30PersistenceAndBoundaryTests(unittest.TestCase):
         agents = (ROOT / "AGENTS.md").read_text()
         self.assertIn("- [x] **Step 30", roadmap)
         self.assertIn("Step 30: COMPLETE AND PUSHED", roadmap)
-        self.assertIn("- [ ] **Step 31", roadmap)
+        self.assertIn("- [x] **Step 31", roadmap)
+        self.assertIn("- [ ] **Step 32", roadmap)
         self.assertIn("Step 30: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 31: NOT STARTED", agents)
+        self.assertIn("Step 31: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 32: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

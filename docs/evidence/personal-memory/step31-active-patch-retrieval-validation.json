@@ -1,0 +1,123 @@
+{
+  "active_patch": {
+    "activation_receipt_hash": "baa5eb0f68da6b0eb6a878b66b03015abe690c6e98c10d6a0c1c992bb886b9a0",
+    "approval_receipt_hash": "c43ee31c3847bc415dbdf4b0d6831c55bddd7b6b5159dd6644f0acfae84a3848",
+    "commit_receipt_hash": "db701a505cbed0047a53eda04753a179ad1a6cf4919557f00c99fb2814b87628",
+    "patch_hash": "03af05fa58311b80a4620b951d56026d7dd9fbbc181adfa815efe53536f9ac7d",
+    "patch_id": "personal-memory-patch-b2280eb51e46a01bba90c5b231aa80a33b28a54bd5c25f52ec7639b63034124f",
+    "proposal_hash": "fcab2a3272d1c074ceda26ace5da73a6058cecdfa1da0239215dc87a1e88d62a",
+    "statement_sha256": "c187b47762cd638b3153e03a772db8bf9de9c56709d73803695a2caa3fa19539"
+  },
+  "authority": {
+    "approval_authority": false,
+    "execution_authority": false,
+    "model_authority": false,
+    "patch_canonical_evidence": false
+  },
+  "bounds": {
+    "default_result_limit": 8,
+    "hard_candidate_limit": 128,
+    "maximum_result_limit": 32,
+    "parameterized_query": true,
+    "truncated_result_behavior": "DETERMINISTIC_HASH_BOUND"
+  },
+  "canonical_evidence": {
+    "conflict_result": "PATCH_SUPPRESSED",
+    "patch_canonical_evidence": false,
+    "source_authority_upgrade": false
+  },
+  "cleanup": {
+    "app_role_removed": true,
+    "commit_role_removed": true,
+    "database_removed": true,
+    "force_kill_used": false,
+    "pid_exited": true,
+    "ports_closed": true,
+    "temporary_store_removed": true
+  },
+  "cross_model_reuse": {
+    "model_a": {
+      "context_hash": "eb4edb0597e58cace20a6f4dbf667a41e82903b2014df323fe98a59ee0f660e6",
+      "identity_digest": "e06d51f14cb11c253316b052ddfd70b6f4ab954731140fc53190ada890223979",
+      "request_hash": "9b949310fc9453e6bde896250a4df7c3b7b9e65e685ab592073de279279e4727",
+      "result_hash": "b8f1ee7d33885e9672e3d867761cbff8a1df71a23edf23ac939e8b006484ceab"
+    },
+    "model_b": {
+      "context_hash": "083cc8aed2e5df3bd9ff6b6cea50162cb7e2ab64c836978d93afe307054dc84d",
+      "identity_digest": "8407638b3e5dc1ef5480c12a94dba56f0b402f55a2a0f4998a6b77785d5f47bd",
+      "request_hash": "54aa92fe629f20e35dd55ca621b55f8ab9ea65c0ec17f20cfd20ca2eccbd9836",
+      "result_hash": "82e86e3243c19c565253913ac8cfd81b057c8b06bffa3a05c03a12d526370cc6"
+    },
+    "model_c_denied": true,
+    "same_patch_hash_across_models": true
+  },
+  "database": {
+    "binary_sha256": "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf",
+    "migration_added": false,
+    "migration_count": 14,
+    "replay_skipped_count": 14,
+    "security_catalog": {
+      "force_rls": true,
+      "retrieval_index": "memory_items_scope_retrieval_idx",
+      "rls": true,
+      "tables": [
+        "memory_items",
+        "memory_patch_proposals",
+        "personal_memory_model_bindings",
+        "personal_memory_spaces"
+      ]
+    },
+    "version": "v26.2.4"
+  },
+  "effect_bounds": {
+    "approval_actions": 0,
+    "aws_mutations": 0,
+    "commit_actions": 0,
+    "model_calls": 0,
+    "patch_state_mutations": 0,
+    "provider_calls": 0,
+    "s3_mutations": 0,
+    "shared_promotion_actions": 0,
+    "web_calls": 0
+  },
+  "nonactive": {
+    "awaiting_approval_not_retrieved": true,
+    "awaiting_proposal_hash": "526cd702b0240fbbce64724d79b9d1e1e5935f4db8496ba0b6fa774a5369d0c9",
+    "committed_not_retrieved": true,
+    "committed_patch_hash": "2699cf6351918c00050e6d7c8b89d33df9111b3bc210fadebaec2bd849d772df"
+  },
+  "owner_scope": {
+    "cross_tenant_rows": 0,
+    "cross_user_rows": 0,
+    "owner_rows": 1,
+    "owner_user_id": "user-step20",
+    "personal_memory_space_id": "personal-slot-step31-active",
+    "tenant_id": "tenant-step20"
+  },
+  "policy_digest": "3551556cdbac62eaea1bfe49daddf81ab87edd010509ad15937ef68b6ab645fd",
+  "query_time_gates": {
+    "canonical_conflict": "SUPPRESSED",
+    "scope_match": "PASS",
+    "scope_mismatch": "DENIED",
+    "temporal_match": "PASS",
+    "temporal_mismatch": "DENIED"
+  },
+  "read_only": {
+    "patch_state_after": "ACTIVE",
+    "patch_state_before": "ACTIVE",
+    "semantic_state_mutations": 0,
+    "state_hash_unchanged": true
+  },
+  "real_cross_model_provider_validation": "NOT_REQUIRED",
+  "schema_version": "step31-active-patch-retrieval-validation-1a",
+  "start_sha": "753e14b0a079bd48466f694435587a2b5acbe4ca",
+  "status": "PASS",
+  "step": 31,
+  "step32_boundary": {
+    "revocation_transitions": 0,
+    "shared_promotions": 0,
+    "step32_started": false,
+    "supersession_transitions": 0
+  },
+  "validation_digest": "08a2706ffb0a25de78bbc48705d2ffb0ec8752721c3a702af0c55accc87c05bc"
+}

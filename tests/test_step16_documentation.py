@@ -116,7 +116,9 @@ class Step16DocumentationTests(unittest.TestCase):
         step30 = roadmap[roadmap.index("**Step 30") - 10 : roadmap.index("**Step 30") + 120]
         self.assertIn("[x]", step30)
         step31 = roadmap[roadmap.index("**Step 31") - 10 : roadmap.index("**Step 31") + 120]
-        self.assertIn("[ ]", step31)
+        self.assertIn("[x]", step31)
+        step32 = roadmap[roadmap.index("**Step 32") - 10 : roadmap.index("**Step 32") + 120]
+        self.assertIn("[ ]", step32)
         agents = AGENTS.read_text(encoding="utf-8")
         self.assertIn("Step 16 trusted publication", agents)
         self.assertIn("Step 17 deterministic Axis A routing", agents)
@@ -133,7 +135,8 @@ class Step16DocumentationTests(unittest.TestCase):
         self.assertIn("Step 28 owner- and slot-bound Correction Candidate", agents)
         self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 30: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 31: NOT STARTED", agents)
+        self.assertIn("Step 31: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 32: NOT STARTED", agents)
         self.assertIn("Step 16 closure record", README.read_text(encoding="utf-8"))
 
 

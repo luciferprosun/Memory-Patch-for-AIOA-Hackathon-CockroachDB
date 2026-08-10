@@ -308,7 +308,8 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 25 verified Correction Packet integrity gating",
             "Step 26 complete upstream integrity binding",
             "Step 30 exact owner-human approval",
-            "Step 30 completion does not authorize Step 31.",
+            "Step 31 exact Step 30 ACTIVE-only retrieval",
+            "Step 31 completion does not authorize Step 32.",
         ):
             self.assertIn(required, text)
 
