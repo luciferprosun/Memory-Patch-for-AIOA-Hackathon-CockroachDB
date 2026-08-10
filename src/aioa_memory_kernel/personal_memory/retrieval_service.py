@@ -93,6 +93,7 @@ class ActivePatchRetrievalService:
                     personal_memory_space_id=request.personal_memory_space_id,
                     hat_scope_id=slot.hat_scope_id,
                     limit=MAXIMUM_ACTIVE_PATCH_CANDIDATES + 1,
+                    knowledge_as_of=request.knowledge_as_of,
                 )
             except (ContractValidationError, IntegrityError) as exc:
                 raise ActivePatchRetrievalError(

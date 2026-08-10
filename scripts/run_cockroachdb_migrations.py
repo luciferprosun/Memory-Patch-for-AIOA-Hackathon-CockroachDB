@@ -80,10 +80,16 @@ APPROVAL_COMMIT_SECURITY_MANIFEST_PATH = (
     / "cockroachdb"
     / "personal-memory-approval-commit-security-1a.json"
 )
+LIFECYCLE_SECURITY_MANIFEST_PATH = (
+    REPOSITORY_ROOT
+    / "config"
+    / "cockroachdb"
+    / "personal-memory-lifecycle-security-1a.json"
+)
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "12.0.0"
+RUNNER_VERSION = "13.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
@@ -109,6 +115,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step29_",
     "mp_step30_",
     "mp_step31_",
+    "mp_step32_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
@@ -230,6 +237,25 @@ STEP30_FUNCTION_SIGNATURES = {
     ),
     "step30_transition_target_matches": (
         "step30_transition_target_matches(text, text, text, text, text)"
+    ),
+}
+STEP32_MIGRATION_ID = "0015_step32_personal_memory_lifecycle"
+STEP32_MIGRATION_SHA256 = (
+    "eb1a442a98d5822d11b316822a40258b6b9d780cdb55be75af2988ac4677bf4a"
+)
+STEP32_FUNCTION_SIGNATURES = {
+    "guard_step32_memory_item_terminal": (
+        "guard_step32_memory_item_terminal()"
+    ),
+    "step32_patch_owner_matches": (
+        "step32_patch_owner_matches(text, text, text, text, text)"
+    ),
+    "step32_slot_snapshot_matches": (
+        "step32_slot_snapshot_matches(text, text, text, text, text)"
+    ),
+    "step32_terminal_record_matches": (
+        "step32_terminal_record_matches(text, text, text, text, text, "
+        "timestamptz, text)"
     ),
 }
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
@@ -1658,6 +1684,88 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
             re.IGNORECASE,
         ):
             raise MigrationError("Step 30 leaks a later-step or execution boundary")
+    elif migration_id == STEP32_MIGRATION_ID:
+        forbidden_patterns = ()
+        for fragment in (
+            "step32_terminal_kind STRING",
+            "memory_items_s32_owner_terminal_idx",
+            "personal_memory_patch_supersessions_s32_successor_idx",
+            "CREATE TABLE memory_patch.personal_memory_patch_supersessions",
+            "CREATE TABLE memory_patch.personal_memory_patch_revocations",
+            "CREATE TABLE memory_patch.personal_memory_exports",
+            "CREATE TABLE memory_patch.personal_memory_deletions",
+            "CREATE TABLE memory_patch.shared_memory_promotion_proposals",
+            "step32_patch_owner_matches",
+            "step32_slot_snapshot_matches",
+            "step32_terminal_record_matches",
+            "guard_step32_memory_item_terminal",
+            "WHEN ((NEW).step32_terminal_kind IS NULL)",
+            "WHEN ((NEW).step32_terminal_kind IS NOT NULL)",
+            "personal_memory_patch_supersessions_s32_insert",
+            "personal_memory_patch_revocations_s32_insert",
+            "personal_memory_exports_s32_insert",
+            "personal_memory_deletions_s32_insert",
+            "shared_memory_promotion_proposals_s32_insert",
+            "memory_items_s32_terminal_update",
+            "SUPERSEDED",
+            "REVOKED",
+            "DELETED",
+            "SHARED_PROMOTION_PROPOSED",
+            "review_required = true",
+            "logical_delete = true",
+            "physical_delete = false",
+            "IS NOT DISTINCT FROM",
+            "IS TRUE",
+            "IS FALSE",
+            "source_registry_published",
+            "canonical_evidence",
+            "ENABLE ROW LEVEL SECURITY",
+            "FORCE ROW LEVEL SECURITY",
+            "SECURITY INVOKER",
+            "OWNER TO mp_schema_owner",
+            "REVOKE DELETE ON TABLE",
+            "memory_patch.step30_commit_helper_authorized()",
+        ):
+            if fragment not in sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required Step 32 fragment: {fragment}"
+                )
+        if len(re.findall(r"^CREATE TABLE memory_patch\.", sql, re.MULTILINE)) != 5:
+            raise MigrationError("Step 32 table set is not exact")
+        if re.search(r"\bTO\s+PUBLIC\b", sql, re.IGNORECASE):
+            raise MigrationError("Step 32 policy or grant targets PUBLIC")
+        if re.search(
+            r"\b(?:USING|WITH\s+CHECK)\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 32 contains an allow-all RLS policy")
+        if re.search(
+            r"\b(?:BYPASSRLS|CREATE\s+ROLE|ON\s+DELETE\s+CASCADE)\b",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 32 weakens a database security boundary")
+        if re.search(
+            r"^\s*(?:DELETE\s+FROM|TRUNCATE|DROP\s+TABLE)\b",
+            sql,
+            re.IGNORECASE | re.MULTILINE,
+        ):
+            raise MigrationError("Step 32 contains destructive physical deletion")
+        if re.search(
+            r"CREATE\s+TABLE.*(?:audit_ledger|hash_chain|review_workspace)",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 32 starts a later roadmap boundary")
+        if re.search(
+            r"GRANT\s+EXECUTE\s+ON\s+FUNCTION\s+"
+            r"memory_patch\.step30_commit_helper_authorized\(\)\s+"
+            r"TO\s+mp_app_runtime\s*;",
+            sql,
+            re.IGNORECASE,
+        ) is None:
+            raise MigrationError("Step 32 RLS policy-planning grant is missing")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -1667,11 +1775,11 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 12:
-        raise MigrationError("migration manifest schema_version must be 12")
+    if manifest.get("schema_version") != 13:
+        raise MigrationError("migration manifest schema_version must be 13")
     if (
         manifest.get("manifest_id")
-        != "memory-patch-step30-user-approval-commit-activation-1a"
+        != "memory-patch-step32-personal-memory-lifecycle-1a"
     ):
         raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
@@ -1687,7 +1795,8 @@ def load_migrations() -> list[Migration]:
         "STEP11_ONE_TRANSACTION_STEP12_ONE_TRANSACTION_"
         "STEP19_ONE_TRANSACTION_STEP27_ONE_TRANSACTION_"
         "STEP28_ONE_TRANSACTION_STEP29_ONE_TRANSACTION_"
-        "STEP30_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL"
+        "STEP30_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL_"
+        "STEP32_ONE_TRANSACTION"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -1770,6 +1879,8 @@ def load_migrations() -> list[Migration]:
             raise MigrationError("Step 29 checksum differs from the audited migration")
         if migration_id == STEP30_MIGRATION_ID and checksum != STEP30_MIGRATION_SHA256:
             raise MigrationError("Step 30 checksum differs from the audited migration")
+        if migration_id == STEP32_MIGRATION_ID and checksum != STEP32_MIGRATION_SHA256:
+            raise MigrationError("Step 32 checksum differs from the audited migration")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -1792,12 +1903,13 @@ def load_migrations() -> list[Migration]:
         STEP28_MIGRATION_ID,
         STEP29_MIGRATION_ID,
         STEP30_MIGRATION_ID,
+        STEP32_MIGRATION_ID,
     ]
     if identifiers != expected_identifiers:
         raise MigrationError(
             "migration chain is not the exact Step 4 -> Step 5 -> Step 6 -> "
             "Step 9 -> Step 10 -> Step 11 -> Step 12 -> Step 19 -> "
-            "Step 27 -> Step 28 -> Step 29 -> Step 30 chain"
+            "Step 27 -> Step 28 -> Step 29 -> Step 30 -> Step 32 chain"
         )
     return migrations
 
@@ -2787,6 +2899,116 @@ def load_approval_commit_security_manifest() -> dict[str, Any]:
     return manifest
 
 
+def load_lifecycle_security_manifest() -> dict[str, Any]:
+    manifest = load_json(LIFECYCLE_SECURITY_MANIFEST_PATH)
+    if set(manifest) != {
+        "append_only",
+        "canonical_evidence_authority",
+        "commit_helper_fk_reference_tables",
+        "helper_functions",
+        "manifest_id",
+        "physical_delete",
+        "runtime_role",
+        "schema_version",
+        "shared_publication_authority",
+        "step30_policy_planning_function_grants",
+        "tables",
+        "target_cockroachdb_version",
+        "terminal_states",
+    }:
+        raise MigrationError("Step 32 security manifest shape is invalid")
+    if (
+        manifest.get("schema_version") != 1
+        or manifest.get("manifest_id")
+        != "memory-patch-step32-personal-memory-lifecycle-security-1a"
+        or manifest.get("target_cockroachdb_version") != PINNED_VERSION
+        or manifest.get("runtime_role") != "mp_app_runtime"
+        or manifest.get("append_only") is not True
+        or manifest.get("physical_delete") is not False
+        or manifest.get("canonical_evidence_authority") is not False
+        or manifest.get("shared_publication_authority") is not False
+        or manifest.get("terminal_states")
+        != ["SUPERSEDED", "REVOKED", "DELETED"]
+        or manifest.get("commit_helper_fk_reference_tables")
+        != [
+            "personal_memory_patch_supersessions",
+            "personal_memory_patch_revocations",
+            "personal_memory_exports",
+            "personal_memory_deletions",
+            "shared_memory_promotion_proposals",
+        ]
+    ):
+        raise MigrationError("Step 32 security authority boundary differs")
+    if manifest.get("step30_policy_planning_function_grants") != [
+        {
+            "authority_result": False,
+            "function": "step30_commit_helper_authorized",
+            "purpose": "RLS_POLICY_PLANNING_ONLY",
+            "runtime_role": "mp_app_runtime",
+        }
+    ]:
+        raise MigrationError("Step 32 RLS policy-planning grant differs")
+    helpers = manifest.get("helper_functions")
+    if not isinstance(helpers, list) or [
+        item.get("function") for item in helpers if isinstance(item, dict)
+    ] != [
+        "step32_patch_owner_matches",
+        "step32_slot_snapshot_matches",
+        "step32_terminal_record_matches",
+        "guard_step32_memory_item_terminal",
+    ]:
+        raise MigrationError("Step 32 helper-function set differs")
+    helper_runtime_roles = {
+        "step32_patch_owner_matches": ["mp_app_runtime"],
+        "step32_slot_snapshot_matches": ["mp_app_runtime"],
+        "step32_terminal_record_matches": [
+            "mp_app_runtime",
+            "mp_personal_memory_commit_helper",
+        ],
+        "guard_step32_memory_item_terminal": [
+            "mp_app_runtime",
+            "mp_personal_memory_commit_helper",
+        ],
+    }
+    for helper in helpers:
+        if (
+            set(helper)
+            != {"function", "owner_role", "runtime_roles", "security_type"}
+            or helper["owner_role"] != "mp_schema_owner"
+            or helper["runtime_roles"]
+            != helper_runtime_roles[helper["function"]]
+            or helper["security_type"] != "INVOKER"
+        ):
+            raise MigrationError("Step 32 helper-function decision is unsafe")
+    tables = manifest.get("tables")
+    expected_tables = [
+        "personal_memory_patch_supersessions",
+        "personal_memory_patch_revocations",
+        "personal_memory_exports",
+        "personal_memory_deletions",
+        "shared_memory_promotion_proposals",
+        "memory_items",
+    ]
+    if not isinstance(tables, list) or [
+        item.get("table") for item in tables if isinstance(item, dict)
+    ] != expected_tables:
+        raise MigrationError("Step 32 protected table set differs")
+    for table in tables:
+        allowed = {
+            "force_rls", "insert_policy", "privileges", "select_policy", "table"
+        }
+        if table["table"] == "memory_items":
+            allowed.add("update_policy")
+        if (
+            set(table) != allowed
+            or table["force_rls"] is not True
+            or "DELETE" in table["privileges"]
+            or "SELECT" not in table["privileges"]
+        ):
+            raise MigrationError("Step 32 table decision is unsafe")
+    return manifest
+
+
 def offline_validate() -> dict[str, Any]:
     pin = load_version_pin()
     migrations = load_migrations()
@@ -2799,6 +3021,7 @@ def offline_validate() -> dict[str, Any]:
     candidate_security_manifest = load_correction_candidate_security_manifest()
     patch_validation_manifest = load_patch_validation_security_manifest()
     approval_commit_manifest = load_approval_commit_security_manifest()
+    lifecycle_security_manifest = load_lifecycle_security_manifest()
     step4_sql = "\n".join(
         migration.sql
         for migration in migrations
@@ -2853,6 +3076,11 @@ def offline_validate() -> dict[str, Any]:
         migration.sql
         for migration in migrations
         if migration.migration_id == STEP30_MIGRATION_ID
+    )
+    step32_sql = next(
+        migration.sql
+        for migration in migrations
+        if migration.migration_id == STEP32_MIGRATION_ID
     )
     historical_sql = step4_sql + "\n" + step5_sql
     step4_tables = sorted(
@@ -3482,6 +3710,82 @@ def offline_validate() -> dict[str, Any]:
         re.IGNORECASE,
     ):
         raise MigrationError("Step 30 implements forbidden retrieval/reuse")
+    step32_tables = set(
+        re.findall(
+            r"^CREATE TABLE memory_patch\.([a-z0-9_]+)",
+            step32_sql,
+            re.MULTILINE,
+        )
+    )
+    expected_step32_new_tables = {
+        table["table"]
+        for table in lifecycle_security_manifest["tables"]
+        if table["table"] != "memory_items"
+    }
+    if step32_tables != expected_step32_new_tables:
+        raise MigrationError("Step 32 lifecycle table set differs")
+    step32_enabled = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"ENABLE ROW LEVEL SECURITY;",
+            step32_sql,
+        )
+    )
+    step32_forced = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"FORCE ROW LEVEL SECURITY;",
+            step32_sql,
+        )
+    )
+    expected_step32_protected = {
+        table["table"] for table in lifecycle_security_manifest["tables"]
+    }
+    if step32_enabled != expected_step32_protected or step32_forced != expected_step32_protected:
+        raise MigrationError("Step 32 RLS/FORCE RLS coverage is incomplete")
+    for table in lifecycle_security_manifest["tables"]:
+        select_policy = table["select_policy"]
+        if select_policy.endswith("_s32_select") and re.search(
+            rf"CREATE POLICY {re.escape(select_policy)}\s+"
+            rf"ON memory_patch\.{re.escape(table['table'])}\s+"
+            r"FOR SELECT TO mp_app_runtime",
+            step32_sql,
+            re.MULTILINE,
+        ) is None:
+            raise MigrationError(f"Step 32 SELECT policy is missing: {select_policy}")
+        insert_policy = table["insert_policy"]
+        if insert_policy is not None and re.search(
+            rf"CREATE POLICY {re.escape(insert_policy)}\s+"
+            rf"ON memory_patch\.{re.escape(table['table'])}\s+"
+            r"FOR INSERT TO mp_app_runtime\s+WITH CHECK",
+            step32_sql,
+            re.MULTILINE,
+        ) is None:
+            raise MigrationError(f"Step 32 INSERT policy is missing: {insert_policy}")
+    if any(
+        fragment not in step32_sql
+        for fragment in (
+            "active = false",
+            "step32_terminal_kind IN ('SUPERSEDED', 'REVOKED', 'DELETED')",
+            "logical_delete = true",
+            "physical_delete = false",
+            "review_required = true",
+            "lifecycle_state = 'SHARED_PROMOTION_PROPOSED'",
+            "source_registry_published",
+            "canonical_evidence",
+            "memory_patch.user_context_matches",
+            "memory_patch.step30_commit_helper_authorized()",
+        )
+    ):
+        raise MigrationError("Step 32 lifecycle or authority boundary is incomplete")
+    if re.search(
+        r"GRANT\s+EXECUTE\s+ON\s+FUNCTION\s+"
+        r"memory_patch\.step30_commit_helper_authorized\(\)\s+"
+        r"TO\s+mp_app_runtime\s*;",
+        step32_sql,
+        re.IGNORECASE,
+    ) is None:
+        raise MigrationError("Step 32 RLS policy-planning grant is missing")
     return {
         "migration_count": len(migrations),
         "migration_ids": [migration.migration_id for migration in migrations],
@@ -3493,6 +3797,7 @@ def offline_validate() -> dict[str, Any]:
         "parsing_pipeline_table_count": len(parsing_pipeline_tables),
         "embedding_table_count": len(embedding_tables),
         "personal_memory_table_count": len(personal_memory_tables),
+        "step32_lifecycle_table_count": len(step32_tables),
         "step4_table_count": len(step4_tables),
         "protected_table_count": (
             len(protected)
@@ -3518,6 +3823,9 @@ def offline_validate() -> dict[str, Any]:
         ),
         "patch_validation_boundary": (
             "STEP29_AWAITING_APPROVAL_OWNER_PRIVATE"
+        ),
+        "personal_memory_lifecycle_boundary": (
+            "STEP32_TERMINAL_OVERLAY_REVIEW_ONLY_SHARED_PROPOSAL"
         ),
     }
 
@@ -5331,7 +5639,17 @@ def assert_step30_security_catalog(
     actual_grants = [
         (row["table_name"], row["privilege_type"]) for row in grant_rows
     ]
-    if actual_grants != expected_grants:
+    step32_fk_grants = sorted(
+        expected_grants
+        + [
+            ("personal_memory_patch_supersessions", "SELECT"),
+            ("personal_memory_patch_revocations", "SELECT"),
+            ("personal_memory_exports", "SELECT"),
+            ("personal_memory_deletions", "SELECT"),
+            ("shared_memory_promotion_proposals", "SELECT"),
+        ]
+    )
+    if actual_grants not in (expected_grants, step32_fk_grants):
         raise MigrationError("Step 30 dedicated table grants differ")
     identity_policy_rows = parse_tsv(
         client.execute(
@@ -5479,6 +5797,251 @@ def assert_step30_security_catalog(
         "quota_lock_effective_column": "candidate_quota_epoch",
         "quota_lock_guarded_table_update": True,
         "protected_table_count": len(table_rows),
+        "trigger_count": len(trigger_rows),
+    }
+
+
+def assert_step32_security_catalog(
+    client: SqlClient,
+    database: str,
+) -> dict[str, Any]:
+    """Verify Step 32 owner RLS, append-only grants, and terminal guards."""
+
+    manifest = load_lifecycle_security_manifest()
+    table_names = [table["table"] for table in manifest["tables"]]
+    quoted = ", ".join(sql_literal(name) for name in table_names)
+    table_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT c.relname AS table_name, c.relrowsecurity, "
+            "c.relforcerowsecurity, owner.rolname AS owner_role "
+            "FROM pg_catalog.pg_class AS c "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = c.relnamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = c.relowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            f"AND c.relname IN ({quoted}) AND c.relkind = 'r' "
+            "ORDER BY c.relname",
+        )
+    )
+    expected = [
+        {
+            "table_name": name,
+            "relrowsecurity": "t",
+            "relforcerowsecurity": "t",
+            "owner_role": "mp_schema_owner",
+        }
+        for name in sorted(table_names)
+    ]
+    if table_rows != expected:
+        raise MigrationError("Step 32 table ownership or RLS state differs")
+    policy_names = []
+    for table in manifest["tables"]:
+        for key in ("select_policy", "insert_policy", "update_policy"):
+            name = table.get(key)
+            if name is not None and name.endswith(("_s32_select", "_s32_insert", "_s32_terminal_update")):
+                policy_names.append(name)
+    quoted_policies = ", ".join(sql_literal(name) for name in policy_names)
+    policy_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT policyname, tablename, cmd, roles, qual, with_check "
+            "FROM pg_catalog.pg_policies WHERE schemaname = 'memory_patch' "
+            f"AND policyname IN ({quoted_policies}) ORDER BY policyname",
+        )
+    )
+    if {row["policyname"] for row in policy_rows} != set(policy_names):
+        raise MigrationError("Step 32 policy catalog is incomplete")
+    if any("mp_app_runtime" not in row["roles"] for row in policy_rows):
+        raise MigrationError("Step 32 policy role differs")
+    if any(
+        "mp_personal_memory_commit_helper" in row["roles"]
+        for row in policy_rows
+    ):
+        raise MigrationError("Step 32 grants Commit Helper row visibility")
+    expected_policy_commands: dict[str, tuple[str, str]] = {}
+    for table in manifest["tables"]:
+        for key, command in (
+            ("select_policy", "SELECT"),
+            ("insert_policy", "INSERT"),
+            ("update_policy", "UPDATE"),
+        ):
+            name = table.get(key)
+            if name is not None and name in policy_names:
+                expected_policy_commands[name] = (table["table"], command)
+    for row in policy_rows:
+        if expected_policy_commands[row["policyname"]] != (
+            row["tablename"], row["cmd"].upper()
+        ):
+            raise MigrationError("Step 32 policy target differs")
+        if row["cmd"].upper() == "SELECT" and not row["qual"]:
+            raise MigrationError("Step 32 SELECT policy is unbounded")
+        if row["cmd"].upper() in {"INSERT", "UPDATE"} and not row["with_check"]:
+            raise MigrationError("Step 32 mutation policy is unbounded")
+    helper_names = [item["function"] for item in manifest["helper_functions"]]
+    quoted_helpers = ", ".join(sql_literal(name) for name in helper_names)
+    helper_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT procedure.proname AS function_name, "
+            "owner.rolname AS owner_role, procedure.prosecdef "
+            "FROM pg_catalog.pg_proc AS procedure "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = procedure.pronamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = procedure.proowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            f"AND procedure.proname IN ({quoted_helpers}) "
+            "ORDER BY procedure.proname",
+        )
+    )
+    if helper_rows != [
+        {
+            "function_name": name,
+            "owner_role": "mp_schema_owner",
+            "prosecdef": "f",
+        }
+        for name in sorted(helper_names)
+    ]:
+        raise MigrationError("Step 32 helper ownership or mode differs")
+    app_grants = parse_tsv(
+        client.execute(
+            database,
+            "SELECT table_name, privilege_type "
+            "FROM information_schema.table_privileges "
+            "WHERE table_schema = 'memory_patch' AND grantee = 'mp_app_runtime' "
+            f"AND table_name IN ({quoted}) ORDER BY table_name, privilege_type",
+        )
+    )
+    if any(row["privilege_type"] == "DELETE" for row in app_grants):
+        raise MigrationError("Step 32 grants physical DELETE authority")
+    expected_app_grants = sorted(
+        (table["table"], privilege)
+        for table in manifest["tables"]
+        for privilege in table["privileges"]
+    )
+    if [
+        (row["table_name"], row["privilege_type"]) for row in app_grants
+    ] != expected_app_grants:
+        raise MigrationError("Step 32 runtime table grants differ")
+    commit_helper_tables = manifest["commit_helper_fk_reference_tables"]
+    quoted_commit_tables = ", ".join(
+        sql_literal(name) for name in commit_helper_tables
+    )
+    commit_helper_grants = parse_tsv(
+        client.execute(
+            database,
+            "SELECT table_name, privilege_type "
+            "FROM information_schema.table_privileges "
+            "WHERE table_schema = 'memory_patch' "
+            "AND grantee = 'mp_personal_memory_commit_helper' "
+            f"AND table_name IN ({quoted_commit_tables}) "
+            "ORDER BY table_name, privilege_type",
+        )
+    )
+    if [
+        (row["table_name"], row["privilege_type"])
+        for row in commit_helper_grants
+    ] != sorted((name, "SELECT") for name in commit_helper_tables):
+        raise MigrationError("Step 32 Commit Helper FK grants differ")
+    runtime_function_grants = 0
+    for helper in manifest["helper_functions"]:
+        rows = parse_tsv(
+            client.execute(
+                database,
+                "SHOW GRANTS ON FUNCTION memory_patch." + helper["function"],
+            )
+        )
+        signature = STEP32_FUNCTION_SIGNATURES.get(helper["function"])
+        required_columns = {
+            "database_name", "schema_name", "routine_id",
+            "routine_signature", "grantee", "privilege_type",
+            "is_grantable",
+        }
+        if signature is None or not rows or any(
+            set(row) != required_columns for row in rows
+        ):
+            raise MigrationError("Step 32 helper grant catalog is invalid")
+        if (
+            len({row["routine_id"] for row in rows}) != 1
+            or not rows[0]["routine_id"].isdigit()
+            or any(
+                row["database_name"] != database
+                or row["schema_name"] != "memory_patch"
+                or row["routine_signature"] != signature
+                for row in rows
+            )
+        ):
+            raise MigrationError("Step 32 helper grant identity differs")
+        expected_grants = {
+            ("admin", "ALL", "t"),
+            ("mp_schema_owner", "ALL", "t"),
+            ("root", "ALL", "t"),
+        }
+        expected_grants.update(
+            (role, "EXECUTE", "f") for role in helper["runtime_roles"]
+        )
+        actual_grants = {
+            (row["grantee"], row["privilege_type"], row["is_grantable"])
+            for row in rows
+        }
+        if len(rows) != len(expected_grants) or actual_grants != expected_grants:
+            raise MigrationError("Step 32 helper grants differ")
+        runtime_function_grants += len(helper["runtime_roles"])
+    planning_grants = manifest["step30_policy_planning_function_grants"]
+    planning_grant = planning_grants[0]
+    planning_rows = parse_tsv(
+        client.execute(
+            database,
+            "SHOW GRANTS ON FUNCTION memory_patch."
+            + planning_grant["function"],
+        )
+    )
+    planning_function_grant_count = _validate_step30_function_grants(
+        database=database,
+        function_name=planning_grant["function"],
+        rows=planning_rows,
+        runtime_roles=(
+            "mp_app_runtime",
+            "mp_personal_memory_commit_helper",
+        ),
+    )
+    trigger_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT trigger.tgname AS trigger_name, "
+            "procedure.proname AS function_name "
+            "FROM pg_catalog.pg_trigger AS trigger "
+            "JOIN pg_catalog.pg_class AS target ON target.oid = trigger.tgrelid "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = target.relnamespace "
+            "JOIN pg_catalog.pg_proc AS procedure ON procedure.oid = trigger.tgfoid "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND trigger.tgname IN ('memory_items_s30_guard', "
+            "'memory_items_s32_terminal_guard') AND NOT trigger.tgisinternal "
+            "ORDER BY trigger.tgname",
+        )
+    )
+    if trigger_rows != [
+        {
+            "trigger_name": "memory_items_s30_guard",
+            "function_name": "guard_step30_memory_item",
+        },
+        {
+            "trigger_name": "memory_items_s32_terminal_guard",
+            "function_name": "guard_step32_memory_item_terminal",
+        },
+    ]:
+        raise MigrationError("Step 32 terminal trigger boundary differs")
+    return {
+        "protected_table_count": len(table_rows),
+        "policy_count": len(policy_rows),
+        "helper_count": len(helper_rows),
+        "runtime_function_grant_count": runtime_function_grants,
+        "policy_planning_function_grant_count": planning_function_grant_count,
+        "runtime_table_grant_count": len(app_grants),
+        "commit_helper_fk_select_grant_count": len(commit_helper_grants),
+        "commit_helper_lifecycle_select_policy_count": 0,
+        "delete_grants": 0,
         "trigger_count": len(trigger_rows),
     }
 
@@ -5634,6 +6197,20 @@ def apply_migrations(
                     sqlstate=exc.sqlstate,
                 ) from exc
             assert_step30_security_catalog(client, database)
+            database_sql = ""
+        elif migration.migration_id == STEP32_MIGRATION_ID:
+            try:
+                client.execute(
+                    database,
+                    "BEGIN;\n" + database_sql + "\nCOMMIT;",
+                    timeout=timeout,
+                )
+            except SqlError as exc:
+                raise SqlError(
+                    f"{migration.migration_id} database transaction failed: {exc}",
+                    sqlstate=exc.sqlstate,
+                ) from exc
+            assert_step32_security_catalog(client, database)
             database_sql = ""
         migration_record_sql = (
             "INSERT INTO memory_patch.schema_migrations "

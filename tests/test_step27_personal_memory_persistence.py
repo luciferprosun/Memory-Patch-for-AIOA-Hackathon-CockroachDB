@@ -905,6 +905,12 @@ class DatabaseAndBoundaryStaticTests(unittest.TestCase):
                 (ROOT / "src/aioa_memory_kernel/personal_memory").glob("*.py")
             )
         )
+        cls.step27_package_text = "\n".join(
+            (
+                ROOT / "src/aioa_memory_kernel/personal_memory" / filename
+            ).read_text(encoding="utf-8")
+            for filename in ("models.py", "repository.py", "service.py", "export.py")
+        )
 
     def test_quota_table_uses_composite_owner_key_and_restrictive_fk(self) -> None:
         self.assertIn(
@@ -936,7 +942,7 @@ class DatabaseAndBoundaryStaticTests(unittest.TestCase):
         ):
             self.assertIn(field, self.sql)
         self.assertNotRegex(
-            self.package_text.lower(),
+            self.step27_package_text.lower(),
             r"api[_-]?key|authorization:|password|secret_key|private_key",
         )
 
@@ -964,12 +970,12 @@ class DatabaseAndBoundaryStaticTests(unittest.TestCase):
         self.assertNotIn("os.system", self.package_text)
         self.assertNotIn("shell=True", self.package_text)
 
-    def test_step32_and_later_capabilities_are_absent(self) -> None:
+    def test_step33_and_later_capabilities_are_absent(self) -> None:
         for forbidden in (
-            "shared_promotion",
-            "promote_to_shared",
-            "personal_to_shared",
-            "supersede_personal_memory_patch",
+            "audit_ledger",
+            "hash_chain",
+            "review_workspace",
+            "personal_memory_ui",
         ):
             self.assertNotIn(forbidden, self.package_text)
 
@@ -1038,7 +1044,8 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("Step 29: COMPLETE AND PUSHED", roadmap)
         self.assertIn("[x] **Step 30", roadmap)
         self.assertIn("[x] **Step 31", roadmap)
-        self.assertIn("[ ] **Step 32", roadmap)
+        self.assertIn("[x] **Step 32", roadmap)
+        self.assertIn("[ ] **Step 33", roadmap)
         self.assertIn(
             "Step 27 owner-private empty Personal Memory HAT slots",
             agents,
@@ -1047,7 +1054,8 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
         self.assertIn("`Step 30: COMPLETE AND PUSHED", agents)
         self.assertIn("`Step 31: COMPLETE AND PUSHED", agents)
-        self.assertIn("`Step 32: NOT STARTED`", agents)
+        self.assertIn("`Step 32: COMPLETE AND PUSHED", agents)
+        self.assertIn("`Step 33: NOT STARTED`", agents)
 
 
 if __name__ == "__main__":

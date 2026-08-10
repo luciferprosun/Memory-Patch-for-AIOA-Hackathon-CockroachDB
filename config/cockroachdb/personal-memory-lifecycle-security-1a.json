@@ -1,0 +1,130 @@
+{
+  "append_only": true,
+  "canonical_evidence_authority": false,
+  "commit_helper_fk_reference_tables": [
+    "personal_memory_patch_supersessions",
+    "personal_memory_patch_revocations",
+    "personal_memory_exports",
+    "personal_memory_deletions",
+    "shared_memory_promotion_proposals"
+  ],
+  "helper_functions": [
+    {
+      "function": "step32_patch_owner_matches",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_app_runtime"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step32_slot_snapshot_matches",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_app_runtime"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step32_terminal_record_matches",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_app_runtime",
+        "mp_personal_memory_commit_helper"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "guard_step32_memory_item_terminal",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_app_runtime",
+        "mp_personal_memory_commit_helper"
+      ],
+      "security_type": "INVOKER"
+    }
+  ],
+  "manifest_id": "memory-patch-step32-personal-memory-lifecycle-security-1a",
+  "physical_delete": false,
+  "runtime_role": "mp_app_runtime",
+  "schema_version": 1,
+  "shared_publication_authority": false,
+  "step30_policy_planning_function_grants": [
+    {
+      "authority_result": false,
+      "function": "step30_commit_helper_authorized",
+      "purpose": "RLS_POLICY_PLANNING_ONLY",
+      "runtime_role": "mp_app_runtime"
+    }
+  ],
+  "tables": [
+    {
+      "force_rls": true,
+      "insert_policy": "personal_memory_patch_supersessions_s32_insert",
+      "privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "personal_memory_patch_supersessions_s32_select",
+      "table": "personal_memory_patch_supersessions"
+    },
+    {
+      "force_rls": true,
+      "insert_policy": "personal_memory_patch_revocations_s32_insert",
+      "privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "personal_memory_patch_revocations_s32_select",
+      "table": "personal_memory_patch_revocations"
+    },
+    {
+      "force_rls": true,
+      "insert_policy": "personal_memory_exports_s32_insert",
+      "privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "personal_memory_exports_s32_select",
+      "table": "personal_memory_exports"
+    },
+    {
+      "force_rls": true,
+      "insert_policy": "personal_memory_deletions_s32_insert",
+      "privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "personal_memory_deletions_s32_select",
+      "table": "personal_memory_deletions"
+    },
+    {
+      "force_rls": true,
+      "insert_policy": "shared_memory_promotion_proposals_s32_insert",
+      "privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "select_policy": "shared_memory_promotion_proposals_s32_select",
+      "table": "shared_memory_promotion_proposals"
+    },
+    {
+      "force_rls": true,
+      "insert_policy": null,
+      "privileges": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "select_policy": "memory_items_s5_select",
+      "table": "memory_items",
+      "update_policy": "memory_items_s32_terminal_update"
+    }
+  ],
+  "target_cockroachdb_version": "v26.2.4",
+  "terminal_states": [
+    "SUPERSEDED",
+    "REVOKED",
+    "DELETED"
+  ]
+}

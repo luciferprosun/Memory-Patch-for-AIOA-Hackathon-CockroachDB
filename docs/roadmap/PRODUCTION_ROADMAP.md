@@ -152,7 +152,13 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   conflict suppression, non-canonical authority separation and controlled
   CockroachDB validation are closed by the intended Step 31 commit once it is
   reachable on `origin/main`.
-- `Step 32: NOT STARTED`.
+- `Step 32: COMPLETE AND PUSHED at actual closure commit`.
+  Exact owner-scoped Personal Memory supersession, revocation, deterministic
+  export, logical deletion, Step 31 retrieval suppression, separate owner
+  consent, deterministic de-identification, review-only shared-promotion
+  proposals, RLS/FORCE RLS isolation and controlled CockroachDB validation are
+  closed by the intended Step 32 commit once it is reachable on `origin/main`.
+- `Step 33: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -675,8 +681,20 @@ Dać użytkownikowi pulę prywatnych HAT-ów, w których zatwierdzone korekty st
   [validation evidence](../evidence/personal-memory/step31-active-patch-retrieval-validation.json),
   [rekord zamknięcia](../audits/STEP_31_ACTIVE_PATCH_RETRIEVAL_CROSS_MODEL_REUSE_CLOSURE_1A.md).
 
-- [ ] **Step 32 — Supersession, Revocation, Export, Deletion and Shared Promotion 1A**
+- [x] **Step 32 — Supersession, Revocation, Export, Deletion and Shared Promotion 1A**
   Konflikt z nowszą wiedzą, stale marking, supersession, revocation, user export/delete oraz osobny, de-identyfikowany personal-to-shared review flow.
+  `Step 32: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje immutable/hash-bound supersession i revocation receipts,
+  zachowanie historycznej treści, bieżące i historyczne Step 31 eligibility,
+  deterministyczny owner export, logiczne Step 27 delete/tombstone, osobną
+  zgodę właściciela na shared review, deterministyczną de-identyfikację,
+  wyłącznie review-required `SHARED_PROMOTION_PROPOSED`, migration 0015,
+  RLS/FORCE RLS i brak canonical-evidence/source-publication authority.
+  [Architektura](../architecture/PERSONAL_MEMORY_SUPERSESSION_REVOCATION_EXPORT_DELETE_SHARED_PROMOTION_1A.md),
+  [ADR-039](../adr/ADR-039-personal-memory-lifecycle-shared-promotion-boundary.md),
+  [runbook](../operations/STEP_32_PERSONAL_MEMORY_LIFECYCLE_VALIDATION_1A.md),
+  [validation evidence](../evidence/personal-memory/step32-personal-memory-lifecycle-validation.json),
+  [rekord zamknięcia](../audits/STEP_32_PERSONAL_MEMORY_LIFECYCLE_CLOSURE_1A.md).
 
 ### Gate fazy 7
 

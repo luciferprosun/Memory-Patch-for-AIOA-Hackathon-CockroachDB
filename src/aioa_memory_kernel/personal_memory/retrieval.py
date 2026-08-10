@@ -388,6 +388,9 @@ class StoredActivePatchCandidate:
     valid_from: datetime | None
     valid_until: datetime | None
     expires_at: datetime | None
+    step32_terminal_kind: str | None = None
+    step32_effective_at: datetime | None = None
+    step32_superseded_by_patch_id: str | None = None
     row_hash: str = field(init=False)
 
     def __post_init__(self) -> None:
@@ -401,11 +404,32 @@ class StoredActivePatchCandidate:
         valid_from = _optional_timestamp(self.valid_from, "valid_from")
         valid_until = _optional_timestamp(self.valid_until, "valid_until")
         expires_at = _optional_timestamp(self.expires_at, "expires_at")
+        terminal_effective_at = _optional_timestamp(
+            self.step32_effective_at, "step32_effective_at"
+        )
         if valid_from is not None and valid_until is not None and valid_from > valid_until:
             raise ContractValidationError("patch validity interval is invalid")
+        if self.step32_terminal_kind is not None:
+            if (
+                self.step32_terminal_kind != "SUPERSEDED"
+                or self.active
+                or self.revoked
+                or terminal_effective_at is None
+                or not isinstance(self.step32_superseded_by_patch_id, str)
+                or not self.step32_superseded_by_patch_id
+            ):
+                raise ContractValidationError(
+                    "historical retrieval accepts only exact supersession metadata"
+                )
+        elif (
+            terminal_effective_at is not None
+            or self.step32_superseded_by_patch_id is not None
+        ):
+            raise ContractValidationError("terminal metadata is incomplete")
         object.__setattr__(self, "valid_from", valid_from)
         object.__setattr__(self, "valid_until", valid_until)
         object.__setattr__(self, "expires_at", expires_at)
+        object.__setattr__(self, "step32_effective_at", terminal_effective_at)
         object.__setattr__(
             self,
             "row_hash",
@@ -1058,10 +1082,19 @@ def assess_active_patch(
     retrieval_binding = _matching_model_binding(slot, request.model_identity)
     model_match = origin_binding is not None and retrieval_binding is not None
     compatibility = _current_canonical_compatibility(state, temporal_result)
+    historical_supersession = (
+        candidate.step32_terminal_kind == "SUPERSEDED"
+        and request.knowledge_as_of is not None
+        and candidate.step32_effective_at is not None
+        and request.knowledge_as_of < candidate.step32_effective_at
+        and not candidate.revoked
+    )
     active = (
         state.state is PatchState.ACTIVE
-        and candidate.active
-        and not candidate.revoked
+        and (
+            (candidate.active and not candidate.revoked)
+            or historical_supersession
+        )
         and state.activation_receipt is not None
     )
     reasons: set[Step31ReasonCode] = set()

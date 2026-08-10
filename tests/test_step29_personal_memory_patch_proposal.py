@@ -1001,9 +1001,9 @@ class PersistenceAndBoundaryTests(unittest.TestCase):
         manifest = json.loads(
             (ROOT / "sql/cockroachdb/migrations/manifest.json").read_text()
         )
-        self.assertEqual(manifest["schema_version"], 12)
-        self.assertEqual(manifest["runner_version"], "12.0.0")
-        self.assertEqual(len(manifest["migrations"]), 14)
+        self.assertEqual(manifest["schema_version"], 13)
+        self.assertEqual(manifest["runner_version"], "13.0.0")
+        self.assertEqual(len(manifest["migrations"]), 15)
         latest = next(
             item
             for item in manifest["migrations"]
@@ -1099,11 +1099,13 @@ class PersistenceAndBoundaryTests(unittest.TestCase):
         self.assertIn("`Step 29: COMPLETE AND PUSHED at actual closure commit`", roadmap)
         self.assertIn("- [x] **Step 30", roadmap)
         self.assertIn("- [x] **Step 31", roadmap)
-        self.assertIn("- [ ] **Step 32", roadmap)
+        self.assertIn("- [x] **Step 32", roadmap)
+        self.assertIn("- [ ] **Step 33", roadmap)
         self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 30: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 31: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 32: NOT STARTED", agents)
+        self.assertIn("Step 32: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 33: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

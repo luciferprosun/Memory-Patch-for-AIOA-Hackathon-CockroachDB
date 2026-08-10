@@ -193,7 +193,14 @@ At roadmap adoption and in subsequent audited closure records:
   closure commit. It is completion evidence only after that commit is
   reachable on `origin/main`.
 - `Step 31: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 32: NOT STARTED`. Step 31 completion does not authorize Step 32.
+- Step 32 exact owner-scoped supersession, revocation, deterministic owner
+  export, logical deletion, Step 31 retrieval suppression, separate shared
+  consent, deterministic de-identification, review-only shared-promotion
+  proposals, RLS/FORCE RLS isolation and controlled disposable CockroachDB
+  validation are complete in its intended closure commit. It is completion
+  evidence only after that commit is reachable on `origin/main`.
+- `Step 32: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 33: NOT STARTED`. Step 32 completion does not authorize Step 33.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

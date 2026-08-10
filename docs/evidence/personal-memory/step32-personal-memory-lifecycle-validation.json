@@ -1,0 +1,150 @@
+{
+  "authority": {
+    "execution_authority": false,
+    "model_authority": false,
+    "private_patch_canonical_evidence": false,
+    "shared_promotion_canonical_evidence": false,
+    "source_publication_authority": false
+  },
+  "cleanup": {
+    "app_role_removed": true,
+    "commit_role_removed": true,
+    "database_removed": true,
+    "force_kill_used": false,
+    "pid_exited": true,
+    "ports_closed": true,
+    "temporary_store_removed": true
+  },
+  "database": {
+    "binary_sha256": "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf",
+    "migration_added": true,
+    "migration_count": 15,
+    "migration_id": "0015_step32_personal_memory_lifecycle",
+    "migration_sha256": "eb1a442a98d5822d11b316822a40258b6b9d780cdb55be75af2988ac4677bf4a",
+    "replay_skipped_count": 15,
+    "security_catalog": {
+      "commit_helper_fk_select_grant_count": 5,
+      "commit_helper_lifecycle_select_policy_count": 0,
+      "delete_grants": 0,
+      "helper_count": 4,
+      "policy_count": 11,
+      "policy_planning_function_grant_count": 2,
+      "protected_table_count": 6,
+      "runtime_function_grant_count": 6,
+      "runtime_table_grant_count": 13,
+      "trigger_count": 2
+    },
+    "version": "v26.2.4"
+  },
+  "deletion": {
+    "deleted_patch_not_retrieved": true,
+    "logical_delete": true,
+    "patch_hash": "a0696f0e703c32c5fe16cf9bdff51bd2446e243585e75701deb60a718b38cf4d",
+    "physical_delete": false,
+    "replay": "EXACT_REPLAY",
+    "request_hash": "2141b3b0977578eff80dd4f697272da6193567e96efdcdc4244e12065224f618",
+    "result_hash": "580c88b35ba7d5b08692267ae981a32b1c0ff69f9de4640672bb4efa0935f0fa",
+    "shared_artifacts_mutated": false,
+    "tombstone_hash": "6381307ca64b9f59d0051899431b634daaf86320c82e561aeaa44915ae871801"
+  },
+  "effect_bounds": {
+    "aws_mutations": 0,
+    "external_execution_actions": 0,
+    "global_audit_ledger": 0,
+    "human_review_workspace": 0,
+    "model_calls": 0,
+    "personal_memory_ui": 0,
+    "provider_calls": 0,
+    "s3_mutations": 0,
+    "source_registry_publications": 0,
+    "web_calls": 0
+  },
+  "export": {
+    "bundle_hash": "1555c21ad0b08ae2f39af4fe6a5d041ba10b7e962ec1af4281bfeafb559f6c1b",
+    "deterministic": true,
+    "owner_isolation": "PASS",
+    "record_count": 13,
+    "request_hash": "0719a19b9fbcfbe2f47364faf574899d3e2ffe289e845a34a9f69a44972185c4"
+  },
+  "owner_isolation": {
+    "commit_helper_fk_visible_rows": {
+      "personal_memory_deletions": 0,
+      "personal_memory_exports": 0,
+      "personal_memory_patch_revocations": 0,
+      "personal_memory_patch_supersessions": 0,
+      "shared_memory_promotion_proposals": 0
+    },
+    "cross_tenant_insert": "DENIED",
+    "cross_tenant_visible_rows": {
+      "personal_memory_deletions": 0,
+      "personal_memory_exports": 0,
+      "personal_memory_patch_revocations": 0,
+      "personal_memory_patch_supersessions": 0,
+      "shared_memory_promotion_proposals": 0
+    },
+    "cross_user_export": "DENIED",
+    "cross_user_insert": "DENIED",
+    "cross_user_visible_rows": {
+      "personal_memory_deletions": 0,
+      "personal_memory_exports": 0,
+      "personal_memory_patch_revocations": 0,
+      "personal_memory_patch_supersessions": 0,
+      "shared_memory_promotion_proposals": 0
+    },
+    "owner_visible_rows": {
+      "personal_memory_deletions": 1,
+      "personal_memory_exports": 1,
+      "personal_memory_patch_revocations": 1,
+      "personal_memory_patch_supersessions": 1,
+      "shared_memory_promotion_proposals": 1
+    }
+  },
+  "revocation": {
+    "content_preserved": true,
+    "patch_hash": "2497263b1bf9fc975a60b73223804f37677903a84c423eadb8fc8f17e4200bfc",
+    "receipt_hash": "4d089c3a3070623c461cef5ea06adf446456ef4c257900f3ce6326b15c853880",
+    "replay": "EXACT_REPLAY",
+    "revocation_is_deletion": false,
+    "revoked_patch_not_retrieved": true
+  },
+  "rls": {
+    "force_rls": true,
+    "owner_isolation": "PASS",
+    "runtime_delete_grants": 0
+  },
+  "schema_version": "step32-personal-memory-lifecycle-validation-1a",
+  "shared_promotion": {
+    "candidate_shared_statement_hash": "077cdd059dbb74ce83d2453e092f8a320958b897cad429beca0f73a61a0c39bf",
+    "canonical_conflict_result": "MATCH",
+    "canonical_evidence": false,
+    "deidentification_policy_digest": "01624dea517506ce0f3e68bc0c8754e6ba5cb70ac3d87be050c9a5aa073bc90f",
+    "owner_consent_hash": "95c95fdb1a2ada4d57e9664fe095dc0073dd62e136f45aaa3432a27f01c581ea",
+    "privacy_result": "PASS",
+    "proposal_hash": "e8679b40b978790e1f3ab321dcf42c92bb6a9fb2ad35bf4b31b67cd982d608c7",
+    "review_required": true,
+    "shared_active": false,
+    "source_patch_hash": "a51be16ccb69000203840eddaf798ed03e6bfa2e36caca4617bd78cf41b2ad50",
+    "source_registry_published": false
+  },
+  "start_sha": "bf6cde9de87ab727f1bd5e48e2abfc7e8e3b85b5",
+  "status": "PASS",
+  "step": 32,
+  "step33_boundary": {
+    "global_audit_ledger": 0,
+    "human_review_workspace": 0,
+    "personal_memory_ui": 0,
+    "step33_started": false
+  },
+  "supersession": {
+    "current_patch_ids": [
+      "personal-memory-patch-5ffac2505b367cb52579b8bebf73e9c15dd457d526c16d4d9d18cf0651b6f52e"
+    ],
+    "historical_old_patch_applicable": true,
+    "new_patch_hash": "a51be16ccb69000203840eddaf798ed03e6bfa2e36caca4617bd78cf41b2ad50",
+    "old_patch_hash": "6a90e47725a7d5bda298ff3cfd2a8d86c6010c6e761a3b4b1c23668bac82bf6b",
+    "old_patch_immutable": true,
+    "receipt_hash": "0a5577afc3e428da38576fa659124a19e9da7e596bceef0a4754ab3a1e3a2841",
+    "replay": "EXACT_REPLAY"
+  },
+  "validation_digest": "5a122a6ee0af54e9818bee4a3c45515fc0d6e13deb272005a1111d68a9ccd1db"
+}

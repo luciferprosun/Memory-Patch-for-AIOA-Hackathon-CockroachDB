@@ -728,14 +728,16 @@ class DocumentationClosureTests(unittest.TestCase):
         self.assertIn("Step 29: COMPLETE AND PUSHED", roadmap)
         self.assertIn("[x] **Step 30", roadmap)
         self.assertIn("[x] **Step 31", roadmap)
-        self.assertIn("[ ] **Step 32", roadmap)
+        self.assertIn("[x] **Step 32", roadmap)
+        self.assertIn("[ ] **Step 33", roadmap)
         self.assertIn("Step 26 complete upstream integrity binding", agents)
         self.assertIn("Step 27 owner-private empty Personal Memory HAT slots", agents)
         self.assertIn("Step 28 owner- and slot-bound Correction Candidate", agents)
         self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
         self.assertIn("`Step 30: COMPLETE AND PUSHED", agents)
         self.assertIn("`Step 31: COMPLETE AND PUSHED", agents)
-        self.assertIn("`Step 32: NOT STARTED`", agents)
+        self.assertIn("`Step 32: COMPLETE AND PUSHED", agents)
+        self.assertIn("`Step 33: NOT STARTED`", agents)
 
 
 if __name__ == "__main__":

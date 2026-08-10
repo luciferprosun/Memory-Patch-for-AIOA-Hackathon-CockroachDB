@@ -71,7 +71,10 @@ ACTIVE_PATCH_RETRIEVAL_SQL = """
       item.step30_state_version AS item_step30_state_version,
       item.step30_state_hash AS item_step30_state_hash,
       item.step30_activation_receipt_hash AS item_step30_activation_receipt_hash,
-      item.step30_activation_payload AS item_step30_activation_payload
+      item.step30_activation_payload AS item_step30_activation_payload,
+      item.step32_terminal_kind,
+      item.step32_effective_at,
+      item.step32_superseded_by_patch_id
     FROM memory_patch.memory_items AS item
     JOIN memory_patch.memory_patch_proposals AS proposal
       ON proposal.tenant_id = item.tenant_id
@@ -86,8 +89,28 @@ ACTIVE_PATCH_RETRIEVAL_SQL = """
      AND item.target_scope = 'USER_PERSONAL_HAT'
      AND item.visibility = 'PERSONAL'
      AND item.trust_class = 'PERSONAL_VERIFIED_PATCH'
-     AND item.active = true
-     AND item.revoked = false
+     AND (
+       (
+         item.active = true
+         AND item.revoked = false
+         AND item.step32_terminal_kind IS NULL
+       )
+       OR (
+         %s::TIMESTAMPTZ IS NOT NULL
+         AND item.active = false
+         AND item.revoked = false
+         AND item.step32_terminal_kind = 'SUPERSEDED'
+         AND item.step32_effective_at > %s::TIMESTAMPTZ
+       )
+     )
+     AND NOT EXISTS (
+       SELECT 1
+         FROM memory_patch.personal_memory_patch_supersessions AS successor
+        WHERE successor.tenant_id = item.tenant_id
+          AND successor.new_patch_id = item.memory_item_id
+          AND %s::TIMESTAMPTZ IS NOT NULL
+          AND successor.effective_at > %s::TIMESTAMPTZ
+     )
      AND item.step30_state_version = 7
      AND item.step30_activation_receipt_hash IS NOT NULL
      AND proposal.lifecycle_state = 'ACTIVE'
@@ -218,6 +241,13 @@ def active_patch_candidate_from_row(
         valid_from=_timestamp(row.get("valid_from"), "valid_from"),
         valid_until=_timestamp(row.get("valid_until"), "valid_until"),
         expires_at=_timestamp(row.get("expires_at"), "expires_at"),
+        step32_terminal_kind=row.get("step32_terminal_kind"),
+        step32_effective_at=_timestamp(
+            row.get("step32_effective_at"), "step32_effective_at"
+        ),
+        step32_superseded_by_patch_id=row.get(
+            "step32_superseded_by_patch_id"
+        ),
     )
 
 
@@ -233,6 +263,7 @@ class ActivePatchRetrievalCockroachRepository:
         personal_memory_space_id: str,
         hat_scope_id: str,
         limit: int,
+        knowledge_as_of: datetime | None = None,
     ) -> tuple[StoredActivePatchCandidate, ...]:
         if (
             not isinstance(limit, int)
@@ -251,6 +282,10 @@ class ActivePatchRetrievalCockroachRepository:
                 owner_user_id,
                 personal_memory_space_id,
                 hat_scope_id,
+                knowledge_as_of,
+                knowledge_as_of,
+                knowledge_as_of,
+                knowledge_as_of,
                 limit,
             ),
         )
