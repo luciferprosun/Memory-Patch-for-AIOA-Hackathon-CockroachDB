@@ -137,7 +137,14 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   guards, RLS/FORCE RLS isolation, and controlled CockroachDB validation are
   closed by the intended Step 29 commit once it is reachable on
   `origin/main`.
-- `Step 30: NOT STARTED`.
+- `Step 30: COMPLETE AND PUSHED at actual closure commit`.
+  Exact owner-human approval, hash-bound receipts, three independent replay
+  identities, the separate least-privileged Commit Helper, precommit and
+  preactivation TOCTOU revalidation, the no-skip
+  `AWAITING_APPROVAL -> APPROVED -> COMMITTED -> ACTIVE` progression,
+  RLS/FORCE RLS isolation, and controlled CockroachDB validation are closed
+  by the intended Step 30 commit once it is reachable on `origin/main`.
+- `Step 31: NOT STARTED`.
 
 ## Zasada prowadzenia prac
 
@@ -628,8 +635,21 @@ Dać użytkownikowi pulę prywatnych HAT-ów, w których zatwierdzone korekty st
   [validation evidence](../evidence/personal-memory/step29-personal-memory-patch-validation.json),
   [rekord zamknięcia](../audits/STEP_29_PERSONAL_MEMORY_PATCH_PROPOSAL_VALIDATION_CLOSURE_1A.md).
 
-- [ ] **Step 30 — User Approval, Commit Helper and Activation 1A**
+- [x] **Step 30 — User Approval, Commit Helper and Activation 1A**
   Oddzielne approval i technical commit, revalidation hashy, dedicated credentials, replay protection, `APPROVED → COMMITTED → ACTIVE`.
+  `Step 30: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje wyłącznie jawne zatwierdzenie dokładnego proposal przez
+  właściciela-człowieka, immutable approval/commit/activation receipts,
+  niezależną ochronę replay, oddzielny `mp_personal_memory_commit_helper`,
+  ponowną walidację hashy, slotu, quota, evidence i model binding przed
+  commitem oraz aktywacją, migration 0014, RLS/FORCE RLS, owner isolation,
+  TOCTOU negatives, identyczność treści proposal→committed→active i zero
+  retrieval/cross-model/external-execution authority.
+  [Architektura](../architecture/USER_APPROVAL_COMMIT_HELPER_ACTIVATION_1A.md),
+  [ADR-037](../adr/ADR-037-user-approval-commit-helper-activation.md),
+  [runbook](../operations/STEP_30_USER_APPROVAL_COMMIT_ACTIVATION_VALIDATION_1A.md),
+  [validation evidence](../evidence/personal-memory/step30-user-approval-commit-activation-validation.json),
+  [rekord zamknięcia](../audits/STEP_30_USER_APPROVAL_COMMIT_HELPER_ACTIVATION_CLOSURE_1A.md).
 
 - [ ] **Step 31 — Active Patch Retrieval and Cross-Model Reuse 1A**
   Użycie aktywnego patcha przy późniejszym pytaniu, scope/temporal checks, ta sama pamięć dla Gemmy lub innego modelu, bez traktowania patcha jako canonical evidence.

@@ -1,0 +1,126 @@
+{
+  "activation": {
+    "exact_content_identity": true,
+    "preactivation_revalidation": "PASS",
+    "receipt_hash": "8805112fd6ad91b85dbf55257c6e848bdc98ce0af84ea82d8ae7c8ef4dfed6d3",
+    "replay": {
+      "changed_replay": "DENIED",
+      "exact_replay": "PASS"
+    },
+    "request_hash": "43bce5f07e34f9ad1061373556155ea506a45d256589a19aa1ea415525018345"
+  },
+  "active_patch_canonical_evidence": false,
+  "approval": {
+    "actor_type": "HUMAN_USER",
+    "policy_digest": "7fe9d4bf85241fdfcd4a7f9fb52da6c5a670f18e2fb4cb221c9bcdec2f990f34",
+    "receipt_hash": "54a3653281d1ca03eee26227fdf773a3e438f09d577f75fd90f110619f8b492f",
+    "replay": {
+      "changed_replay": "DENIED",
+      "exact_replay": "PASS"
+    },
+    "request_hash": "c6c6ffbbc849051ae87e8c3a8446b4902e713f968f05a6e075b47e4c8a11d13a"
+  },
+  "authority": {
+    "critic_approval_authority": false,
+    "external_execution_authority": false,
+    "hat_approval_authority": false,
+    "kernel_auto_approval": false,
+    "model_approval_authority": false
+  },
+  "cleanup": {
+    "app_role_removed": true,
+    "commit_role_removed": true,
+    "database_removed": true,
+    "force_kill_used": false,
+    "pid_exited": true,
+    "ports_closed": true,
+    "temporary_store_removed": true
+  },
+  "commit": {
+    "dedicated_role": "mp_personal_memory_commit_helper",
+    "dedicated_role_can_change_slot": false,
+    "dedicated_role_quota_lock_trigger_guarded": true,
+    "exact_content_identity": true,
+    "precommit_revalidation": "PASS",
+    "receipt_hash": "eea074e64587ecaee88921b1008b465f58cec67de2aa524cb1fda2462bd043c6",
+    "replay": {
+      "changed_replay": "DENIED",
+      "exact_replay": "PASS"
+    },
+    "request_hash": "956adfa809caaa081efd71b24e18bb0bf17975b80e0181e2b1d51f5506e539c9"
+  },
+  "content_identity": {
+    "active_statement_sha256": "c187b47762cd638b3153e03a772db8bf9de9c56709d73803695a2caa3fa19539",
+    "committed_statement_sha256": "c187b47762cd638b3153e03a772db8bf9de9c56709d73803695a2caa3fa19539",
+    "proposal_statement_sha256": "c187b47762cd638b3153e03a772db8bf9de9c56709d73803695a2caa3fa19539"
+  },
+  "database": {
+    "binary_sha256": "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf",
+    "migration": "0014_step30_user_approval_commit_activation.sql",
+    "migration_count": 14,
+    "replay_skipped_count": 14,
+    "security_catalog": {
+      "commit_role_bypassrls": false,
+      "commit_role_can_login": false,
+      "dedicated_table_grant_count": 22,
+      "helper_function_count": 10,
+      "identity_read_policy_count": 4,
+      "protected_table_count": 6,
+      "quota_lock_effective_column": "candidate_quota_epoch",
+      "quota_lock_guarded_table_update": true,
+      "runtime_function_grant_count": 8,
+      "trigger_count": 3
+    },
+    "version": "v26.2.4"
+  },
+  "effect_bounds": {
+    "aws_mutations": 0,
+    "external_execution_actions": 0,
+    "model_calls": 0,
+    "provider_calls": 0,
+    "retrieval_calls": 0,
+    "s3_mutations": 0,
+    "web_calls": 0
+  },
+  "owner_isolation": {
+    "cross_tenant_rows": 0,
+    "cross_user_activation": "DENIED",
+    "cross_user_approval": "DENIED",
+    "cross_user_commit": "DENIED",
+    "cross_user_rows": 0,
+    "owner_rows": 1
+  },
+  "proposal_hash": "20cf2cc3f4d2d94e3d8e9e2052d1507af1c9ed632533a726fe52f744129dd2a3",
+  "proposal_id": "personal-memory-patch-proposal-b04e39a964050f814f5fcc77ba88ee69c716d9d7c8269658b10c28b349b05ad8",
+  "schema_version": "step30-user-approval-commit-activation-validation-1a",
+  "start_sha": "0805fcbb04822d48198aa95ead42abd281784001",
+  "state_matrix": {
+    "ACTIVE": "PASS",
+    "APPROVED": "PASS",
+    "AWAITING_APPROVAL": "PASS_STEP29_INPUT",
+    "COMMITTED": "PASS"
+  },
+  "status": "PASS",
+  "step": 30,
+  "step31_boundary": {
+    "active_patch_retrieval": 0,
+    "cross_model_reuse": 0,
+    "step31_started": false
+  },
+  "target_slot": {
+    "owner_user_id": "user-step20",
+    "personal_memory_space_id": "personal-slot-step30-primary",
+    "tenant_id": "tenant-step20"
+  },
+  "toctou": {
+    "post_approval_quota_change": "DENIED",
+    "post_approval_slot_change": "DENIED"
+  },
+  "transition_history_count": 7,
+  "transition_negatives": {
+    "APPROVED_TO_ACTIVE": "DENIED",
+    "AWAITING_APPROVAL_TO_COMMITTED": "DENIED"
+  },
+  "validation_digest": "e8e9db4edd28630f16f70ec548d27c68c0d45aac1f79d3d50a2e7a5ee1b60e9e",
+  "validation_receipt_hash": "0e8456b62eee58d455ed57027981f18641eff4d8953c8650b06d204c5799e906"
+}

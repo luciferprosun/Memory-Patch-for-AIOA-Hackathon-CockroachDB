@@ -865,7 +865,8 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
             "- [x] **Step 29 — Personal Memory Patch Proposal and Evidence Validation 1A**",
             roadmap,
         )
-        self.assertIn("- [ ] **Step 30", roadmap)
+        self.assertIn("- [x] **Step 30", roadmap)
+        self.assertIn("- [ ] **Step 31", roadmap)
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("Step 18 exact identifiers", agents)
         self.assertIn("Step 19 immutable local-model embeddings", agents)
@@ -879,7 +880,8 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("Step 27 owner-private empty Personal Memory HAT slots", agents)
         self.assertIn("Step 28 owner- and slot-bound Correction Candidate", agents)
         self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 30: NOT STARTED", agents)
+        self.assertIn("Step 30: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 31: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

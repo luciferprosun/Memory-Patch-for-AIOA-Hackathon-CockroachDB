@@ -177,7 +177,15 @@ At roadmap adoption and in subsequent audited closure records:
   CockroachDB validation are complete in its intended closure commit. It is
   completion evidence only after that commit is reachable on `origin/main`.
 - `Step 29: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 30: NOT STARTED`. Step 29 completion does not authorize Step 30.
+- Step 30 exact owner-human approval, hash-bound approval/commit/activation
+  receipts, independent replay protection, separate least-privileged Commit
+  Helper, precommit/preactivation TOCTOU revalidation, no-skip
+  `AWAITING_APPROVAL -> APPROVED -> COMMITTED -> ACTIVE` transitions,
+  RLS/FORCE RLS owner isolation, and controlled disposable CockroachDB
+  validation are complete in its intended closure commit. It is completion
+  evidence only after that commit is reachable on `origin/main`.
+- `Step 30: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 31: NOT STARTED`. Step 30 completion does not authorize Step 31.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

@@ -1001,10 +1001,15 @@ class PersistenceAndBoundaryTests(unittest.TestCase):
         manifest = json.loads(
             (ROOT / "sql/cockroachdb/migrations/manifest.json").read_text()
         )
-        self.assertEqual(manifest["schema_version"], 11)
-        self.assertEqual(manifest["runner_version"], "11.0.0")
-        self.assertEqual(len(manifest["migrations"]), 13)
-        latest = manifest["migrations"][-1]
+        self.assertEqual(manifest["schema_version"], 12)
+        self.assertEqual(manifest["runner_version"], "12.0.0")
+        self.assertEqual(len(manifest["migrations"]), 14)
+        latest = next(
+            item
+            for item in manifest["migrations"]
+            if item["migration_id"]
+            == "0013_step29_personal_memory_patch_validation"
+        )
         self.assertEqual(
             latest["migration_id"],
             "0013_step29_personal_memory_patch_validation",
@@ -1088,14 +1093,15 @@ class PersistenceAndBoundaryTests(unittest.TestCase):
         digest = evidence.pop("validation_digest")
         self.assertEqual(digest, canonical_sha256(evidence))
 
-    def test_roadmap_and_agents_close_only_step29(self):
+    def test_roadmap_and_agents_preserve_step29_history_and_close_step30(self):
         roadmap = (ROOT / "docs/roadmap/PRODUCTION_ROADMAP.md").read_text()
         agents = (ROOT / "AGENTS.md").read_text()
         self.assertIn("`Step 29: COMPLETE AND PUSHED at actual closure commit`", roadmap)
-        self.assertIn("- [ ] **Step 30", roadmap)
+        self.assertIn("- [x] **Step 30", roadmap)
+        self.assertIn("- [ ] **Step 31", roadmap)
         self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 30: NOT STARTED", agents)
-        self.assertNotIn("`Step 30: COMPLETE AND PUSHED", roadmap)
+        self.assertIn("Step 30: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 31: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

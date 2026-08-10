@@ -74,10 +74,16 @@ PATCH_VALIDATION_SECURITY_MANIFEST_PATH = (
     / "cockroachdb"
     / "personal-memory-patch-validation-security-1a.json"
 )
+APPROVAL_COMMIT_SECURITY_MANIFEST_PATH = (
+    REPOSITORY_ROOT
+    / "config"
+    / "cockroachdb"
+    / "personal-memory-approval-commit-security-1a.json"
+)
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "11.0.0"
+RUNNER_VERSION = "12.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
@@ -101,6 +107,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step27_",
     "mp_step28_",
     "mp_step29_",
+    "mp_step30_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
@@ -189,6 +196,39 @@ STEP29_FUNCTION_SIGNATURES = {
     ),
     "step29_transition_target_matches": (
         "step29_transition_target_matches(text, text, text, text)"
+    ),
+}
+STEP30_MIGRATION_ID = "0014_step30_user_approval_commit_activation"
+STEP30_MIGRATION_SHA256 = (
+    "8c8fce3bb6263698a43adfd844e67dd4d55c78f7b584468a8e10cd1edc0ca95f"
+)
+STEP30_CLUSTER_ROLE_BEGIN = "-- STEP30_CLUSTER_ROLE_DDL_BEGIN"
+STEP30_CLUSTER_ROLE_END = "-- STEP30_CLUSTER_ROLE_DDL_END"
+STEP30_FUNCTION_SIGNATURES = {
+    "guard_step30_commit_slot_update": "guard_step30_commit_slot_update()",
+    "guard_step30_memory_item": "guard_step30_memory_item()",
+    "guard_step30_proposal_transition": "guard_step30_proposal_transition()",
+    "step30_approval_target_matches": (
+        "step30_approval_target_matches(text, text, text, text, text, text, text)"
+    ),
+    "step30_approval_transition_matches": (
+        "step30_approval_transition_matches(text, text, text, text, text, text, text)"
+    ),
+    "step30_commit_helper_authorized": "step30_commit_helper_authorized()",
+    "step30_commit_target_matches": (
+        "step30_commit_target_matches(text, text, text, text, text, text, text, "
+        "text, text, text, jsonb)"
+    ),
+    "step30_memory_item_commit_matches": (
+        "step30_memory_item_commit_matches(text, text, text, text, text, text, "
+        "text, text, text, jsonb)"
+    ),
+    "step30_proposal_lifecycle_matches": (
+        "step30_proposal_lifecycle_matches(text, text, text, text, text, text, "
+        "text, text, text, text, text, text, jsonb)"
+    ),
+    "step30_transition_target_matches": (
+        "step30_transition_target_matches(text, text, text, text, text)"
     ),
 }
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
@@ -1553,6 +1593,70 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
             "patch_transition_records_s29_insert",
         ]:
             raise MigrationError("Step 29 policy set is not exact")
+    elif migration_id == STEP30_MIGRATION_ID:
+        forbidden_patterns = ()
+        for fragment in (
+            "CREATE ROLE IF NOT EXISTS mp_personal_memory_commit_helper",
+            "NOLOGIN NOCREATEROLE NOCREATEDB NOBYPASSRLS",
+            "step30_approval_receipt_hash STRING",
+            "step30_commit_receipt_hash STRING",
+            "step30_activation_receipt_hash STRING",
+            "step30_receipt_hash STRING",
+            "memory_patch_approvals_s30_replay_uq",
+            "memory_patch_commits_s30_replay_uq",
+            "memory_items_s30_activation_replay_uq",
+            "step30_commit_helper_authorized",
+            "guard_step30_commit_slot_update",
+            "personal_memory_spaces_s30_commit_guard",
+            "guard_step30_proposal_transition",
+            "guard_step30_memory_item",
+            "step30_approval_transition_matches",
+            "step30_memory_item_commit_matches",
+            "step30_proposal_lifecycle_matches",
+            "AWAITING_APPROVAL'",
+            "APPROVED'",
+            "COMMITTED'",
+            "ACTIVE'",
+            "PersonalMemoryPatchLifecycleState",
+            "HUMAN_USER",
+            "personal-memory-commit-helper-1a",
+            "mp_personal_memory_commit_helper",
+            "CREATE POLICY memory_patch_approvals_s30_insert",
+            "CREATE POLICY memory_patch_commits_s30_insert",
+            "CREATE POLICY memory_items_s30_commit_insert",
+            "CREATE POLICY memory_items_s30_activate_update",
+            "FORCE ROW LEVEL SECURITY",
+        ):
+            if fragment not in sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required Step 30 fragment: {fragment}"
+                )
+        cluster_role_sql, database_sql = split_cluster_role_ddl(
+            sql,
+            begin_marker=STEP30_CLUSTER_ROLE_BEGIN,
+            end_marker=STEP30_CLUSTER_ROLE_END,
+            role_name="mp_personal_memory_commit_helper",
+        )
+        if "CREATE ROLE" in database_sql:
+            raise MigrationError("Step 30 database transaction contains role creation")
+        if re.search(r"\bTO\s+PUBLIC\b", database_sql, re.IGNORECASE):
+            raise MigrationError("Step 30 policy or grant targets PUBLIC")
+        if re.search(
+            r"\b(?:USING|WITH\s+CHECK)\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+            database_sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 30 contains an allow-all RLS policy")
+        if re.search(r"\bON\s+DELETE\s+CASCADE\b", database_sql, re.IGNORECASE):
+            raise MigrationError("Step 30 introduces cascade deletion")
+        if re.search(r"^\s*(?:CREATE\s+TABLE|DELETE\s+FROM|TRUNCATE)\b", database_sql, re.I | re.M):
+            raise MigrationError("Step 30 exceeds the bounded existing-table delta")
+        if re.search(
+            r"active_patch_retrieval|cross_model_reuse|external_action",
+            database_sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 30 leaks a later-step or execution boundary")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -1562,11 +1666,11 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 11:
-        raise MigrationError("migration manifest schema_version must be 11")
+    if manifest.get("schema_version") != 12:
+        raise MigrationError("migration manifest schema_version must be 12")
     if (
         manifest.get("manifest_id")
-        != "memory-patch-step29-personal-memory-patch-validation-1a"
+        != "memory-patch-step30-user-approval-commit-activation-1a"
     ):
         raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
@@ -1581,7 +1685,8 @@ def load_migrations() -> list[Migration]:
         "STEP9_ONE_TRANSACTION_STEP10_ONE_TRANSACTION_"
         "STEP11_ONE_TRANSACTION_STEP12_ONE_TRANSACTION_"
         "STEP19_ONE_TRANSACTION_STEP27_ONE_TRANSACTION_"
-        "STEP28_ONE_TRANSACTION_STEP29_ONE_TRANSACTION"
+        "STEP28_ONE_TRANSACTION_STEP29_ONE_TRANSACTION_"
+        "STEP30_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -1662,6 +1767,8 @@ def load_migrations() -> list[Migration]:
             raise MigrationError("Step 28 checksum differs from the audited migration")
         if migration_id == STEP29_MIGRATION_ID and checksum != STEP29_MIGRATION_SHA256:
             raise MigrationError("Step 29 checksum differs from the audited migration")
+        if migration_id == STEP30_MIGRATION_ID and checksum != STEP30_MIGRATION_SHA256:
+            raise MigrationError("Step 30 checksum differs from the audited migration")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -1683,12 +1790,13 @@ def load_migrations() -> list[Migration]:
         STEP27_MIGRATION_ID,
         STEP28_MIGRATION_ID,
         STEP29_MIGRATION_ID,
+        STEP30_MIGRATION_ID,
     ]
     if identifiers != expected_identifiers:
         raise MigrationError(
             "migration chain is not the exact Step 4 -> Step 5 -> Step 6 -> "
             "Step 9 -> Step 10 -> Step 11 -> Step 12 -> Step 19 -> "
-            "Step 27 -> Step 28 -> Step 29 chain"
+            "Step 27 -> Step 28 -> Step 29 -> Step 30 chain"
         )
     return migrations
 
@@ -2527,6 +2635,157 @@ def load_patch_validation_security_manifest() -> dict[str, Any]:
     return manifest
 
 
+def load_approval_commit_security_manifest() -> dict[str, Any]:
+    manifest = load_json(APPROVAL_COMMIT_SECURITY_MANIFEST_PATH)
+    if set(manifest) != {
+        "approval_boundary",
+        "commit_audit_fk_read_boundary",
+        "commit_authority",
+        "commit_identity_read_boundary",
+        "commit_run_lineage_read_boundary",
+        "credential_separation",
+        "helper_functions",
+        "manifest_id",
+        "maximum_lifecycle_state",
+        "quota_serialization",
+        "schema_version",
+        "tables",
+        "target_cockroachdb_version",
+        "transition_edges",
+        "transition_guard",
+    }:
+        raise MigrationError("Step 30 security manifest shape is invalid")
+    if (
+        manifest.get("schema_version") != 1
+        or manifest.get("manifest_id")
+        != "memory-patch-step30-personal-memory-approval-commit-security-1a"
+        or manifest.get("target_cockroachdb_version") != PINNED_VERSION
+    ):
+        raise MigrationError("Step 30 security manifest identity differs")
+    if manifest.get("approval_boundary") != {
+        "actor_type": "HUMAN_USER",
+        "insert_policy": "memory_patch_approvals_s30_insert",
+        "runtime_role": "mp_app_runtime",
+        "technical_roles_may_approve": False,
+    }:
+        raise MigrationError("Step 30 human approval boundary differs")
+    if manifest.get("commit_authority") != {
+        "bypass_rls": False,
+        "can_approve": False,
+        "can_publish_sources": False,
+        "can_update_hat_registry": False,
+        "cluster_role": "mp_personal_memory_commit_helper",
+        "login": False,
+    }:
+        raise MigrationError("Step 30 commit authority is not least privileged")
+    if manifest.get("commit_audit_fk_read_boundary") != {
+        "owner_scoped": True,
+        "policy": "audit_events_s30_commit_owner_select",
+        "privilege": "SELECT",
+        "table": "audit_events",
+    }:
+        raise MigrationError("Step 30 audit FK read boundary differs")
+    if manifest.get("commit_identity_read_boundary") != {
+        "policies": {
+            "tenants": "tenants_s30_commit_identity_select",
+            "users": "users_s30_commit_identity_select",
+        },
+        "privilege": "SELECT",
+        "tables": ["tenants", "users"],
+        "tenant_user_scoped": True,
+    }:
+        raise MigrationError("Step 30 identity read boundary differs")
+    if manifest.get("commit_run_lineage_read_boundary") != {
+        "owner_scoped": True,
+        "policy": "kernel_runs_s30_commit_lineage_select",
+        "privilege": "SELECT",
+        "table": "kernel_runs",
+    }:
+        raise MigrationError("Step 30 run-lineage read boundary differs")
+    if manifest.get("credential_separation") != {
+        "approval_runtime_role": "mp_app_runtime",
+        "commit_role": "mp_personal_memory_commit_helper",
+        "model_credentials_available": False,
+        "secret_material_in_repository": False,
+    }:
+        raise MigrationError("Step 30 credential separation differs")
+    if manifest.get("maximum_lifecycle_state") != "ACTIVE":
+        raise MigrationError("Step 30 lifecycle boundary differs")
+    if manifest.get("quota_serialization") != {
+        "column": "candidate_quota_epoch",
+        "database_compatibility": "TABLE_UPDATE_GUARDED_TO_EPOCH_ONLY",
+        "guard_function": "guard_step30_commit_slot_update",
+        "guard_trigger": "personal_memory_spaces_s30_commit_guard",
+        "policy": "personal_memory_spaces_s30_commit_quota_lock_update",
+        "privilege": "UPDATE",
+        "table": "personal_memory_spaces",
+    }:
+        raise MigrationError("Step 30 quota serialization boundary differs")
+    if manifest.get("transition_edges") != [
+        "AWAITING_APPROVAL_TO_APPROVED",
+        "APPROVED_TO_COMMITTED",
+        "COMMITTED_TO_ACTIVE",
+    ]:
+        raise MigrationError("Step 30 transition set differs")
+    helpers = manifest.get("helper_functions")
+    if not isinstance(helpers, list) or [
+        item.get("function") for item in helpers if isinstance(item, dict)
+    ] != [
+        "step30_commit_helper_authorized",
+        "step30_approval_target_matches",
+        "step30_approval_transition_matches",
+        "step30_commit_target_matches",
+        "step30_memory_item_commit_matches",
+        "step30_proposal_lifecycle_matches",
+        "step30_transition_target_matches",
+    ]:
+        raise MigrationError("Step 30 helper-function boundary differs")
+    for helper in helpers:
+        if (
+            set(helper)
+            != {"function", "owner_role", "runtime_roles", "security_type"}
+            or helper["owner_role"] != "mp_schema_owner"
+            or helper["security_type"] != "INVOKER"
+            or not helper["runtime_roles"]
+        ):
+            raise MigrationError("Step 30 helper-function decision is unsafe")
+    tables = manifest.get("tables")
+    if not isinstance(tables, list) or [
+        item.get("table") for item in tables if isinstance(item, dict)
+    ] != [
+        "memory_patch_approvals",
+        "memory_patch_proposals",
+        "memory_patch_commits",
+        "memory_items",
+        "patch_transition_records",
+        "persistence_operations",
+    ]:
+        raise MigrationError("Step 30 protected table set differs")
+    for table in tables:
+        if (
+            set(table)
+            != {
+                "app_runtime_privileges",
+                "commit_runtime_privileges",
+                "force_rls",
+                "table",
+            }
+            or table["force_rls"] is not True
+            or "DELETE" in table["app_runtime_privileges"]
+            or "DELETE" in table["commit_runtime_privileges"]
+        ):
+            raise MigrationError("Step 30 table decision is unsafe")
+    if manifest.get("transition_guard") != {
+        "function": "guard_step30_proposal_transition",
+        "function_owner_role": "mp_schema_owner",
+        "function_runtime_privileges": [],
+        "function_security_type": "INVOKER",
+        "trigger": "memory_patch_proposals_s30_transition_guard",
+    }:
+        raise MigrationError("Step 30 transition guard differs")
+    return manifest
+
+
 def offline_validate() -> dict[str, Any]:
     pin = load_version_pin()
     migrations = load_migrations()
@@ -2538,6 +2797,7 @@ def offline_validate() -> dict[str, Any]:
     parsing_pipeline_manifest = load_parsing_pipeline_manifest()
     candidate_security_manifest = load_correction_candidate_security_manifest()
     patch_validation_manifest = load_patch_validation_security_manifest()
+    approval_commit_manifest = load_approval_commit_security_manifest()
     step4_sql = "\n".join(
         migration.sql
         for migration in migrations
@@ -2587,6 +2847,11 @@ def offline_validate() -> dict[str, Any]:
         migration.sql
         for migration in migrations
         if migration.migration_id == STEP29_MIGRATION_ID
+    )
+    step30_sql = next(
+        migration.sql
+        for migration in migrations
+        if migration.migration_id == STEP30_MIGRATION_ID
     )
     historical_sql = step4_sql + "\n" + step5_sql
     step4_tables = sorted(
@@ -3160,6 +3425,62 @@ def offline_validate() -> dict[str, Any]:
         )
     ):
         raise MigrationError("Step 29 lifecycle or integrity boundary is incomplete")
+    cluster_role_sql, step30_database_sql = split_cluster_role_ddl(
+        step30_sql,
+        begin_marker=STEP30_CLUSTER_ROLE_BEGIN,
+        end_marker=STEP30_CLUSTER_ROLE_END,
+        role_name="mp_personal_memory_commit_helper",
+    )
+    if any(
+        fragment not in cluster_role_sql
+        for fragment in (
+            "NOLOGIN NOCREATEROLE NOCREATEDB NOBYPASSRLS",
+            "REVOKE admin FROM mp_personal_memory_commit_helper",
+            "REVOKE mp_app_runtime FROM mp_personal_memory_commit_helper",
+        )
+    ):
+        raise MigrationError("Step 30 dedicated role is not least privileged")
+    expected_step30_tables = {
+        table["table"] for table in approval_commit_manifest["tables"]
+    }
+    step30_enabled = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"ENABLE ROW LEVEL SECURITY;",
+            step30_database_sql,
+        )
+    )
+    step30_forced = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"FORCE ROW LEVEL SECURITY;",
+            step30_database_sql,
+        )
+    )
+    if step30_enabled != expected_step30_tables or step30_forced != expected_step30_tables:
+        raise MigrationError("Step 30 RLS/FORCE RLS coverage is incomplete")
+    required = (
+        "state_before = 'AWAITING_APPROVAL'",
+        "state_after = 'APPROVED'",
+        "state_before = 'APPROVED'",
+        "state_after = 'COMMITTED'",
+        "state_before = 'COMMITTED'",
+        "state_after = 'ACTIVE'",
+        "step30_approval_replay_identity",
+        "step30_commit_replay_identity",
+        "step30_activation_replay_identity",
+        "step30_commit_helper_authorized",
+        "guard_step30_commit_slot_update",
+        "personal_memory_spaces_s30_commit_guard",
+    )
+    if any(fragment not in step30_database_sql for fragment in required):
+        raise MigrationError("Step 30 lifecycle/replay boundary is incomplete")
+    if re.search(
+        r"active_patch_retrieval|cross_model_reuse|inject.*patch",
+        step30_database_sql,
+        re.IGNORECASE,
+    ):
+        raise MigrationError("Step 30 implements forbidden retrieval/reuse")
     return {
         "migration_count": len(migrations),
         "migration_ids": [migration.migration_id for migration in migrations],
@@ -3389,20 +3710,26 @@ def applied_migrations(client: SqlClient, database: str) -> dict[str, str]:
     return {row["migration_id"]: row["checksum_sha256"] for row in rows}
 
 
-def split_step5_cluster_role_ddl(sql: str) -> tuple[str, str]:
-    if sql.count(STEP5_CLUSTER_ROLE_BEGIN) != 1:
-        raise MigrationError("Step 5 cluster-role begin marker is not exact")
-    if sql.count(STEP5_CLUSTER_ROLE_END) != 1:
-        raise MigrationError("Step 5 cluster-role end marker is not exact")
-    before, marked = sql.split(STEP5_CLUSTER_ROLE_BEGIN, 1)
-    cluster_sql, after = marked.split(STEP5_CLUSTER_ROLE_END, 1)
+def split_cluster_role_ddl(
+    sql: str,
+    *,
+    begin_marker: str,
+    end_marker: str,
+    role_name: str,
+) -> tuple[str, str]:
+    if sql.count(begin_marker) != 1:
+        raise MigrationError(f"{role_name} cluster-role begin marker is not exact")
+    if sql.count(end_marker) != 1:
+        raise MigrationError(f"{role_name} cluster-role end marker is not exact")
+    before, marked = sql.split(begin_marker, 1)
+    cluster_sql, after = marked.split(end_marker, 1)
     if re.search(
         r"\b(?:CREATE|ALTER|DROP)\s+(?:TABLE|SCHEMA|FUNCTION|POLICY)\b",
         cluster_sql,
         re.IGNORECASE,
     ):
-        raise MigrationError("cluster-role section contains database object DDL")
-    if "CREATE ROLE IF NOT EXISTS" not in cluster_sql:
+        raise MigrationError(f"{role_name} cluster-role section contains database DDL")
+    if f"CREATE ROLE IF NOT EXISTS {role_name}" not in cluster_sql:
         raise MigrationError("cluster-role section lacks idempotent role creation")
     if re.search(r"\bCREATE\s+ROLE\s+(?!IF\s+NOT\s+EXISTS)", cluster_sql, re.I):
         raise MigrationError("cluster-role creation is not idempotent")
@@ -3410,6 +3737,15 @@ def split_step5_cluster_role_ddl(sql: str) -> tuple[str, str]:
     if re.search(r"\bCREATE\s+ROLE\b", database_sql, re.IGNORECASE):
         raise MigrationError("database transaction contains cluster role creation")
     return cluster_sql.strip() + "\n", database_sql
+
+
+def split_step5_cluster_role_ddl(sql: str) -> tuple[str, str]:
+    return split_cluster_role_ddl(
+        sql,
+        begin_marker=STEP5_CLUSTER_ROLE_BEGIN,
+        end_marker=STEP5_CLUSTER_ROLE_END,
+        role_name="mp_schema_owner",
+    )
 
 
 def split_step5_database_phases(database_sql: str) -> list[str]:
@@ -4844,6 +5180,308 @@ def assert_step29_security_catalog(
     }
 
 
+def _validate_step30_function_grants(
+    *,
+    database: str,
+    function_name: str,
+    rows: list[dict[str, str]],
+    runtime_roles: Sequence[str],
+) -> int:
+    signature = STEP30_FUNCTION_SIGNATURES.get(function_name)
+    columns = {
+        "database_name",
+        "schema_name",
+        "routine_id",
+        "routine_signature",
+        "grantee",
+        "privilege_type",
+        "is_grantable",
+    }
+    if signature is None or not rows or any(set(row) != columns for row in rows):
+        raise MigrationError("Step 30 helper-function grant catalog is invalid")
+    if (
+        len({row["routine_id"] for row in rows}) != 1
+        or not rows[0]["routine_id"].isdigit()
+        or any(
+            row["database_name"] != database
+            or row["schema_name"] != "memory_patch"
+            or row["routine_signature"] != signature
+            for row in rows
+        )
+    ):
+        raise MigrationError("Step 30 helper-function identity differs")
+    expected = {
+        ("admin", "ALL", "t"),
+        ("mp_schema_owner", "ALL", "t"),
+        ("root", "ALL", "t"),
+    }
+    expected.update((role, "EXECUTE", "f") for role in runtime_roles)
+    actual = {
+        (row["grantee"], row["privilege_type"], row["is_grantable"])
+        for row in rows
+    }
+    if len(rows) != len(expected) or actual != expected:
+        raise MigrationError("Step 30 helper-function grants differ")
+    return len(runtime_roles)
+
+
+def assert_step30_security_catalog(
+    client: SqlClient,
+    database: str,
+) -> dict[str, Any]:
+    """Verify the dedicated role, owner RLS, receipts, and exact three edges."""
+
+    manifest = load_approval_commit_security_manifest()
+    role_rows = parse_tsv(
+        client.execute(
+            "defaultdb",
+            "SELECT rolname, rolcanlogin, rolcreaterole, rolcreatedb, "
+            "rolbypassrls, rolsuper FROM pg_catalog.pg_roles "
+            "WHERE rolname = 'mp_personal_memory_commit_helper'",
+        )
+    )
+    if role_rows != [
+        {
+            "rolname": "mp_personal_memory_commit_helper",
+            "rolcanlogin": "f",
+            "rolcreaterole": "f",
+            "rolcreatedb": "f",
+            "rolbypassrls": "f",
+            "rolsuper": "f",
+        }
+    ]:
+        raise MigrationError("Step 30 dedicated role options differ")
+    memberships = parse_tsv(
+        client.execute(
+            "defaultdb",
+            "SELECT parent.rolname AS parent_role "
+            "FROM pg_catalog.pg_auth_members AS membership "
+            "JOIN pg_catalog.pg_roles AS member ON member.oid = membership.member "
+            "JOIN pg_catalog.pg_roles AS parent ON parent.oid = membership.roleid "
+            "WHERE member.rolname = 'mp_personal_memory_commit_helper' "
+            "ORDER BY parent.rolname",
+        )
+    )
+    if memberships:
+        raise MigrationError("Step 30 dedicated role inherits another role")
+    table_names = [table["table"] for table in manifest["tables"]]
+    quoted = ", ".join(sql_literal(name) for name in table_names)
+    table_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT c.relname AS table_name, c.relrowsecurity, "
+            "c.relforcerowsecurity, owner.rolname AS owner_role "
+            "FROM pg_catalog.pg_class AS c "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = c.relnamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = c.relowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            f"AND c.relname IN ({quoted}) AND c.relkind = 'r' "
+            "ORDER BY c.relname",
+        )
+    )
+    expected_tables = [
+        {
+            "table_name": name,
+            "relrowsecurity": "t",
+            "relforcerowsecurity": "t",
+            "owner_role": "mp_schema_owner",
+        }
+        for name in sorted(table_names)
+    ]
+    if table_rows != expected_tables:
+        raise MigrationError("Step 30 table ownership or RLS state differs")
+    grant_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT table_name, privilege_type "
+            "FROM information_schema.table_privileges "
+            "WHERE table_schema = 'memory_patch' "
+            "AND grantee = 'mp_personal_memory_commit_helper' "
+            "ORDER BY table_name, privilege_type",
+        )
+    )
+    expected_grants = sorted(
+        (
+            ("audit_events", "SELECT"),
+            ("hat_scopes", "SELECT"),
+            ("kernel_runs", "SELECT"),
+            ("memory_items", "INSERT"),
+            ("memory_items", "SELECT"),
+            ("memory_items", "UPDATE"),
+            ("memory_patch_approvals", "SELECT"),
+            ("memory_patch_commits", "INSERT"),
+            ("memory_patch_commits", "SELECT"),
+            ("memory_patch_proposals", "SELECT"),
+            ("memory_patch_proposals", "UPDATE"),
+            ("patch_transition_records", "INSERT"),
+            ("patch_transition_records", "SELECT"),
+            ("persistence_operations", "INSERT"),
+            ("persistence_operations", "SELECT"),
+            ("persistence_operations", "UPDATE"),
+            ("personal_memory_model_bindings", "SELECT"),
+            ("personal_memory_quota_policies", "SELECT"),
+            ("personal_memory_spaces", "SELECT"),
+            ("personal_memory_spaces", "UPDATE"),
+            ("tenants", "SELECT"),
+            ("users", "SELECT"),
+        )
+    )
+    actual_grants = [
+        (row["table_name"], row["privilege_type"]) for row in grant_rows
+    ]
+    if actual_grants != expected_grants:
+        raise MigrationError("Step 30 dedicated table grants differ")
+    identity_policy_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT tablename, policyname, cmd, roles, qual "
+            "FROM pg_catalog.pg_policies "
+            "WHERE schemaname = 'memory_patch' "
+            "AND policyname IN ('audit_events_s30_commit_owner_select', "
+            "'kernel_runs_s30_commit_lineage_select', "
+            "'tenants_s30_commit_identity_select', "
+            "'users_s30_commit_identity_select') "
+            "ORDER BY policyname",
+        )
+    )
+    if {
+        (row["tablename"], row["policyname"], row["cmd"].upper())
+        for row in identity_policy_rows
+    } != {
+        ("audit_events", "audit_events_s30_commit_owner_select", "SELECT"),
+        ("kernel_runs", "kernel_runs_s30_commit_lineage_select", "SELECT"),
+        ("tenants", "tenants_s30_commit_identity_select", "SELECT"),
+        ("users", "users_s30_commit_identity_select", "SELECT"),
+    }:
+        raise MigrationError("Step 30 identity read policies differ")
+    for row in identity_policy_rows:
+        expected_function = (
+            "tenant_context_matches"
+            if row["tablename"] == "tenants"
+            else "user_context_matches"
+        )
+        if (
+            "mp_personal_memory_commit_helper" not in row["roles"]
+            or expected_function not in row["qual"]
+        ):
+            raise MigrationError("Step 30 identity read policy is not scoped")
+        if row["tablename"] == "audit_events" and (
+            "USER_ID IS NOT NULL" not in row["qual"].upper()
+            or "PERSONAL_MEMORY_SPACE_ID IS NOT NULL"
+            not in row["qual"].upper()
+        ):
+            raise MigrationError("Step 30 audit read policy is not owner-private")
+    functions = [
+        *manifest["helper_functions"],
+        {
+            "function": "guard_step30_commit_slot_update",
+            "owner_role": "mp_schema_owner",
+            "runtime_roles": [],
+            "security_type": "INVOKER",
+        },
+        {
+            "function": "guard_step30_proposal_transition",
+            "owner_role": "mp_schema_owner",
+            "runtime_roles": [],
+            "security_type": "INVOKER",
+        },
+        {
+            "function": "guard_step30_memory_item",
+            "owner_role": "mp_schema_owner",
+            "runtime_roles": [],
+            "security_type": "INVOKER",
+        },
+    ]
+    names = [value["function"] for value in functions]
+    quoted_functions = ", ".join(sql_literal(name) for name in names)
+    function_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT procedure.proname AS function_name, "
+            "owner.rolname AS owner_role, procedure.prosecdef "
+            "FROM pg_catalog.pg_proc AS procedure "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = procedure.pronamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = procedure.proowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            f"AND procedure.proname IN ({quoted_functions}) "
+            "ORDER BY procedure.proname",
+        )
+    )
+    expected_functions = [
+        {
+            "function_name": value["function"],
+            "owner_role": "mp_schema_owner",
+            "prosecdef": "f",
+        }
+        for value in sorted(functions, key=lambda item: item["function"])
+    ]
+    if function_rows != expected_functions:
+        raise MigrationError("Step 30 helper-function ownership or mode differs")
+    function_grants = 0
+    for function in functions:
+        rows = parse_tsv(
+            client.execute(
+                database,
+                "SHOW GRANTS ON FUNCTION memory_patch." + function["function"],
+            )
+        )
+        function_grants += _validate_step30_function_grants(
+            database=database,
+            function_name=function["function"],
+            rows=rows,
+            runtime_roles=function["runtime_roles"],
+        )
+    trigger_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT trigger.tgname AS trigger_name, target.relname AS table_name, "
+            "procedure.proname AS function_name "
+            "FROM pg_catalog.pg_trigger AS trigger "
+            "JOIN pg_catalog.pg_class AS target ON target.oid = trigger.tgrelid "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = target.relnamespace "
+            "JOIN pg_catalog.pg_proc AS procedure ON procedure.oid = trigger.tgfoid "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND trigger.tgname IN ('memory_items_s30_guard', "
+            "'memory_patch_proposals_s30_transition_guard', "
+            "'personal_memory_spaces_s30_commit_guard') "
+            "AND NOT trigger.tgisinternal ORDER BY trigger.tgname",
+        )
+    )
+    if trigger_rows != [
+        {
+            "trigger_name": "memory_items_s30_guard",
+            "table_name": "memory_items",
+            "function_name": "guard_step30_memory_item",
+        },
+        {
+            "trigger_name": "memory_patch_proposals_s30_transition_guard",
+            "table_name": "memory_patch_proposals",
+            "function_name": "guard_step30_proposal_transition",
+        },
+        {
+            "trigger_name": "personal_memory_spaces_s30_commit_guard",
+            "table_name": "personal_memory_spaces",
+            "function_name": "guard_step30_commit_slot_update",
+        },
+    ]:
+        raise MigrationError("Step 30 transition/quota trigger set differs")
+    return {
+        "commit_role_bypassrls": False,
+        "commit_role_can_login": False,
+        "dedicated_table_grant_count": len(grant_rows),
+        "helper_function_count": len(function_rows),
+        "identity_read_policy_count": len(identity_policy_rows),
+        "runtime_function_grant_count": function_grants,
+        "quota_lock_effective_column": "candidate_quota_epoch",
+        "quota_lock_guarded_table_update": True,
+        "protected_table_count": len(table_rows),
+        "trigger_count": len(trigger_rows),
+    }
+
+
 def apply_migrations(
     client: SqlClient,
     database: str,
@@ -4969,6 +5607,32 @@ def apply_migrations(
                     sqlstate=exc.sqlstate,
                 ) from exc
             assert_step29_security_catalog(client, database)
+            database_sql = ""
+        elif migration.migration_id == STEP30_MIGRATION_ID:
+            cluster_role_sql, database_sql = split_cluster_role_ddl(
+                migration.sql,
+                begin_marker=STEP30_CLUSTER_ROLE_BEGIN,
+                end_marker=STEP30_CLUSTER_ROLE_END,
+                role_name="mp_personal_memory_commit_helper",
+            )
+            client.execute(
+                database,
+                "SET allow_role_memberships_to_change_during_transaction = true;\n"
+                + cluster_role_sql,
+                timeout=timeout,
+            )
+            try:
+                client.execute(
+                    database,
+                    "BEGIN;\n" + database_sql + "\nCOMMIT;",
+                    timeout=timeout,
+                )
+            except SqlError as exc:
+                raise SqlError(
+                    f"{migration.migration_id} database transaction failed: {exc}",
+                    sqlstate=exc.sqlstate,
+                ) from exc
+            assert_step30_security_catalog(client, database)
             database_sql = ""
         migration_record_sql = (
             "INSERT INTO memory_patch.schema_migrations "

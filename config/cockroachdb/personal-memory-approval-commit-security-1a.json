@@ -1,0 +1,204 @@
+{
+  "approval_boundary": {
+    "actor_type": "HUMAN_USER",
+    "insert_policy": "memory_patch_approvals_s30_insert",
+    "runtime_role": "mp_app_runtime",
+    "technical_roles_may_approve": false
+  },
+  "commit_audit_fk_read_boundary": {
+    "owner_scoped": true,
+    "policy": "audit_events_s30_commit_owner_select",
+    "privilege": "SELECT",
+    "table": "audit_events"
+  },
+  "commit_authority": {
+    "bypass_rls": false,
+    "can_approve": false,
+    "can_publish_sources": false,
+    "can_update_hat_registry": false,
+    "cluster_role": "mp_personal_memory_commit_helper",
+    "login": false
+  },
+  "commit_identity_read_boundary": {
+    "policies": {
+      "tenants": "tenants_s30_commit_identity_select",
+      "users": "users_s30_commit_identity_select"
+    },
+    "privilege": "SELECT",
+    "tables": [
+      "tenants",
+      "users"
+    ],
+    "tenant_user_scoped": true
+  },
+  "commit_run_lineage_read_boundary": {
+    "owner_scoped": true,
+    "policy": "kernel_runs_s30_commit_lineage_select",
+    "privilege": "SELECT",
+    "table": "kernel_runs"
+  },
+  "credential_separation": {
+    "approval_runtime_role": "mp_app_runtime",
+    "commit_role": "mp_personal_memory_commit_helper",
+    "model_credentials_available": false,
+    "secret_material_in_repository": false
+  },
+  "helper_functions": [
+    {
+      "function": "step30_commit_helper_authorized",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_personal_memory_commit_helper"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step30_approval_target_matches",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_app_runtime"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step30_approval_transition_matches",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_app_runtime"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step30_commit_target_matches",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_personal_memory_commit_helper"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step30_memory_item_commit_matches",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_personal_memory_commit_helper"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step30_proposal_lifecycle_matches",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_personal_memory_commit_helper"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step30_transition_target_matches",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_app_runtime",
+        "mp_personal_memory_commit_helper"
+      ],
+      "security_type": "INVOKER"
+    }
+  ],
+  "manifest_id": "memory-patch-step30-personal-memory-approval-commit-security-1a",
+  "maximum_lifecycle_state": "ACTIVE",
+  "quota_serialization": {
+    "column": "candidate_quota_epoch",
+    "database_compatibility": "TABLE_UPDATE_GUARDED_TO_EPOCH_ONLY",
+    "guard_function": "guard_step30_commit_slot_update",
+    "guard_trigger": "personal_memory_spaces_s30_commit_guard",
+    "policy": "personal_memory_spaces_s30_commit_quota_lock_update",
+    "privilege": "UPDATE",
+    "table": "personal_memory_spaces"
+  },
+  "schema_version": 1,
+  "tables": [
+    {
+      "app_runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "commit_runtime_privileges": [
+        "SELECT"
+      ],
+      "force_rls": true,
+      "table": "memory_patch_approvals"
+    },
+    {
+      "app_runtime_privileges": [
+        "SELECT",
+        "UPDATE"
+      ],
+      "commit_runtime_privileges": [
+        "SELECT",
+        "UPDATE"
+      ],
+      "force_rls": true,
+      "table": "memory_patch_proposals"
+    },
+    {
+      "app_runtime_privileges": [
+        "SELECT"
+      ],
+      "commit_runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "force_rls": true,
+      "table": "memory_patch_commits"
+    },
+    {
+      "app_runtime_privileges": [
+        "SELECT"
+      ],
+      "commit_runtime_privileges": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "force_rls": true,
+      "table": "memory_items"
+    },
+    {
+      "app_runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "commit_runtime_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "force_rls": true,
+      "table": "patch_transition_records"
+    },
+    {
+      "app_runtime_privileges": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "commit_runtime_privileges": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "force_rls": true,
+      "table": "persistence_operations"
+    }
+  ],
+  "target_cockroachdb_version": "v26.2.4",
+  "transition_edges": [
+    "AWAITING_APPROVAL_TO_APPROVED",
+    "APPROVED_TO_COMMITTED",
+    "COMMITTED_TO_ACTIVE"
+  ],
+  "transition_guard": {
+    "function": "guard_step30_proposal_transition",
+    "function_owner_role": "mp_schema_owner",
+    "function_runtime_privileges": [],
+    "function_security_type": "INVOKER",
+    "trigger": "memory_patch_proposals_s30_transition_guard"
+  }
+}
