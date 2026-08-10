@@ -1,0 +1,150 @@
+{
+  "audit_integration": {
+    "atomic_with_review_mutation": true,
+    "event_table": "audit_events",
+    "hash_chain_semantics_changed": false
+  },
+  "authority": {
+    "arbitrary_business_mutation": false,
+    "canonical_source_publication": false,
+    "external_execution": false,
+    "model_reviewer": false,
+    "ordinary_user_workspace_access": false
+  },
+  "database_roles": [
+    {
+      "bypass_rls": false,
+      "login": false,
+      "role": "mp_human_reviewer"
+    },
+    {
+      "bypass_rls": false,
+      "login": false,
+      "role": "mp_review_service"
+    }
+  ],
+  "helper_functions": [
+    {
+      "function": "step34_reviewer_authorized",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_human_reviewer"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step34_reviewer_owner_authorized",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_human_reviewer"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step34_review_service_authorized",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_review_service"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step34_reviewer_case_authorized",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_human_reviewer"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "step34_review_service_case_state_matches",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_review_service"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "guard_step34_review_append_only",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_human_reviewer",
+        "mp_review_service"
+      ],
+      "security_type": "INVOKER"
+    },
+    {
+      "function": "guard_step34_review_case_transition",
+      "owner_role": "mp_schema_owner",
+      "runtime_roles": [
+        "mp_human_reviewer",
+        "mp_review_service"
+      ],
+      "security_type": "INVOKER"
+    }
+  ],
+  "manifest_id": "memory-patch-step34-human-review-workspace-security-1a",
+  "schema_version": 1,
+  "tables": [
+    {
+      "append_only": true,
+      "force_rls": true,
+      "review_service_privileges": [],
+      "reviewer_privileges": [
+        "SELECT"
+      ],
+      "table": "reviewer_authorizations"
+    },
+    {
+      "append_only": false,
+      "force_rls": true,
+      "review_service_privileges": [
+        "INSERT",
+        "SELECT",
+        "UPDATE"
+      ],
+      "reviewer_privileges": [
+        "SELECT",
+        "UPDATE"
+      ],
+      "table": "human_review_cases"
+    },
+    {
+      "append_only": true,
+      "force_rls": true,
+      "review_service_privileges": [
+        "SELECT"
+      ],
+      "reviewer_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "human_review_claims"
+    },
+    {
+      "append_only": true,
+      "force_rls": true,
+      "review_service_privileges": [
+        "SELECT"
+      ],
+      "reviewer_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "table": "human_review_decisions"
+    },
+    {
+      "append_only": true,
+      "force_rls": true,
+      "review_service_privileges": [
+        "INSERT",
+        "SELECT"
+      ],
+      "reviewer_privileges": [
+        "SELECT"
+      ],
+      "table": "human_review_handoffs"
+    }
+  ],
+  "target_cockroachdb_version": "v26.2.4"
+}

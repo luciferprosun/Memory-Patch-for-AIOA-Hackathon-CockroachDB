@@ -207,7 +207,15 @@ At roadmap adoption and in subsequent audited closure records:
   its intended closure commit. It is completion evidence only after that
   commit is reachable on `origin/main`.
 - `Step 33: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 34: NOT STARTED`. Step 33 completion does not authorize Step 34.
+- Step 34 typed Step 26/32 review-case intake, bounded minimum-disclosure queue,
+  concurrency-safe human claim and case-specific decisions, Step 33 verified
+  audit context, typed non-publishing handoff, migration 0017, least-privileged
+  reviewer/review-service roles, RLS/FORCE RLS isolation and controlled
+  disposable CockroachDB validation are complete in its intended closure
+  commit. It is completion evidence only after that commit is reachable on
+  `origin/main`.
+- `Step 34: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 35: NOT STARTED`. Step 34 completion does not authorize Step 35.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

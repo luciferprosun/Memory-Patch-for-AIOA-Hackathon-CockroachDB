@@ -92,10 +92,16 @@ AUDIT_LEDGER_SECURITY_MANIFEST_PATH = (
     / "cockroachdb"
     / "audit-ledger-security-1a.json"
 )
+REVIEW_WORKSPACE_SECURITY_MANIFEST_PATH = (
+    REPOSITORY_ROOT
+    / "config"
+    / "cockroachdb"
+    / "review-workspace-security-1a.json"
+)
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "14.0.0"
+RUNNER_VERSION = "15.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
@@ -123,6 +129,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step31_",
     "mp_step32_",
     "mp_step33_",
+    "mp_step34_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
@@ -272,6 +279,33 @@ STEP33_MIGRATION_SHA256 = (
 STEP33_FUNCTION_SIGNATURES = {
     "guard_step33_audit_append_only": "guard_step33_audit_append_only()",
     "guard_step33_chain_head": "guard_step33_chain_head()",
+}
+STEP34_MIGRATION_ID = "0017_step34_human_review_workspace"
+STEP34_MIGRATION_SHA256 = (
+    "383a52efacb114b4065dd82fad0ac1a69da8599c464fa7f362bed4a41294c1da"
+)
+STEP34_CLUSTER_ROLE_BEGIN = "-- STEP34_CLUSTER_ROLE_DDL_BEGIN"
+STEP34_CLUSTER_ROLE_END = "-- STEP34_CLUSTER_ROLE_DDL_END"
+STEP34_FUNCTION_SIGNATURES = {
+    "guard_step34_review_append_only": "guard_step34_review_append_only()",
+    "guard_step34_review_case_transition": (
+        "guard_step34_review_case_transition()"
+    ),
+    "step34_review_service_authorized": (
+        "step34_review_service_authorized(text)"
+    ),
+    "step34_review_service_case_state_matches": (
+        "step34_review_service_case_state_matches(text, text, text)"
+    ),
+    "step34_reviewer_authorized": (
+        "step34_reviewer_authorized(text, text, text)"
+    ),
+    "step34_reviewer_case_authorized": (
+        "step34_reviewer_case_authorized(text, text, text, text)"
+    ),
+    "step34_reviewer_owner_authorized": (
+        "step34_reviewer_owner_authorized(text, text)"
+    ),
 }
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
 STEP5_CLUSTER_ROLE_END = "-- STEP5_CLUSTER_ROLE_DDL_END"
@@ -1838,6 +1872,88 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
             re.IGNORECASE,
         ):
             raise MigrationError("Step 33 starts a later roadmap boundary")
+    elif migration_id == STEP34_MIGRATION_ID:
+        forbidden_patterns = ()
+        cluster_role_sql, database_sql = split_cluster_role_ddl(
+            sql,
+            begin_marker=STEP34_CLUSTER_ROLE_BEGIN,
+            end_marker=STEP34_CLUSTER_ROLE_END,
+            role_name="mp_human_reviewer",
+        )
+        for fragment in (
+            "CREATE ROLE IF NOT EXISTS mp_human_reviewer",
+            "CREATE ROLE IF NOT EXISTS mp_review_service",
+            "NOLOGIN NOCREATEROLE NOCREATEDB NOBYPASSRLS",
+            "REVOKE admin FROM mp_human_reviewer",
+            "REVOKE admin FROM mp_review_service",
+        ):
+            if fragment not in cluster_role_sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required Step 34 role fragment: "
+                    f"{fragment}"
+                )
+        for fragment in (
+            "CREATE TABLE memory_patch.reviewer_authorizations",
+            "CREATE TABLE memory_patch.human_review_cases",
+            "CREATE TABLE memory_patch.human_review_claims",
+            "CREATE TABLE memory_patch.human_review_decisions",
+            "CREATE TABLE memory_patch.human_review_handoffs",
+            "guard_step34_review_append_only",
+            "guard_step34_review_case_transition",
+            "Step 34 review case must start OPEN at version 1",
+            "BEFORE INSERT OR UPDATE ON memory_patch.human_review_cases",
+            "promotion_proposal_hash",
+            "human_review_result_hash",
+            "bounded_failure_hash",
+            "step34_reviewer_authorized",
+            "step34_reviewer_case_authorized",
+            "step34_review_service_authorized",
+            "step34_review_service_case_state_matches",
+            "memory_patch.tenant_context_matches(STRING)",
+            "memory_patch.user_context_matches(STRING, STRING)",
+            "kernel_runs_s34_reviewer_lineage_select",
+            "kernel_runs_s34_review_service_lineage_select",
+            "personal_memory_spaces_s34_reviewer_lineage_select",
+            "personal_memory_spaces_s34_review_service_lineage_select",
+            "REVIEW_CASE_CREATED",
+            "REVIEW_DECISION_RECORDED",
+            "REVIEW_HANDOFF_SUCCEEDED",
+            "ENABLE ROW LEVEL SECURITY",
+            "FORCE ROW LEVEL SECURITY",
+            "OWNER TO mp_schema_owner",
+            "SECURITY INVOKER",
+        ):
+            if fragment not in database_sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required Step 34 fragment: {fragment}"
+                )
+        if len(
+            re.findall(r"^CREATE TABLE memory_patch\.", database_sql, re.MULTILINE)
+        ) != 5:
+            raise MigrationError("Step 34 table delta is not exact")
+        if re.search(r"\bTO\s+PUBLIC\b", database_sql, re.IGNORECASE):
+            raise MigrationError("Step 34 policy or grant targets PUBLIC")
+        if re.search(
+            r"\b(?:USING|WITH\s+CHECK)\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+            database_sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 34 contains an allow-all RLS policy")
+        if re.search(r"\bON\s+DELETE\s+CASCADE\b", database_sql, re.IGNORECASE):
+            raise MigrationError("Step 34 introduces cascade deletion")
+        if re.search(
+            r"^\s*(?:DELETE\s+FROM|TRUNCATE|DROP\s+TABLE)\b",
+            database_sql,
+            re.IGNORECASE | re.MULTILINE,
+        ):
+            raise MigrationError("Step 34 contains destructive SQL")
+        if re.search(
+            r"personal_memory_(?:dashboard|ui)|slot_management_ui|"
+            r"patch_management_ui|model_binding_settings",
+            database_sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 34 starts the Step 35 UI boundary")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -1847,11 +1963,11 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 14:
-        raise MigrationError("migration manifest schema_version must be 14")
+    if manifest.get("schema_version") != 15:
+        raise MigrationError("migration manifest schema_version must be 15")
     if (
         manifest.get("manifest_id")
-        != "memory-patch-step33-audit-ledger-hash-chain-1a"
+        != "memory-patch-step34-human-review-workspace-1a"
     ):
         raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
@@ -1868,7 +1984,8 @@ def load_migrations() -> list[Migration]:
         "STEP19_ONE_TRANSACTION_STEP27_ONE_TRANSACTION_"
         "STEP28_ONE_TRANSACTION_STEP29_ONE_TRANSACTION_"
         "STEP30_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL_"
-        "STEP32_ONE_TRANSACTION_STEP33_ONE_TRANSACTION"
+        "STEP32_ONE_TRANSACTION_STEP33_ONE_TRANSACTION_"
+        "STEP34_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -1955,6 +2072,8 @@ def load_migrations() -> list[Migration]:
             raise MigrationError("Step 32 checksum differs from the audited migration")
         if migration_id == STEP33_MIGRATION_ID and checksum != STEP33_MIGRATION_SHA256:
             raise MigrationError("Step 33 checksum differs from the audited migration")
+        if migration_id == STEP34_MIGRATION_ID and checksum != STEP34_MIGRATION_SHA256:
+            raise MigrationError("Step 34 checksum differs from the audited migration")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -1979,12 +2098,14 @@ def load_migrations() -> list[Migration]:
         STEP30_MIGRATION_ID,
         STEP32_MIGRATION_ID,
         STEP33_MIGRATION_ID,
+        STEP34_MIGRATION_ID,
     ]
     if identifiers != expected_identifiers:
         raise MigrationError(
             "migration chain is not the exact Step 4 -> Step 5 -> Step 6 -> "
             "Step 9 -> Step 10 -> Step 11 -> Step 12 -> Step 19 -> "
-            "Step 27 -> Step 28 -> Step 29 -> Step 30 -> Step 32 -> Step 33 chain"
+            "Step 27 -> Step 28 -> Step 29 -> Step 30 -> Step 32 -> Step 33 -> "
+            "Step 34 chain"
         )
     return migrations
 
@@ -3148,6 +3269,86 @@ def load_audit_ledger_security_manifest() -> dict[str, Any]:
     return manifest
 
 
+def load_review_workspace_security_manifest() -> dict[str, Any]:
+    manifest = load_json(REVIEW_WORKSPACE_SECURITY_MANIFEST_PATH)
+    if set(manifest) != {
+        "audit_integration",
+        "authority",
+        "database_roles",
+        "helper_functions",
+        "manifest_id",
+        "schema_version",
+        "tables",
+        "target_cockroachdb_version",
+    }:
+        raise MigrationError("Step 34 security manifest shape is invalid")
+    if (
+        manifest.get("schema_version") != 1
+        or manifest.get("manifest_id")
+        != "memory-patch-step34-human-review-workspace-security-1a"
+        or manifest.get("target_cockroachdb_version") != PINNED_VERSION
+        or manifest.get("audit_integration")
+        != {
+            "atomic_with_review_mutation": True,
+            "event_table": "audit_events",
+            "hash_chain_semantics_changed": False,
+        }
+        or manifest.get("authority")
+        != {
+            "arbitrary_business_mutation": False,
+            "canonical_source_publication": False,
+            "external_execution": False,
+            "model_reviewer": False,
+            "ordinary_user_workspace_access": False,
+        }
+    ):
+        raise MigrationError("Step 34 security authority boundary differs")
+    if manifest.get("database_roles") != [
+        {"bypass_rls": False, "login": False, "role": "mp_human_reviewer"},
+        {"bypass_rls": False, "login": False, "role": "mp_review_service"},
+    ]:
+        raise MigrationError("Step 34 dedicated role decision differs")
+    expected_tables = [
+        "reviewer_authorizations",
+        "human_review_cases",
+        "human_review_claims",
+        "human_review_decisions",
+        "human_review_handoffs",
+    ]
+    tables = manifest.get("tables")
+    if not isinstance(tables, list) or [
+        item.get("table") for item in tables if isinstance(item, dict)
+    ] != expected_tables:
+        raise MigrationError("Step 34 protected table set differs")
+    if any(
+        set(item)
+        != {
+            "append_only",
+            "force_rls",
+            "review_service_privileges",
+            "reviewer_privileges",
+            "table",
+        }
+        or item["force_rls"] is not True
+        or "DELETE" in item["review_service_privileges"]
+        or "DELETE" in item["reviewer_privileges"]
+        for item in tables
+    ):
+        raise MigrationError("Step 34 protected-table decision is unsafe")
+    helper_functions = manifest.get("helper_functions")
+    if not isinstance(helper_functions, list) or {
+        item.get("function") for item in helper_functions if isinstance(item, dict)
+    } != set(STEP34_FUNCTION_SIGNATURES):
+        raise MigrationError("Step 34 helper-function set differs")
+    if any(
+        item.get("owner_role") != "mp_schema_owner"
+        or item.get("security_type") != "INVOKER"
+        for item in helper_functions
+    ):
+        raise MigrationError("Step 34 helper-function authority differs")
+    return manifest
+
+
 def offline_validate() -> dict[str, Any]:
     pin = load_version_pin()
     migrations = load_migrations()
@@ -3162,6 +3363,7 @@ def offline_validate() -> dict[str, Any]:
     approval_commit_manifest = load_approval_commit_security_manifest()
     lifecycle_security_manifest = load_lifecycle_security_manifest()
     audit_ledger_security_manifest = load_audit_ledger_security_manifest()
+    review_workspace_security_manifest = load_review_workspace_security_manifest()
     step4_sql = "\n".join(
         migration.sql
         for migration in migrations
@@ -3226,6 +3428,11 @@ def offline_validate() -> dict[str, Any]:
         migration.sql
         for migration in migrations
         if migration.migration_id == STEP33_MIGRATION_ID
+    )
+    step34_sql = next(
+        migration.sql
+        for migration in migrations
+        if migration.migration_id == STEP34_MIGRATION_ID
     )
     historical_sql = step4_sql + "\n" + step5_sql
     step4_tables = sorted(
@@ -3974,6 +4181,69 @@ def offline_validate() -> dict[str, Any]:
         )
     ):
         raise MigrationError("Step 33 append/hash-chain boundary is incomplete")
+    step34_cluster_sql, step34_database_sql = split_cluster_role_ddl(
+        step34_sql,
+        begin_marker=STEP34_CLUSTER_ROLE_BEGIN,
+        end_marker=STEP34_CLUSTER_ROLE_END,
+        role_name="mp_human_reviewer",
+    )
+    if "CREATE ROLE IF NOT EXISTS mp_review_service" not in step34_cluster_sql:
+        raise MigrationError("Step 34 review-service role is missing")
+    step34_tables = set(
+        re.findall(
+            r"^CREATE TABLE memory_patch\.([a-z0-9_]+)",
+            step34_database_sql,
+            re.MULTILINE,
+        )
+    )
+    expected_step34_tables = {
+        table["table"] for table in review_workspace_security_manifest["tables"]
+    }
+    if step34_tables != expected_step34_tables:
+        raise MigrationError("Step 34 review-workspace table set differs")
+    step34_enabled = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"ENABLE ROW LEVEL SECURITY;",
+            step34_database_sql,
+        )
+    )
+    step34_forced = set(
+        re.findall(
+            r"ALTER TABLE memory_patch\.([a-z0-9_]+)\s+"
+            r"FORCE ROW LEVEL SECURITY;",
+            step34_database_sql,
+        )
+    )
+    expected_step34_protected = {
+        *expected_step34_tables,
+        "audit_events",
+        "audit_chain_heads",
+    }
+    if (
+        step34_enabled != expected_step34_protected
+        or step34_forced != expected_step34_protected
+    ):
+        raise MigrationError("Step 34 RLS/FORCE RLS coverage is incomplete")
+    if any(
+        fragment not in step34_database_sql
+        for fragment in (
+            "OPEN' AND (NEW).review_state = 'CLAIMED",
+            "TG_OP = 'INSERT'",
+            "review case must start OPEN at version 1",
+            "BEFORE INSERT OR UPDATE ON memory_patch.human_review_cases",
+            "review_state = 'IN_REVIEW' THEN",
+            "IN_REVIEW'",
+            "RESOLVED', 'ESCALATED",
+            "REVIEW_CASE_CLAIMED",
+            "REVIEW_DECISION_RECORDED",
+            "REVIEW_HANDOFF_SUCCEEDED",
+            "step34_reviewer_authorized",
+            "step34_review_service_authorized",
+            "BEFORE UPDATE OR DELETE",
+        )
+    ):
+        raise MigrationError("Step 34 lifecycle or audit boundary is incomplete")
     return {
         "migration_count": len(migrations),
         "migration_ids": [migration.migration_id for migration in migrations],
@@ -3987,6 +4257,7 @@ def offline_validate() -> dict[str, Any]:
         "personal_memory_table_count": len(personal_memory_tables),
         "step32_lifecycle_table_count": len(step32_tables),
         "step33_audit_ledger_table_count": len(step33_tables),
+        "step34_review_workspace_table_count": len(step34_tables),
         "step4_table_count": len(step4_tables),
         "protected_table_count": (
             len(protected)
@@ -4018,6 +4289,9 @@ def offline_validate() -> dict[str, Any]:
         ),
         "audit_ledger_boundary": (
             "STEP33_APPEND_ONLY_OWNER_CHAIN_HASH_PROOF_EXPORT"
+        ),
+        "review_workspace_boundary": (
+            "STEP34_HUMAN_REVIEW_TYPED_HANDOFF_NO_STEP35_UI"
         ),
     }
 
@@ -6390,6 +6664,144 @@ def assert_step33_security_catalog(
     }
 
 
+def assert_step34_security_catalog(
+    client: SqlClient, database: str
+) -> dict[str, Any]:
+    manifest = load_review_workspace_security_manifest()
+    tables = [item["table"] for item in manifest["tables"]]
+    table_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT c.relname AS table_name, c.relrowsecurity, "
+            "c.relforcerowsecurity, owner.rolname AS owner_role "
+            "FROM pg_catalog.pg_class AS c "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = c.relnamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = c.relowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND c.relname IN ("
+            + ", ".join(sql_literal(name) for name in tables)
+            + ") AND c.relkind = 'r' ORDER BY c.relname",
+        )
+    )
+    if table_rows != [
+        {
+            "table_name": name,
+            "relrowsecurity": "t",
+            "relforcerowsecurity": "t",
+            "owner_role": "mp_schema_owner",
+        }
+        for name in sorted(tables)
+    ]:
+        raise MigrationError("Step 34 table ownership or RLS differs")
+    role_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT rolname, rolcanlogin, rolcreaterole, rolcreatedb, "
+            "rolbypassrls FROM pg_catalog.pg_roles WHERE rolname IN "
+            "('mp_human_reviewer', 'mp_review_service') ORDER BY rolname",
+        )
+    )
+    if role_rows != [
+        {
+            "rolname": role,
+            "rolcanlogin": "f",
+            "rolcreaterole": "f",
+            "rolcreatedb": "f",
+            "rolbypassrls": "f",
+        }
+        for role in ("mp_human_reviewer", "mp_review_service")
+    ]:
+        raise MigrationError("Step 34 dedicated role authority differs")
+    grants = parse_tsv(
+        client.execute(
+            database,
+            "SELECT grantee, table_name, privilege_type "
+            "FROM information_schema.table_privileges "
+            "WHERE table_schema = 'memory_patch' "
+            "AND grantee IN ('mp_human_reviewer', 'mp_review_service') "
+            "AND table_name IN ("
+            + ", ".join(sql_literal(name) for name in tables)
+            + ") ORDER BY grantee, table_name, privilege_type",
+        )
+    )
+    expected_grants = sorted(
+        (
+            role,
+            item["table"],
+            privilege,
+        )
+        for item in manifest["tables"]
+        for role, key in (
+            ("mp_human_reviewer", "reviewer_privileges"),
+            ("mp_review_service", "review_service_privileges"),
+        )
+        for privilege in item[key]
+    )
+    if [
+        (row["grantee"], row["table_name"], row["privilege_type"])
+        for row in grants
+    ] != expected_grants:
+        raise MigrationError("Step 34 dedicated table grants differ")
+    function_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT procedure.proname AS function_name, "
+            "owner.rolname AS owner_role, procedure.prosecdef "
+            "FROM pg_catalog.pg_proc AS procedure "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = procedure.pronamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = procedure.proowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND procedure.proname IN ("
+            + ", ".join(
+                sql_literal(name) for name in sorted(STEP34_FUNCTION_SIGNATURES)
+            )
+            + ") ORDER BY procedure.proname",
+        )
+    )
+    if function_rows != [
+        {
+            "function_name": name,
+            "owner_role": "mp_schema_owner",
+            "prosecdef": "f",
+        }
+        for name in sorted(STEP34_FUNCTION_SIGNATURES)
+    ]:
+        raise MigrationError("Step 34 helper ownership or mode differs")
+    helper_manifest = {
+        item["function"]: set(item["runtime_roles"])
+        for item in manifest["helper_functions"]
+    }
+    for name, signature in sorted(STEP34_FUNCTION_SIGNATURES.items()):
+        rows = parse_tsv(
+            client.execute(database, "SHOW GRANTS ON FUNCTION memory_patch." + name)
+        )
+        expected = {
+            ("admin", "ALL", "t"),
+            ("mp_schema_owner", "ALL", "t"),
+            ("root", "ALL", "t"),
+            *((role, "EXECUTE", "f") for role in helper_manifest[name]),
+        }
+        actual = {
+            (row["grantee"], row["privilege_type"], row["is_grantable"])
+            for row in rows
+        }
+        if actual != expected or any(
+            row["database_name"] != database
+            or row["schema_name"] != "memory_patch"
+            or row["routine_signature"] != signature
+            for row in rows
+        ):
+            raise MigrationError("Step 34 helper grants differ")
+    return {
+        "dedicated_role_count": 2,
+        "force_rls_table_count": len(tables),
+        "helper_count": len(STEP34_FUNCTION_SIGNATURES),
+        "ordinary_user_workspace_access": False,
+    }
+
+
 def apply_migrations(
     client: SqlClient,
     database: str,
@@ -6569,6 +6981,32 @@ def apply_migrations(
                     sqlstate=exc.sqlstate,
                 ) from exc
             assert_step33_security_catalog(client, database)
+            database_sql = ""
+        elif migration.migration_id == STEP34_MIGRATION_ID:
+            cluster_role_sql, database_sql = split_cluster_role_ddl(
+                migration.sql,
+                begin_marker=STEP34_CLUSTER_ROLE_BEGIN,
+                end_marker=STEP34_CLUSTER_ROLE_END,
+                role_name="mp_human_reviewer",
+            )
+            client.execute(
+                database,
+                "SET allow_role_memberships_to_change_during_transaction = true;\n"
+                + cluster_role_sql,
+                timeout=timeout,
+            )
+            try:
+                client.execute(
+                    database,
+                    "BEGIN;\n" + database_sql + "\nCOMMIT;",
+                    timeout=timeout,
+                )
+            except SqlError as exc:
+                raise SqlError(
+                    f"{migration.migration_id} database transaction failed: {exc}",
+                    sqlstate=exc.sqlstate,
+                ) from exc
+            assert_step34_security_catalog(client, database)
             database_sql = ""
         migration_record_sql = (
             "INSERT INTO memory_patch.schema_migrations "

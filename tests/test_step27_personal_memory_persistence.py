@@ -1046,7 +1046,8 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("[x] **Step 31", roadmap)
         self.assertIn("[x] **Step 32", roadmap)
         self.assertIn("[x] **Step 33", roadmap)
-        self.assertIn("[ ] **Step 34", roadmap)
+        self.assertIn("[x] **Step 34", roadmap)
+        self.assertIn("[ ] **Step 35", roadmap)
         self.assertIn(
             "Step 27 owner-private empty Personal Memory HAT slots",
             agents,
@@ -1057,7 +1058,8 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("`Step 31: COMPLETE AND PUSHED", agents)
         self.assertIn("`Step 32: COMPLETE AND PUSHED", agents)
         self.assertIn("`Step 33: COMPLETE AND PUSHED", agents)
-        self.assertIn("`Step 34: NOT STARTED`", agents)
+        self.assertIn("`Step 34: COMPLETE AND PUSHED", agents)
+        self.assertIn("`Step 35: NOT STARTED`", agents)
 
 
 if __name__ == "__main__":

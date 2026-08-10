@@ -761,8 +761,8 @@ class Step32RetrievalPersistenceAndBoundaryTests(unittest.TestCase):
         manifest = json.loads(
             (ROOT / "sql/cockroachdb/migrations/manifest.json").read_text()
         )
-        self.assertEqual(manifest["schema_version"], 14)
-        self.assertEqual(manifest["runner_version"], "14.0.0")
+        self.assertEqual(manifest["schema_version"], 15)
+        self.assertEqual(manifest["runner_version"], "15.0.0")
         step32 = next(
             item for item in manifest["migrations"]
             if item["migration_id"] == "0015_step32_personal_memory_lifecycle"
@@ -854,13 +854,15 @@ class Step32DocumentationAndClosureTests(unittest.TestCase):
             roadmap,
         )
         self.assertIn("- [x] **Step 33", roadmap)
-        self.assertIn("- [ ] **Step 34", roadmap)
+        self.assertIn("- [x] **Step 34", roadmap)
+        self.assertIn("- [ ] **Step 35", roadmap)
         self.assertIn(
             "Step 32: COMPLETE AND PUSHED at actual closure commit",
             agents,
         )
         self.assertIn("Step 33: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 34: NOT STARTED", agents)
+        self.assertIn("Step 34: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 35: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

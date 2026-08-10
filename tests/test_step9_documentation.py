@@ -311,7 +311,8 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 31 exact Step 30 ACTIVE-only retrieval",
             "Step 32 exact owner-scoped supersession",
             "Step 33 typed audit normalization",
-            "Step 33 completion does not authorize Step 34.",
+            "Step 34 typed Step 26/32 review-case intake",
+            "Step 34 completion does not authorize Step 35.",
         ):
             self.assertIn(required, text)
 

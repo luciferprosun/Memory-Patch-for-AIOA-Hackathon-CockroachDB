@@ -65,7 +65,7 @@ class OfflineManifestTests(unittest.TestCase):
         result = migrations.offline_validate()
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["target_version"], "v26.2.4")
-        self.assertEqual(result["migration_count"], 16)
+        self.assertEqual(result["migration_count"], 17)
         self.assertEqual(result["step4_table_count"], 29)
         self.assertEqual(result["schema_table_count"], 43)
         self.assertEqual(result["protected_table_count"], 40)
@@ -109,6 +109,7 @@ class OfflineManifestTests(unittest.TestCase):
                 "0014_step30_user_approval_commit_activation",
                 "0015_step32_personal_memory_lifecycle",
                 "0016_step33_audit_ledger_hash_chain",
+                "0017_step34_human_review_workspace",
             ],
         )
 
@@ -505,9 +506,12 @@ class RetrievalBoundaryTests(unittest.TestCase):
         self.assertRegex(MIGRATION_SQL, r"(?i)\bVECTOR\s*\(\s*384\s*\)")
 
     def test_prefix_indexes_are_filtering_not_authority(self) -> None:
-        self.assertIn("knowledge_chunks_scope_retrieval_idx", MIGRATION_SQL)
-        self.assertIn("tenant_id,\n    hat_scope_id", MIGRATION_SQL)
-        self.assertNotIn("authorization", MIGRATION_SQL.lower())
+        retrieval_sql = (
+            SQL_ROOT / "0002_step4_knowledge_lineage_and_retrieval.sql"
+        ).read_text(encoding="utf-8")
+        self.assertIn("knowledge_chunks_scope_retrieval_idx", retrieval_sql)
+        self.assertIn("tenant_id,\n    hat_scope_id", retrieval_sql)
+        self.assertNotIn("authorization", retrieval_sql.lower())
 
 
 class LiveEvidenceContractTests(unittest.TestCase):
@@ -697,7 +701,7 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
         ):
             result = migrations.apply_migrations(client, "mp_step5_noop")
         self.assertEqual(result["applied_count"], 0)
-        self.assertEqual(result["skipped_count"], 16)
+        self.assertEqual(result["skipped_count"], 17)
         client.execute.assert_not_called()
 
     def test_applied_checksum_mismatch_fails_closed(self) -> None:

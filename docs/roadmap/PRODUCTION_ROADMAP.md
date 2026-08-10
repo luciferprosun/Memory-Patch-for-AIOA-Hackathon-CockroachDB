@@ -737,8 +737,21 @@ Pokazać cały Kernel człowiekowi, zapewnić trwały audyt, izolację credentia
   [validation evidence](../evidence/audit/step33-audit-ledger-validation.json),
   [rekord zamknięcia](../audits/STEP_33_AUDIT_LEDGER_HASH_CHAIN_CLOSURE_1A.md).
 
-- [ ] **Step 34 — Human Review Workspace and Draft Comparison UI 1A**
-  Query, route, policy, evidence, Draft V1, Correction Packet, Draft V2, claim verdicts, patch proposal, approval i committed state.
+- [x] **Step 34 — Human Review Workspace and Draft Comparison UI 1A**
+  Query, route, policy, evidence, Draft V1, Correction Packet, Draft V2, claim
+  verdicts, patch proposal, approval i committed state.
+  `Step 34: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje zamknięte typy review case dla Step 26 i Step 32,
+  deterministyczną kolejkę i claim, least-privileged reviewer authorization,
+  minimal-disclosure detail projection, weryfikację Step 33 audit chain,
+  case-specific human decisions, typed business handoff, ochronę replay/TOCTOU,
+  migration 0017 oraz RLS/FORCE RLS bez model, Critic, publication ani external
+  execution authority.
+  [Architektura](../architecture/HUMAN_REVIEW_WORKSPACE_1A.md),
+  [ADR-041](../adr/ADR-041-human-review-workspace.md),
+  [runbook](../operations/STEP_34_HUMAN_REVIEW_VALIDATION_1A.md),
+  [validation evidence](../evidence/review/step34-human-review-workspace-validation.json),
+  [rekord zamknięcia](../audits/STEP_34_HUMAN_REVIEW_WORKSPACE_CLOSURE_1A.md).
 
 - [ ] **Step 35 — Personal Memory HAT Management UI 1A**
   Sloty, quota, model bindings, active patches, conflicts, archive, revoke, export, delete request i private/shared distinction.

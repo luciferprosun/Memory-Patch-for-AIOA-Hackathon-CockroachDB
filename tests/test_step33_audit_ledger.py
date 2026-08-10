@@ -781,6 +781,9 @@ class Step33MigrationTests(unittest.TestCase):
     def test_migration_is_append_only_rls_and_manifest_bound(self):
         migration = ROOT / "sql/cockroachdb/migrations/0016_step33_audit_ledger_hash_chain.sql"
         sql = migration.read_text(encoding="utf-8")
+        current_registry_sql = sql + (
+            ROOT / "sql/cockroachdb/migrations/0017_step34_human_review_workspace.sql"
+        ).read_text(encoding="utf-8")
         manifest = json.loads(
             (ROOT / "sql/cockroachdb/migrations/manifest.json").read_text(
                 encoding="utf-8"
@@ -791,7 +794,7 @@ class Step33MigrationTests(unittest.TestCase):
         self.assertIn("FORCE ROW LEVEL SECURITY", sql)
         self.assertIn("audit_events_s33_chain_sequence_uq", sql)
         for value in (*AuditEventType, *AuditActorType):
-            self.assertIn(f"'{value.value}'", sql)
+            self.assertIn(f"'{value.value}'", current_registry_sql)
         for fragment in (
             "recorded_at IS NOT NULL",
             "step33_envelope -> 'owner_user_id' IS NOT NULL",
@@ -803,7 +806,9 @@ class Step33MigrationTests(unittest.TestCase):
         self.assertIn("(step33_envelope ->> 'recorded_at')::TIMESTAMPTZ", sql)
         self.assertNotIn("BYPASSRLS", sql)
         self.assertNotRegex(sql, r"(?m)^\s*DELETE\s+FROM")
-        entry = manifest["migrations"][-1]
+        entry = next(
+            item for item in manifest["migrations"] if item["filename"] == migration.name
+        )
         self.assertEqual(entry["filename"], migration.name)
         self.assertEqual(entry["sha256"], __import__("hashlib").sha256(migration.read_bytes()).hexdigest())
 
