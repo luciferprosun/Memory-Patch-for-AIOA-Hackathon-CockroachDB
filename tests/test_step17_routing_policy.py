@@ -998,7 +998,9 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("- [x] **Step 33", roadmap)
         self.assertIn("- [x] **Step 34", roadmap)
         self.assertIn("- [x] **Step 35", roadmap)
-        self.assertIn("- [ ] **Step 36", roadmap)
+        self.assertIn("- [x] **Step 36", roadmap)
+        self.assertIn("- [x] **Step 37", roadmap)
+        self.assertIn("- [ ] **Step 38", roadmap)
         agents = (REPOSITORY_ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("Step 19 immutable local-model embeddings", agents)
         self.assertIn("Step 20 verified Step 18/19 input binding", agents)
@@ -1017,7 +1019,9 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("Step 33: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 34: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 35: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 36: NOT STARTED", agents)
+        self.assertIn("Step 36: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 37: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 38: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

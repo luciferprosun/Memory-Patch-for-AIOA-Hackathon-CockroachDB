@@ -177,6 +177,21 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   Step 27/30/32 mutations, Step 33 history, receipt-driven concurrency,
   XSS/CSRF/IDOR protections and controlled CockroachDB validation are closed
   by the intended Step 35 commit once it is reachable on `origin/main`.
+- `Step 36: COMPLETE AND PUSHED at actual closure commit`.
+  Purpose-bound credentials, no admin/master fallback, separated source
+  publisher and audit reader roles, hardened Commit Helper/reviewer authority,
+  secret redaction, RLS/FORCE RLS and controlled CockroachDB validation are
+  closed by the intended Step 36 commit once it is reachable on `origin/main`.
+- `Step 37: COMPLETE AND PUSHED at actual closure commit`.
+  Closed test-only failure injection, deterministic recovery cases, stable
+  idempotency identities, unknown-completion reconciliation, process/saga
+  resume, fake S3/Object Lock and temporary-volume failures, provider bounds,
+  audit-chain integrity, Personal Memory lifecycle replay, review handoff and
+  missing-capability fail-closed behavior are validated with zero duplicate
+  semantic effects, authority violations or scope widening. Controlled
+  CockroachDB v26.2.4 validation applies and replays all 18 migrations and
+  cleans its exact owned runtime.
+- `Step 38: NOT STARTED`. Step 37 completion does not authorize Step 38.
 
 ## Zasada prowadzenia prac
 
@@ -798,9 +813,23 @@ Pokazać cały Kernel człowiekowi, zapewnić trwały audyt, izolację credentia
   [validation evidence](../evidence/security/step36-credential-authority-validation.json),
   [rekord zamknięcia](../audits/STEP_36_CREDENTIAL_SEPARATION_COMMIT_AUTHORITY_CLOSURE_1A.md).
 
-- [ ] **Step 37 — Failure Injection and Recovery Matrix 1A**
+- [x] **Step 37 — Failure Injection and Recovery 1A**
   CockroachDB down, S3 down, USB missing/read-only, model failure, vector index stale, conflicting evidence, failed approval, interrupted transaction i recovery/resume.
-  `Step 37: NOT STARTED`. Step 36 completion does not authorize Step 37.
+  `Step 37: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje zamknięty test-only failure-point registry, inertny
+  production `NoOpFailureInjector`, deterministyczne kampanie retry,
+  acknowledgement loss, process/saga resume, provider, fake S3/Object Lock,
+  temporary external volume, audit, Personal Memory, review handoff i brak
+  dedykowanego credential. Evidence wiąże 55 przypadków i 2 computed proofs,
+  pełny replay 18 migracji CockroachDB v26.2.4, zero duplicate semantic
+  effects, authority/integrity violations, scope widening i production
+  mutation oraz pełny cleanup.
+  [Architektura](../architecture/FAILURE_INJECTION_RECOVERY_1A.md),
+  [ADR-044](../adr/ADR-044-failure-injection-recovery.md),
+  [failure/recovery matrix](../reliability/STEP37_FAILURE_RECOVERY_MATRIX_1A.md),
+  [runbook](../operations/STEP_37_FAILURE_RECOVERY_VALIDATION_1A.md),
+  [validation evidence](../evidence/reliability/step37-failure-recovery-validation.json),
+  [rekord zamknięcia](../audits/STEP_37_FAILURE_INJECTION_RECOVERY_CLOSURE_1A.md).
 
 ### Gate fazy 8
 
@@ -820,6 +849,7 @@ Zamknąć działający Knowledge Kernel jako pełny system AIOA, a nie pojedyncz
 
 - [ ] **Step 38 — German Law HAT Full End-to-End Integration 1A**
   Pełny przebieg na dowolnych pytaniach wybranych później przez użytkownika: routing, temporal retrieval, correction, approval, personal reuse i audit.
+  `Step 38: NOT STARTED`. Step 37 completion does not authorize Step 38.
 
 - [ ] **Step 39 — AOIA Critic Prompt Loop Production Bridge 1A**
   Most z istniejącym Critic Loop; tylko proposal input, brak authority escalation, hash-bound correction events i wspólne run references.

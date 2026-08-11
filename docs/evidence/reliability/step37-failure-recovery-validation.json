@@ -1,0 +1,1234 @@
+{
+    "authority": {
+        "admin_fallback": false,
+        "authority_escalation_during_recovery": false,
+        "bypassrls_recovery": false,
+        "cross_tenant_writes": 0,
+        "cross_user_writes": 0,
+        "owner_scope_widening": false,
+        "tenant_scope_widening": false
+    },
+    "cases": [
+        {
+            "actual_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "audit.append-ack-lost",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "ONE_CHAIN_EVENT_VERIFIED",
+            "expected_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "failure_domain": "AUDIT_LEDGER",
+            "failure_point": "AUDIT_AFTER_APPEND_ACK_LOST",
+            "final_semantic_state": "ONE_CHAIN_EVENT_VERIFIED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "AUDIT_CHAIN_VERIFIED",
+                "AUDIT_EXACT_REPLAY"
+            ],
+            "result_hash": "aee14bfd4c44c1e9436ff57637c4b2194501dca67e0514b744f8643cbc4da25e",
+            "subject_hash": "e7547ae54d1671af8516e2902ceb2b068ac8e99606fe1093e7509fd5f3c50d02"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "audit.before-append",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_FALSE_SUCCESS_THEN_ONE_CHAIN_EVENT",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "AUDIT_LEDGER",
+            "failure_point": "AUDIT_BEFORE_APPEND",
+            "final_semantic_state": "NO_FALSE_SUCCESS_THEN_ONE_CHAIN_EVENT",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "AUDIT_CHAIN_VERIFIED",
+                "AUDIT_PREAPPEND_FAILED_CLOSED"
+            ],
+            "result_hash": "b34d9e2327a4a96edd50d615190e0ae28342b79da1a0ab8bc6059f8d47782203",
+            "subject_hash": "6777f7ad961b9b9419b2bea280bf983ec083db5a7720f04d7dad2e791d2b22ae"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "audit.chain-head-contention",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "CONTIGUOUS_UNIQUE_CHAIN_SEQUENCE",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "AUDIT_LEDGER",
+            "failure_point": "AUDIT_CHAIN_HEAD_CONTENTION",
+            "final_semantic_state": "CONTIGUOUS_UNIQUE_CHAIN_SEQUENCE",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "AUDIT_CHAIN_HEAD_CONTENTION_SERIALIZED"
+            ],
+            "result_hash": "16f6a9233305c1c79c7d3f0f7d4be3e1f6c187331095a413bce7b1678b643ce2",
+            "subject_hash": "8c68b49c3df611b23fd947635de773e5767a587bffd966fce6d925ff4493d8f8"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "audit.tamper-detected",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "TAMPER_DETECTED_NOT_REPAIRED",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "AUDIT_LEDGER",
+            "failure_point": "AUDIT_CHAIN_TAMPER",
+            "final_semantic_state": "TAMPER_DETECTED_NOT_REPAIRED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "AUDIT_CHAIN_TAMPER_DETECTED"
+            ],
+            "result_hash": "23e408276af3567c4726c4368dfcb947493ed96fbd464369af87fb2b60ad7a65",
+            "subject_hash": "87c4b9269aae5e50a2fa2f86e7375bd8bc2705503f2a5d7a921b19936ebac345"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "authority.audit-tenant-denied",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "TENANT_SCOPE_UNCHANGED",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "AUDIT_LEDGER",
+            "failure_point": "AUDIT_BEFORE_APPEND",
+            "final_semantic_state": "TENANT_SCOPE_UNCHANGED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "TENANT_SCOPE_WIDENING_DENIED"
+            ],
+            "result_hash": "0f32bb81d11da09083ec83b37b0629f75cbd1ce9d9e2f61dca0a750c8ed70294",
+            "subject_hash": "539de6d74be4aed656b0b4137e461eb1765b0bedd007b448f58cc8d708adcd12"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "authority.owner-scope-denied",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "OWNER_SCOPE_UNCHANGED",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "PERSONAL_MEMORY_APPROVAL",
+            "failure_point": "PM_BEFORE_APPROVAL",
+            "final_semantic_state": "OWNER_SCOPE_UNCHANGED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "OWNER_SCOPE_WIDENING_DENIED"
+            ],
+            "result_hash": "9fc76059ef07759c22e36b0c6fdc9263b1e9803e2e5432f77586a93f64f8479a",
+            "subject_hash": "6190fa60752ec1955d7e7f9613efb5d963814df548acc64f83e21d5b5a1a45a7"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "credential.audit-appender-unavailable",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_AUDIT_APPENDER_FALLBACK",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "CREDENTIAL_UNAVAILABLE",
+            "failure_point": "CREDENTIAL_AUDIT_APPENDER_UNAVAILABLE",
+            "final_semantic_state": "NO_AUDIT_APPENDER_FALLBACK",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "MISSING_AUDIT_CREDENTIAL_FAILED_CLOSED"
+            ],
+            "result_hash": "4c449fd0e9e07619700e619f5483118f27ec7f8a6b26b42c5e124c975faedc99",
+            "subject_hash": "8c6ace1999fc2e835828fc628fdfb05752d5db52495adc9547c6b38c7a9a69c8"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "credential.commit-helper-unavailable",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_ADMIN_FALLBACK",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "CREDENTIAL_UNAVAILABLE",
+            "failure_point": "CREDENTIAL_COMMIT_HELPER_UNAVAILABLE",
+            "final_semantic_state": "NO_ADMIN_FALLBACK",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "MISSING_CREDENTIAL_FAILED_CLOSED"
+            ],
+            "result_hash": "f17eae61b33ba8872199ac500ea806e913e2b98fc75225995cbece85a4484496",
+            "subject_hash": "8c6ace1999fc2e835828fc628fdfb05752d5db52495adc9547c6b38c7a9a69c8"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "credential.provider-boundary",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_DATABASE_OR_APPROVAL_AUTHORITY",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "CREDENTIAL_UNAVAILABLE",
+            "failure_point": "CREDENTIAL_PROVIDER_UNAVAILABLE",
+            "final_semantic_state": "NO_DATABASE_OR_APPROVAL_AUTHORITY",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "PROVIDER_AUTHORITY_NOT_UPGRADED"
+            ],
+            "result_hash": "a7803fbf88d34e82517b09e12db7b6ea7e911b60ddc9090e3f1c2ea598c34d6f",
+            "subject_hash": "c622c14b48708a241b9e0cc4fa3035c430f40001e0f2530824cccd5d904faeb6"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "credential.reviewer-unavailable",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_REVIEWER_AUTHORITY_FALLBACK",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "CREDENTIAL_UNAVAILABLE",
+            "failure_point": "CREDENTIAL_REVIEWER_UNAVAILABLE",
+            "final_semantic_state": "NO_REVIEWER_AUTHORITY_FALLBACK",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "MISSING_REVIEWER_CREDENTIAL_FAILED_CLOSED"
+            ],
+            "result_hash": "3aaf34b42d498b7092cb44e84384ec8da69dee0c572595d79976adf7cd6cd324",
+            "subject_hash": "8c6ace1999fc2e835828fc628fdfb05752d5db52495adc9547c6b38c7a9a69c8"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "database.before-begin",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_MUTATION_THEN_ONE_DURABLE_RESULT",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "DATABASE",
+            "failure_point": "DB_BEFORE_BEGIN",
+            "final_semantic_state": "NO_MUTATION_THEN_ONE_DURABLE_RESULT",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "DB_BEFORE_BEGIN_FAILED_CLOSED"
+            ],
+            "result_hash": "2bfd3e2905eca8d8226aecbcd4941689772a1a6608f73a9cced4ea23cd684700",
+            "subject_hash": "8f871bfe87a173daf518849d325a54b67caa2997c63a112d232459d8542462a5"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "database.before-commit",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "ROLLED_BACK_THEN_COMMITTED_ONCE",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "DATABASE",
+            "failure_point": "DB_BEFORE_COMMIT",
+            "final_semantic_state": "ROLLED_BACK_THEN_COMMITTED_ONCE",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "DB_PRECOMMIT_ROLLBACK_VERIFIED"
+            ],
+            "result_hash": "14251bf91a978bd5a9ceb2e8c56f42baf22a7727456664b84fa2c8c626640fbf",
+            "subject_hash": "8f871bfe87a173daf518849d325a54b67caa2997c63a112d232459d8542462a5"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "database.changed-replay-conflict",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "CONFLICT_REJECTED_DURABLE_RESULT_UNCHANGED",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "DATABASE",
+            "failure_point": "DB_BEFORE_COMMIT",
+            "final_semantic_state": "CONFLICT_REJECTED_DURABLE_RESULT_UNCHANGED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "DB_REPLAY_CONFLICT"
+            ],
+            "result_hash": "76040488ee2f6f591b56a560cc4a9e39d63b3b22bd74b04626c0aeabbd6ad27d",
+            "subject_hash": "8f871bfe87a173daf518849d325a54b67caa2997c63a112d232459d8542462a5"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "database.commit-ack-lost",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "ONE_DURABLE_RESULT",
+            "expected_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "failure_domain": "DATABASE",
+            "failure_point": "DB_AFTER_COMMIT_ACK_LOST",
+            "final_semantic_state": "ONE_DURABLE_RESULT",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "DB_ACK_LOST_REPLAY_RECOVERED"
+            ],
+            "result_hash": "9789235c5f6abdfa78fde65815bb8c520117a9d9b7c30d3426e6697812455ea6",
+            "subject_hash": "8f871bfe87a173daf518849d325a54b67caa2997c63a112d232459d8542462a5"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "database.read-failure",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "READ_FAILURE_DID_NOT_WIDEN_SCOPE",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "DATABASE",
+            "failure_point": "DB_READ_FAILURE",
+            "final_semantic_state": "READ_FAILURE_DID_NOT_WIDEN_SCOPE",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "DB_READ_FAILURE_FAILED_CLOSED"
+            ],
+            "result_hash": "23446ae42663d6f1109ad3ffcd9ae2e5dece378779d57159539a9a9a5ee0b760",
+            "subject_hash": "8f871bfe87a173daf518849d325a54b67caa2997c63a112d232459d8542462a5"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "database.serialization-retry",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "ONE_DURABLE_RESULT",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "TRANSACTION_RETRY",
+            "failure_point": "DB_COMMIT_SERIALIZATION_FAILURE",
+            "final_semantic_state": "ONE_DURABLE_RESULT",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "DB_SERIALIZATION_RETRY_RECOVERED"
+            ],
+            "result_hash": "f3917f4027835c20b65f0afb53766448b8fb4b89e1ee54b0ee439dddd1f4c352",
+            "subject_hash": "8f871bfe87a173daf518849d325a54b67caa2997c63a112d232459d8542462a5"
+        },
+        {
+            "actual_recovery_status": "HUMAN_REVIEW_REQUIRED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "final-answer.single-retry-failure",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_KNOWN_BAD_DRAFT_V1_FALLBACK",
+            "expected_recovery_status": "HUMAN_REVIEW_REQUIRED",
+            "failure_domain": "MODEL_PROVIDER",
+            "failure_point": "PROVIDER_TIMEOUT",
+            "final_semantic_state": "NO_KNOWN_BAD_DRAFT_V1_FALLBACK",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "FINAL_RETRY_BOUND_ENFORCED",
+                "HUMAN_REVIEW_REQUIRED"
+            ],
+            "result_hash": "552312adc971c8af298ff5cdaeb9379cc93e6d8fca5eaf9ecbaedf754f6343ca",
+            "subject_hash": "ce736cd9bb7a6962a25b4ed83c4f5fd9d28a3b66bc15794e9f6978ac51844e62"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RESUME",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "ingestion.checkpoint-before-finalize",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "RECEIPT_RECONCILED_WITHOUT_DUPLICATE_PARSE",
+            "expected_recovery_status": "RECOVERED_BY_RESUME",
+            "failure_domain": "INGESTION_SAGA",
+            "failure_point": "SAGA_BEFORE_FINALIZE",
+            "final_semantic_state": "RECEIPT_RECONCILED_WITHOUT_DUPLICATE_PARSE",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "SAGA_CHECKPOINT_RESUMED"
+            ],
+            "result_hash": "e0e9c544aaa087e863328cc46e66541638ef3c717c019b9847556c3343dc9b0b",
+            "subject_hash": "cc849e6d7030f6ffaaef8d0affa99fe0d877bb7dbf1c369500d67d128dd583af"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "ingestion.finalize-ack-lost",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "ONE_DURABLE_PUBLICATION_AFTER_FINALIZE_ACK_LOSS",
+            "expected_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "failure_domain": "INGESTION_SAGA",
+            "failure_point": "SAGA_BEFORE_FINALIZE",
+            "final_semantic_state": "ONE_DURABLE_PUBLICATION_AFTER_FINALIZE_ACK_LOSS",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "SAGA_FINALIZE_ACK_LOST_RECONCILED"
+            ],
+            "result_hash": "9260f3fc3afe8a865467e47f5f295a8d72b1437e3a63be43f2712e34af84c311",
+            "subject_hash": "cc38b9e5dd7144fad2a67323cc152123c74fc879c8db52477834e1a5a338bce9"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RESUME",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "ingestion.s3-ack-lost",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "PUBLISHED_ONCE_AFTER_RECONCILIATION",
+            "expected_recovery_status": "RECOVERED_BY_RESUME",
+            "failure_domain": "INGESTION_SAGA",
+            "failure_point": "SAGA_AFTER_OBJECT_WRITE",
+            "final_semantic_state": "PUBLISHED_ONCE_AFTER_RECONCILIATION",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "SAGA_RESUMED_FROM_DURABLE_INTENT"
+            ],
+            "result_hash": "8c507150358e36388dc26c0c6f44a0caf7c3a6412c3fa8b8fe10083cb3947663",
+            "subject_hash": "43b8adca409fe01c9e20ac79c0ec360162abae8ec7049ce25dd80e1d461b8b07"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 3,
+            "authority_violations": 0,
+            "case_id": "ingestion.s3-outage-bound",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "RETRY_WAIT_NOT_PUBLISHED",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "INGESTION_SAGA",
+            "failure_point": "SAGA_AFTER_STATE_WRITE",
+            "final_semantic_state": "RETRY_WAIT_NOT_PUBLISHED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "S3_RETRY_BOUND_ENFORCED",
+                "SAGA_RETRY_WAIT"
+            ],
+            "result_hash": "0841ddcc96ae253981f491cc9545b4ee937e8b713a3430c912d80da0819bf239",
+            "subject_hash": "219abc986310cea007fc21500defe119f90e342f1cecfa594709c39b336c16f1"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 3,
+            "authority_violations": 0,
+            "case_id": "ingestion.s3-transient-retry-success",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "PUBLISHED_ONCE_AFTER_BOUNDED_S3_RETRY",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "S3_OBJECT_STORE",
+            "failure_point": "S3_PUT_FAILURE",
+            "final_semantic_state": "PUBLISHED_ONCE_AFTER_BOUNDED_S3_RETRY",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "PUBLICATION_NOT_DUPLICATED",
+                "S3_TRANSIENT_RETRY_RECOVERED"
+            ],
+            "result_hash": "a9002d90c2a741a0f715e418b6daff86667c3334478a9d2a406394115c96444c",
+            "subject_hash": "db137dc09d8d8c3a6812f7a344e98ecd87fa5399c4697b8f9e2708bf525b5fa2"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "personal-memory.activation-ack-lost",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "ACTIVE_ONCE",
+            "expected_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "failure_domain": "PERSONAL_MEMORY_ACTIVATION",
+            "failure_point": "PM_AFTER_ACTIVATION_ACK_LOST",
+            "final_semantic_state": "ACTIVE_ONCE",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "ACTIVATION_EXACT_REPLAY"
+            ],
+            "result_hash": "00786ae4e9c5d7a905d447eee7fceb51303bb8de944b548240e595dbc91bc41d",
+            "subject_hash": "8072259f1889a8f4cab71a2a50c3fdef5e0eb05844b6d4d7bb5e74c0aaf0d26b"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "personal-memory.activation-before-write",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "INACTIVE_THEN_ACTIVE_ONCE",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "PERSONAL_MEMORY_ACTIVATION",
+            "failure_point": "PM_BEFORE_ACTIVATION",
+            "final_semantic_state": "INACTIVE_THEN_ACTIVE_ONCE",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "ACTIVATION_PREWRITE_FAILED_CLOSED"
+            ],
+            "result_hash": "16983220158dff378c687ddbdaa08c6a8d32d1fe77e8ccf52c8211c79fc5a268",
+            "subject_hash": "64377cee5361748d99c6ef21a0bf2533d60ba43b1c59fe5b460413ab840281f2"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "personal-memory.approval-ack-lost",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "APPROVED_ONCE",
+            "expected_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "failure_domain": "PERSONAL_MEMORY_APPROVAL",
+            "failure_point": "PM_AFTER_APPROVAL_ACK_LOST",
+            "final_semantic_state": "APPROVED_ONCE",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "APPROVAL_EXACT_REPLAY"
+            ],
+            "result_hash": "3d0a13a4bc5e79fae1cc83794ede43f2058855b341e726aeafeed77da7a57c62",
+            "subject_hash": "4d99b87d4d070c605c2e4d9470ed96448e0e00b8f4f8768844b7502af0721510"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "personal-memory.approval-before-write",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_APPROVAL_THEN_APPROVED_ONCE",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "PERSONAL_MEMORY_APPROVAL",
+            "failure_point": "PM_BEFORE_APPROVAL",
+            "final_semantic_state": "NO_APPROVAL_THEN_APPROVED_ONCE",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "APPROVAL_PREWRITE_FAILED_CLOSED"
+            ],
+            "result_hash": "29c5e6222c345823e58b55b863b15f2601bb225701868d494d3e428d4a0c56be",
+            "subject_hash": "afcf46863764df0e8ac45b210ae2520fdce18d5f0e05d81b981e754f70ba75ae"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "personal-memory.commit-ack-lost",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "COMMITTED_ONCE",
+            "expected_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "failure_domain": "PERSONAL_MEMORY_COMMIT",
+            "failure_point": "PM_AFTER_COMMIT_ACK_LOST",
+            "final_semantic_state": "COMMITTED_ONCE",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "COMMIT_EXACT_REPLAY"
+            ],
+            "result_hash": "a322627d635b7f7db16b7087e8bc08f574462c24c9bf71765f16ff15438a1bfd",
+            "subject_hash": "1849804e078d6ba8537942b2fc371e19e7385b9807f257eec8db92795aa85971"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "personal-memory.commit-before-write",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_PATCH_THEN_COMMITTED_ONCE",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "PERSONAL_MEMORY_COMMIT",
+            "failure_point": "PM_BEFORE_COMMIT",
+            "final_semantic_state": "NO_PATCH_THEN_COMMITTED_ONCE",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "COMMIT_PREWRITE_FAILED_CLOSED"
+            ],
+            "result_hash": "6c194576a3a5f3419e57a5b7cc9b94d6a78177d83f13cfc6110a5bd80a4267d3",
+            "subject_hash": "6b663b7a91f137608c97ccabae1b8ece2d65859ce798fd96cfe6ed624734e912"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 3,
+            "authority_violations": 0,
+            "case_id": "personal-memory.delete-before-write",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_TOMBSTONE_THEN_DELETED_ONCE_EXACT_REPLAY_RETRIEVAL_SUPPRESSED",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "PERSONAL_MEMORY_LIFECYCLE",
+            "failure_point": "PM_LIFECYCLE_BEFORE_COMMIT",
+            "final_semantic_state": "NO_TOMBSTONE_THEN_DELETED_ONCE_EXACT_REPLAY_RETRIEVAL_SUPPRESSED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "DELETE_EXACT_REPLAY",
+                "DELETE_PREWRITE_FAILED_CLOSED",
+                "STEP31_DELETED_PATCH_SUPPRESSED"
+            ],
+            "result_hash": "67abe41dfb23e90be477d95f79c447bdd36ed080d8b42fc9b5f9e6f6bf7a79c3",
+            "subject_hash": "7e3fd21632fd3128810a9829853464ddb3d7cfaf808780c3b9d575d38ab0f3bd"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "personal-memory.export-prewrite-interrupted",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_READY_BUNDLE_THEN_OWNER_EXPORT_READY_ONCE",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "PERSONAL_MEMORY_LIFECYCLE",
+            "failure_point": "PM_EXPORT_INTERRUPTED",
+            "final_semantic_state": "NO_READY_BUNDLE_THEN_OWNER_EXPORT_READY_ONCE",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "EXPORT_PREWRITE_FAILED_CLOSED"
+            ],
+            "result_hash": "99d2c7d638851ffa83bc74f33552ef6f027357e24020a8ac31c478f1ed18031f",
+            "subject_hash": "b7a663463bce3665c3459b71fd611f7d803aeba5ee70f146164dfa45b3de5f8c"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "personal-memory.revocation-ack-lost",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "REVOKED_ONCE_CONTENT_UNCHANGED",
+            "expected_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "failure_domain": "PERSONAL_MEMORY_LIFECYCLE",
+            "failure_point": "PM_LIFECYCLE_AFTER_COMMIT_ACK_LOST",
+            "final_semantic_state": "REVOKED_ONCE_CONTENT_UNCHANGED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "REVOCATION_EXACT_REPLAY"
+            ],
+            "result_hash": "b623014f9c73ee46a80dd0bddbd6601a52cc9e2fd116ca077e01ee7aed74cac6",
+            "subject_hash": "6f1f558fc08b76a115815b30ce5677015c624e8241959d78295f569975ef7537"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 3,
+            "authority_violations": 0,
+            "case_id": "personal-memory.supersession-before-write",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_RELATION_THEN_SUPERSEDED_ONCE_EXACT_REPLAY_HISTORY_PRESERVED",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "PERSONAL_MEMORY_LIFECYCLE",
+            "failure_point": "PM_LIFECYCLE_BEFORE_COMMIT",
+            "final_semantic_state": "NO_RELATION_THEN_SUPERSEDED_ONCE_EXACT_REPLAY_HISTORY_PRESERVED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "SUPERSESSION_EXACT_REPLAY",
+                "SUPERSESSION_HISTORY_PRESERVED",
+                "SUPERSESSION_PREWRITE_FAILED_CLOSED"
+            ],
+            "result_hash": "781473bd6b8b6eec1653ad18cc8244fe0a9bd589399e0d2f8e8958dfa0996b14",
+            "subject_hash": "972bb4a21591f67798d662c9362d4f352bc044e70f5aaba79b9b5201e8af14ef"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RESUME",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "process.after-saga-checkpoint",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NEW_PROCESS_RESUMED_PERSISTED_CHECKPOINT",
+            "expected_recovery_status": "RECOVERED_BY_RESUME",
+            "failure_domain": "PROCESS_CRASH",
+            "failure_point": "PROCESS_AFTER_SAGA_CHECKPOINT",
+            "final_semantic_state": "NEW_PROCESS_RESUMED_PERSISTED_CHECKPOINT",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "PROCESS_CHECKPOINT_RESUME"
+            ],
+            "result_hash": "0a4159aedd03b7b48c86742330a112bfde659eb8287c84fd1dd2be1b7335e89f",
+            "subject_hash": "50d403f417883b983818b94c5097a20c93fa811871f65e3d49d6c11d47878800"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "process.crash-after-durable-write",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "DURABLE_RESULT_REDISCOVERED",
+            "expected_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "failure_domain": "PROCESS_CRASH",
+            "failure_point": "PROCESS_AFTER_DURABLE_WRITE",
+            "final_semantic_state": "DURABLE_RESULT_REDISCOVERED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "PROCESS_RESTART_REPLAYED"
+            ],
+            "result_hash": "6700061d3fd3f23f9b50c58e2118f0cd7778e6e4d14b894c76f41d44dab58527",
+            "subject_hash": "3a9d4b45ab37aad610f975726a391a18c2728e5d90b72b95400e4c13eaad4a28"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "provider.step22-invalid-response",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "INVALID_RESPONSE_REJECTED",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "MODEL_PROVIDER",
+            "failure_point": "PROVIDER_INVALID_RESPONSE",
+            "final_semantic_state": "INVALID_RESPONSE_REJECTED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "PROVIDER_INVALID_RESPONSE_FAILED_CLOSED"
+            ],
+            "result_hash": "d6fc73478d7ff85031f7988bac59ef9b242b9c6cfa5e2dfdd47c7ba932b2a296",
+            "subject_hash": "87122f49ba00f1767e08b8253cecffd0a24fd94993a9a77796594033d218583a"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "provider.step22-nonretryable",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NONRETRYABLE_FAILURE_REJECTED",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "MODEL_PROVIDER",
+            "failure_point": "PROVIDER_AUTH_FAILURE",
+            "final_semantic_state": "NONRETRYABLE_FAILURE_REJECTED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "PROVIDER_NONRETRYABLE_FAILED_CLOSED"
+            ],
+            "result_hash": "369e2e7bbdeeebafec388c9b1ba598b519aa4078eb8dafde9a4992380807ca91",
+            "subject_hash": "692182948ab6fd6deb208c56aba29541783627c088022a57c268700406c4e180"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "provider.step22-oversized-response",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "OVERSIZED_RESPONSE_REJECTED",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "MODEL_PROVIDER",
+            "failure_point": "PROVIDER_OVERSIZED_RESPONSE",
+            "final_semantic_state": "OVERSIZED_RESPONSE_REJECTED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "PROVIDER_OVERSIZED_RESPONSE_FAILED_CLOSED"
+            ],
+            "result_hash": "79c45928a6f7d963d75c1bed1cb11a86fdd10e3a90f0cbebd141e3699aaf1088",
+            "subject_hash": "9362fe29dfce179a67af0bd569a18443ebd41926e1dc14a52fef062b6a7a186e"
+        },
+        {
+            "actual_recovery_status": "MANUAL_OPERATOR_RECOVERY_REQUIRED",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "provider.step22-terminal-after-unknown",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "TERMINAL_FAILURE_PRESERVES_UNKNOWN_COMPLETION",
+            "expected_recovery_status": "MANUAL_OPERATOR_RECOVERY_REQUIRED",
+            "failure_domain": "MODEL_PROVIDER",
+            "failure_point": "PROVIDER_RESPONSE_LOST",
+            "final_semantic_state": "TERMINAL_FAILURE_PRESERVES_UNKNOWN_COMPLETION",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "PROVIDER_UNKNOWN_COMPLETION_STICKY"
+            ],
+            "result_hash": "2a85dd90599af9f8464e7a0c55f39a82e8b67d59eea9f92d5d29e01a9e32763f",
+            "subject_hash": "1be4209319d737940659f6a52131ed6f89b4a3f5f5cd3977d7a391af4ca4359e"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "provider.step22-timeout-exhausted",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "BOUNDED_RETRY_EXHAUSTED",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "MODEL_PROVIDER",
+            "failure_point": "PROVIDER_TIMEOUT",
+            "final_semantic_state": "BOUNDED_RETRY_EXHAUSTED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "PROVIDER_RETRY_BOUND_ENFORCED"
+            ],
+            "result_hash": "db4eae32565bf4c7db35c4aa2c4d8ee885751e5978c3b898fa60210b1ffd2426",
+            "subject_hash": "90459da1ec4371886ef5c38bad59348e92d5cb3d2e7510f88a32aa9adeef973d"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "provider.step22-transient-then-success",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "ONE_VERIFIED_DRAFT_AFTER_BOUNDED_RETRY",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "MODEL_PROVIDER",
+            "failure_point": "PROVIDER_TRANSIENT_FAILURE",
+            "final_semantic_state": "ONE_VERIFIED_DRAFT_AFTER_BOUNDED_RETRY",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "PROVIDER_TRANSIENT_RETRY_RECOVERED"
+            ],
+            "result_hash": "7acbb41f9e17e04815bee969b643f01976473799dd233e2cbc07414a08bc0d21",
+            "subject_hash": "fa1d0ae09573c65f4f00cbf78b811364a21e230116f39ea7c592c0205710aaa1"
+        },
+        {
+            "actual_recovery_status": "MANUAL_OPERATOR_RECOVERY_REQUIRED",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "provider.step22-unknown-completion",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "UNKNOWN_COMPLETION_PRESERVED",
+            "expected_recovery_status": "MANUAL_OPERATOR_RECOVERY_REQUIRED",
+            "failure_domain": "MODEL_PROVIDER",
+            "failure_point": "PROVIDER_RESPONSE_LOST",
+            "final_semantic_state": "UNKNOWN_COMPLETION_PRESERVED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "PROVIDER_UNKNOWN_COMPLETION_REPORTED"
+            ],
+            "result_hash": "16cd1bd14f4378d58db89f94da490f68c3a84af4be040ee648d3d9e8ca449f41",
+            "subject_hash": "2e6767f4960835d4414deb47d5b5f4f8c50140e81ea1490c51bba22d9adc0c74"
+        },
+        {
+            "actual_recovery_status": "MANUAL_OPERATOR_RECOVERY_REQUIRED",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "provider.step25-terminal-after-unknown",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "DRAFT_V2_TERMINAL_FAILURE_PRESERVES_UNKNOWN_COMPLETION",
+            "expected_recovery_status": "MANUAL_OPERATOR_RECOVERY_REQUIRED",
+            "failure_domain": "MODEL_PROVIDER",
+            "failure_point": "PROVIDER_RESPONSE_LOST",
+            "final_semantic_state": "DRAFT_V2_TERMINAL_FAILURE_PRESERVES_UNKNOWN_COMPLETION",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "DRAFT_V2_UNKNOWN_COMPLETION_STICKY"
+            ],
+            "result_hash": "40890a073b0fb702b7d5df1f8170fd54a9025334961079cac0f6136870eff2b6",
+            "subject_hash": "f0d2bccd9cf908ee953888b9701290e3fe505094ec3d548f442cb9a7510179d8"
+        },
+        {
+            "actual_recovery_status": "MANUAL_OPERATOR_RECOVERY_REQUIRED",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "provider.step25-unknown-completion",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "UNKNOWN_COMPLETION_PRESERVED",
+            "expected_recovery_status": "MANUAL_OPERATOR_RECOVERY_REQUIRED",
+            "failure_domain": "MODEL_PROVIDER",
+            "failure_point": "PROVIDER_RESPONSE_LOST",
+            "final_semantic_state": "UNKNOWN_COMPLETION_PRESERVED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "DRAFT_V2_UNKNOWN_COMPLETION_REPORTED"
+            ],
+            "result_hash": "82248617a2d01c458245294df9cd1eba9ed199a97713dfb3fa460b078df41cc3",
+            "subject_hash": "0c5a056bd7221ab223ff0b6d3068af8afa7c7a520e3011dffaea7b608b66bc11"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_RETRY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "review.before-handoff",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "UNRESOLVED_THEN_RESOLVED_ONCE",
+            "expected_recovery_status": "RECOVERED_BY_RETRY",
+            "failure_domain": "REVIEW_HANDOFF",
+            "failure_point": "REVIEW_BEFORE_HANDOFF",
+            "final_semantic_state": "UNRESOLVED_THEN_RESOLVED_ONCE",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "REVIEW_PREHANDOFF_FAILED_CLOSED"
+            ],
+            "result_hash": "c9bd785fe317b280bbadc49045691dcd2568687414f81d6383dce24c703947df",
+            "subject_hash": "a049b02ca010edd9be24a951d4d204cc869aa85d268c9c2fcf243f47c08e3d9f"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "review.handoff-ack-lost",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "RESOLVED_ONCE_AFTER_TYPED_HANDOFF",
+            "expected_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "failure_domain": "REVIEW_HANDOFF",
+            "failure_point": "REVIEW_AFTER_HANDOFF_ACK_LOST",
+            "final_semantic_state": "RESOLVED_ONCE_AFTER_TYPED_HANDOFF",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "REVIEW_HANDOFF_EXACT_REPLAY"
+            ],
+            "result_hash": "ea24c9c78897d97fd8a4670736f8359769b1b7adfb070cad5905ab2d324bd83d",
+            "subject_hash": "c78e93cfafaade36ab931018e9490c94af7dcf8e81349e1c4a225b547c39a3e7"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "s3.ack-lost-reconcile",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "EXACT_OBJECT_RECONCILED",
+            "expected_recovery_status": "RECOVERED_BY_IDEMPOTENT_REPLAY",
+            "failure_domain": "S3_OBJECT_STORE",
+            "failure_point": "S3_ACK_LOST",
+            "final_semantic_state": "EXACT_OBJECT_RECONCILED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "S3_ACK_LOST_RECONCILED"
+            ],
+            "result_hash": "116af3634d78c783234477d38b8fa9545d62e52a454c37c8a819812fa785a0df",
+            "subject_hash": "a4a89efcabbea22b6d16e2efd0d10e3b586647335c467cd3278eede183de7f7c"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "s3.checksum-mismatch",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "CHECKSUM_MISMATCH_REJECTED",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "S3_OBJECT_STORE",
+            "failure_point": "S3_CHECKSUM_MISMATCH",
+            "final_semantic_state": "CHECKSUM_MISMATCH_REJECTED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "S3_CHECKSUM_MISMATCH_REJECTED"
+            ],
+            "result_hash": "bbc5ee6e6090fdc85bf62a66a6af9b37ae50e08f3df3d617a103133070463e9a",
+            "subject_hash": "5c0e5505ff82f6df0f3dec29db80922c2f0752532032a1fdf7b4973d025fb3fc"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "s3.integrity-and-object-lock",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "OBJECT_LOCK_NOT_WEAKENED",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "S3_OBJECT_STORE",
+            "failure_point": "S3_OBJECT_LOCK_REJECTION",
+            "final_semantic_state": "OBJECT_LOCK_NOT_WEAKENED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "OBJECT_LOCK_REJECTION_PRESERVED",
+                "S3_CHECKSUM_MISMATCH_REJECTED"
+            ],
+            "result_hash": "4961d34411d81fc68f7f0f59393ada06436b375471e106c099a968949632820f",
+            "subject_hash": "f52d42a7d99dbf868bad661b5fdeeaf1c93973e974fc1cf50dbb819bd3879bab"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "s3.put-prewrite-failure",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_OBJECT_REPORTED",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "S3_OBJECT_STORE",
+            "failure_point": "S3_PUT_FAILURE",
+            "final_semantic_state": "NO_OBJECT_REPORTED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "S3_PREWRITE_FAILURE"
+            ],
+            "result_hash": "4e02e70f68e021c9edc5db4873f3dcb2763c7a65bfb493455acb604ee1869614",
+            "subject_hash": "4b1bbcdcf015ba3eb9c34ec518d652f24e4080ddd3c3e446c961b93b2c78c032"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "s3.streaming-body-close",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "TRANSIENT_BODY_READ_FAILED_CLOSED_STREAM_CLOSED",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "S3_OBJECT_STORE",
+            "failure_point": "S3_READ_FAILURE",
+            "final_semantic_state": "TRANSIENT_BODY_READ_FAILED_CLOSED_STREAM_CLOSED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "S3_BODY_CLOSED",
+                "S3_BODY_READ_FAILURE"
+            ],
+            "result_hash": "9b36dca4a4ec9e6573aaea73ab8da4451c80f907f17494429da1049890cab603",
+            "subject_hash": "1366a0ee4f0c1b89045861e2b478b36e675723ec5f1653ac22f50209739061b8"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_REBUILD",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "volume.cache-corruption",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "CORRUPT_DERIVED_CACHE_REBUILT_EXACTLY",
+            "expected_recovery_status": "RECOVERED_BY_REBUILD",
+            "failure_domain": "EXTERNAL_VOLUME",
+            "failure_point": "VOLUME_CACHE_CORRUPTION",
+            "final_semantic_state": "CORRUPT_DERIVED_CACHE_REBUILT_EXACTLY",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "VOLUME_CACHE_REBUILT"
+            ],
+            "result_hash": "f743580dc6970ac30472a56ad43ecb80bbc3b98c90d83dc17645280befd6e219",
+            "subject_hash": "9f0ec5ba5b834e4744cd182e42a6309563531284e35eb936366a6817a85857f4"
+        },
+        {
+            "actual_recovery_status": "RECOVERED_BY_REBUILD",
+            "attempts": 2,
+            "authority_violations": 0,
+            "case_id": "volume.missing-then-rebuild",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "DERIVED_FILE_REBUILT_EXACTLY",
+            "expected_recovery_status": "RECOVERED_BY_REBUILD",
+            "failure_domain": "EXTERNAL_VOLUME",
+            "failure_point": "VOLUME_MISSING",
+            "final_semantic_state": "DERIVED_FILE_REBUILT_EXACTLY",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "NO_SYSTEM_DRIVE_FALLBACK",
+                "VOLUME_REBUILT"
+            ],
+            "result_hash": "75243594c711b8efdc41b9be67d2e6c4d6fc7f42bc605ba835ab0d9464919cbe",
+            "subject_hash": "9c92dcd860bf77c77b800e39022113565508edb78537ec0dd334143bd4a482dc"
+        },
+        {
+            "actual_recovery_status": "MANUAL_OPERATOR_RECOVERY_REQUIRED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "volume.rename-failure",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "INCOMPLETE_STAGING_PRESERVED_RETRY_BLOCKED",
+            "expected_recovery_status": "MANUAL_OPERATOR_RECOVERY_REQUIRED",
+            "failure_domain": "EXTERNAL_VOLUME",
+            "failure_point": "VOLUME_RENAME_FAILURE",
+            "final_semantic_state": "INCOMPLETE_STAGING_PRESERVED_RETRY_BLOCKED",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "VOLUME_RENAME_STAGING_PRESERVED",
+                "VOLUME_RETRY_BLOCKED_PENDING_RECONCILIATION"
+            ],
+            "result_hash": "1bd709d4ef457b61049c96c024c726637fe11b8e8de44e7338df8a679adb59c6",
+            "subject_hash": "85a7581a70253cec33eff7b7d4cbeace40593122ba5b5563b65c84003dc80cad"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "volume.required-missing",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "REQUIRED_VOLUME_UNAVAILABLE",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "EXTERNAL_VOLUME",
+            "failure_point": "VOLUME_MISSING",
+            "final_semantic_state": "REQUIRED_VOLUME_UNAVAILABLE",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "NO_SYSTEM_DRIVE_FALLBACK"
+            ],
+            "result_hash": "53b54d42ff3142bcf89b3689751997436450c731a473815a4ab094d4ee629596",
+            "subject_hash": "bba252e5165b47263cd4522da3d853106bb1f80332801ef91f9b7ed767a37590"
+        },
+        {
+            "actual_recovery_status": "FAILED_CLOSED",
+            "attempts": 1,
+            "authority_violations": 0,
+            "case_id": "volume.write-failure",
+            "duplicate_side_effects": 0,
+            "expected_behavior": "NO_TARGET_OR_STAGING_ARTIFACT",
+            "expected_recovery_status": "FAILED_CLOSED",
+            "failure_domain": "EXTERNAL_VOLUME",
+            "failure_point": "VOLUME_WRITE_FAILURE",
+            "final_semantic_state": "NO_TARGET_OR_STAGING_ARTIFACT",
+            "integrity_violations": 0,
+            "reason_codes": [
+                "VOLUME_WRITE_FAILED_CLOSED"
+            ],
+            "result_hash": "c8dd716e08635955c5be597b819f0b1d9165d3b49a94e447f50342e98d67e124",
+            "subject_hash": "d01d89acd8d8c8349c33d98231cfab3375384c7214bc9caebeb391adecaf53f9"
+        }
+    ],
+    "cleanup": {
+        "database": {
+            "cleanup_errors": [],
+            "database_removed": true,
+            "drain_command_completed": false,
+            "drain_completion_marker": false,
+            "drain_shutdown_requested": false,
+            "force_kill_used": false,
+            "graceful_shutdown_requested": true,
+            "owned_child_processes_reaped": true,
+            "owned_pid_recorded": true,
+            "panic_detected": false,
+            "pid_exited": true,
+            "ports_closed": true,
+            "process_exit_accepted": true,
+            "process_exit_code": 0,
+            "runtime_duration_seconds": 2117.4,
+            "runtime_log_evidence": {
+                "byte_length": 78908,
+                "drain_rpc_exit_observed": false,
+                "graceful_drain_request_observed": true,
+                "graceful_shutdown_completed": true,
+                "panic_detected": false,
+                "sha256": "29c79ddde9e38808fac886041a016a1da4b7da601429c4c83cda6a708d4f62a6"
+            },
+            "runtime_preserved_for_diagnostics": false,
+            "shutdown_method": "EXACT_OWNED_PID_SIGTERM",
+            "sigterm_sent_to_exact_pid": true,
+            "temporary_store_removed": true
+        },
+        "fake_object_store": "IN_MEMORY_RELEASED",
+        "provider": "FAKE_ONLY_NO_NETWORK",
+        "temporary_process_and_volume_fixtures": "TEMPORARY_DIRECTORIES_RELEASED"
+    },
+    "closure_eligible": true,
+    "computed_policy_proofs": [
+        {
+            "final_policy_state": "PARTIAL_NOT_FALSE_COMPLETE",
+            "proof_hash": "330cd0d487232f7d51d369390f47b4303fd51c09e62dbb60b71a4b679debe8e6",
+            "proof_id": "vector-index-stale-or-missing",
+            "status": "PASS"
+        },
+        {
+            "final_policy_state": "CONFLICTING_PRESERVED",
+            "proof_hash": "169536a29b3c6464a2e28980b2b2a15efa406441de7eaf255932050c90294d11",
+            "proof_id": "canonical-evidence-conflict",
+            "status": "PASS"
+        }
+    ],
+    "database": {
+        "catalog_force_rls_table_count": 7,
+        "changed_replay_sqlstate": "23505",
+        "cleanup": {
+            "cleanup_errors": [],
+            "database_removed": true,
+            "drain_command_completed": false,
+            "drain_completion_marker": false,
+            "drain_shutdown_requested": false,
+            "force_kill_used": false,
+            "graceful_shutdown_requested": true,
+            "owned_child_processes_reaped": true,
+            "owned_pid_recorded": true,
+            "panic_detected": false,
+            "pid_exited": true,
+            "ports_closed": true,
+            "process_exit_accepted": true,
+            "process_exit_code": 0,
+            "runtime_duration_seconds": 2117.4,
+            "runtime_log_evidence": {
+                "byte_length": 78908,
+                "drain_rpc_exit_observed": false,
+                "graceful_drain_request_observed": true,
+                "graceful_shutdown_completed": true,
+                "panic_detected": false,
+                "sha256": "29c79ddde9e38808fac886041a016a1da4b7da601429c4c83cda6a708d4f62a6"
+            },
+            "runtime_preserved_for_diagnostics": false,
+            "shutdown_method": "EXACT_OWNED_PID_SIGTERM",
+            "sigterm_sent_to_exact_pid": true,
+            "temporary_store_removed": true
+        },
+        "migration_count": 18,
+        "migration_replay_skipped": 18,
+        "row_count_after_exact_replay": 1,
+        "synthetic_retry_sqlstate": "40001",
+        "version": "v26.2.4"
+    },
+    "effect_bounds": {
+        "external_side_effects": 0,
+        "production_aws_mutations": 0,
+        "production_db_mutations": 0,
+        "production_s3_mutations": 0,
+        "production_secret_rotations": 0,
+        "real_provider_calls": 0
+    },
+    "failure_injector_version": "step37-deterministic-failure-injector-1a",
+    "failure_point_registry_version": "step37-closed-failure-point-registry-1a",
+    "global_integrity": {
+        "audit_chain_corruption_accepted": 0,
+        "authority_violations": 0,
+        "duplicate_semantic_side_effects": 0,
+        "hash_mismatch_accepted": 0,
+        "integrity_violations": 0,
+        "secret_leakage_count": 0,
+        "unauthorized_state_transitions": 0
+    },
+    "recovery_matrix_digest": "9c65dc8f1e95590010a6221074b9d3173cc262e91b4bd57cfe66ed146f4db639",
+    "recovery_policy_version": "step37-recovery-policy-1a",
+    "schema_version": "step37-failure-recovery-validation-1a",
+    "start_sha": "f7882eed42534fb5c07bf55694886a2fca11823e",
+    "status": "PASS",
+    "step": 37,
+    "step38_boundary": {
+        "german_law_full_e2e": 0,
+        "step38_started": false
+    },
+    "summary": {
+        "case_count": 55,
+        "failed_closed": 19,
+        "human_review_required": 1,
+        "manual_operator_recovery_required": 5,
+        "recovered": 30,
+        "recovery_status_counts": {
+            "COMPENSATED": 0,
+            "FAILED_CLOSED": 19,
+            "HUMAN_REVIEW_REQUIRED": 1,
+            "MANUAL_OPERATOR_RECOVERY_REQUIRED": 5,
+            "RECOVERED_BY_IDEMPOTENT_REPLAY": 10,
+            "RECOVERED_BY_REBUILD": 2,
+            "RECOVERED_BY_RESUME": 3,
+            "RECOVERED_BY_RETRY": 15
+        },
+        "unexpected_failures": 0
+    },
+    "validation_digest": "59983b1b399118897440519d98a7ff27c052c85cb5f2007414ada16d2aa97fcc",
+    "validation_domains": {
+        "audit": [
+            "audit.append-ack-lost",
+            "audit.before-append",
+            "audit.chain-head-contention",
+            "audit.tamper-detected",
+            "authority.audit-tenant-denied"
+        ],
+        "capability_unavailable": [
+            "credential.audit-appender-unavailable",
+            "credential.commit-helper-unavailable",
+            "credential.provider-boundary",
+            "credential.reviewer-unavailable"
+        ],
+        "database": [
+            "database.before-begin",
+            "database.before-commit",
+            "database.changed-replay-conflict",
+            "database.commit-ack-lost",
+            "database.read-failure",
+            "database.serialization-retry"
+        ],
+        "draft_v2_final_retry": [
+            "final-answer.single-retry-failure",
+            "provider.step25-terminal-after-unknown",
+            "provider.step25-unknown-completion"
+        ],
+        "external_volume": [
+            "volume.cache-corruption",
+            "volume.missing-then-rebuild",
+            "volume.rename-failure",
+            "volume.required-missing",
+            "volume.write-failure"
+        ],
+        "ingestion_saga": [
+            "ingestion.checkpoint-before-finalize",
+            "ingestion.finalize-ack-lost",
+            "ingestion.s3-ack-lost",
+            "ingestion.s3-outage-bound"
+        ],
+        "model_provider": [
+            "final-answer.single-retry-failure",
+            "provider.step22-invalid-response",
+            "provider.step22-nonretryable",
+            "provider.step22-oversized-response",
+            "provider.step22-terminal-after-unknown",
+            "provider.step22-timeout-exhausted",
+            "provider.step22-transient-then-success",
+            "provider.step22-unknown-completion",
+            "provider.step25-terminal-after-unknown",
+            "provider.step25-unknown-completion"
+        ],
+        "personal_memory": [
+            "authority.owner-scope-denied",
+            "personal-memory.activation-ack-lost",
+            "personal-memory.activation-before-write",
+            "personal-memory.approval-ack-lost",
+            "personal-memory.approval-before-write",
+            "personal-memory.commit-ack-lost",
+            "personal-memory.commit-before-write",
+            "personal-memory.delete-before-write",
+            "personal-memory.export-prewrite-interrupted",
+            "personal-memory.revocation-ack-lost",
+            "personal-memory.supersession-before-write"
+        ],
+        "process_crash": [
+            "process.after-saga-checkpoint",
+            "process.crash-after-durable-write"
+        ],
+        "review_handoff": [
+            "review.before-handoff",
+            "review.handoff-ack-lost"
+        ],
+        "s3_object_store": [
+            "ingestion.s3-transient-retry-success",
+            "s3.ack-lost-reconcile",
+            "s3.checksum-mismatch",
+            "s3.integrity-and-object-lock",
+            "s3.put-prewrite-failure",
+            "s3.streaming-body-close"
+        ]
+    },
+    "validation_mode": "LIVE_DISPOSABLE_COCKROACHDB"
+}

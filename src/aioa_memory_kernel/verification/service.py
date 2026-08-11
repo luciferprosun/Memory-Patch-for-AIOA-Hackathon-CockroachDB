@@ -158,18 +158,24 @@ class DraftV2Service:
         response: ProviderResponse | None = None
         failed: list[ModelReasonCode] = []
         attempt_count = 0
+        unknown_completion = False
         for attempt_count in range(1, request.attempt_policy.max_attempts + 1):
             assert_no_open_persistence_transaction()
             try:
                 response = self._provider.generate(provider_request, request.timeout_policy)
             except ModelAdapterError as exc:
+                unknown_completion = unknown_completion or exc.unknown_completion
                 if not exc.retryable:
-                    raise
+                    raise ModelAdapterError(
+                        exc.reason_code,
+                        retryable=False,
+                        unknown_completion=unknown_completion,
+                    ) from exc
                 failed.append(exc.reason_code)
                 if attempt_count >= request.attempt_policy.max_attempts:
                     raise ModelAdapterError(
                         ModelReasonCode.MODEL_RETRY_EXHAUSTED,
-                        unknown_completion=exc.unknown_completion,
+                        unknown_completion=unknown_completion,
                     ) from exc
                 self._sleep(request.attempt_policy.retry_delay_milliseconds / 1000)
                 continue

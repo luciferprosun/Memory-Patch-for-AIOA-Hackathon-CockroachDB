@@ -808,29 +808,32 @@ class S3SnapshotAdapter:
                 operation="GetObject",
                 sanitized_code="MALFORMED_S3_BODY",
             )
-        length = response.get("ContentLength")
-        if (
-            not isinstance(length, int)
-            or isinstance(length, bool)
-            or length != snapshot.content_length
-        ):
-            raise SnapshotIntegrityError(
-                "S3 content length does not match the snapshot manifest",
-                operation="GetObject",
-                sanitized_code="S3_CONTENT_LENGTH_MISMATCH",
-            )
+        failed_before_close = False
         try:
-            payload = body.read(snapshot.content_length + 1)
-        except Exception as error:
+            length = response.get("ContentLength")
+            if (
+                not isinstance(length, int)
+                or isinstance(length, bool)
+                or length != snapshot.content_length
+            ):
+                raise SnapshotIntegrityError(
+                    "S3 content length does not match the snapshot manifest",
+                    operation="GetObject",
+                    sanitized_code="S3_CONTENT_LENGTH_MISMATCH",
+                )
+            try:
+                payload = body.read(snapshot.content_length + 1)
+            except Exception as error:
+                raise _translated_error(error, "GetObjectBodyRead") from None
+        except SnapshotStorageError:
+            failed_before_close = True
+            raise
+        finally:
             try:
                 body.close()
-            except Exception:
-                pass
-            raise _translated_error(error, "GetObjectBodyRead") from None
-        try:
-            body.close()
-        except Exception as error:
-            raise _translated_error(error, "GetObjectBodyClose") from None
+            except Exception as error:
+                if not failed_before_close:
+                    raise _translated_error(error, "GetObjectBodyClose") from None
         if not isinstance(payload, bytes):
             raise SnapshotMalformedResponseError(
                 "GetObject body did not return bytes",

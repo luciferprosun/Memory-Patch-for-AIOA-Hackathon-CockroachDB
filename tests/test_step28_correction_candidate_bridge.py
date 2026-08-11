@@ -1183,7 +1183,9 @@ class CorrectionCandidateAuthorityAndClosureTests(unittest.TestCase):
         self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 33 — ")
         self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 34 — ")
         self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 35 — ")
-        self.assertRegex(roadmap, r"(?m)^- \[ \] \*\*Step 36 — ")
+        self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 36 — ")
+        self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 37 — ")
+        self.assertRegex(roadmap, r"(?m)^- \[ \] \*\*Step 38 — ")
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertNotIn("`Step 28: NOT STARTED`", agents)
         self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
@@ -1193,7 +1195,9 @@ class CorrectionCandidateAuthorityAndClosureTests(unittest.TestCase):
         self.assertIn("Step 33: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 34: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 35: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 36: NOT STARTED", agents)
+        self.assertIn("Step 36: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 37: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 38: NOT STARTED", agents)
 
 
 if __name__ == "__main__":

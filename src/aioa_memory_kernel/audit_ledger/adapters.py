@@ -31,10 +31,20 @@ from .models import (
 _APPENDED = (AuditReasonCode.AUDIT_EVENT_APPENDED,)
 
 
+def _stable_recorded_at(
+    recorded_at: datetime | None,
+    *,
+    occurred_at: datetime,
+) -> datetime:
+    """Use the immutable business timestamp when replay supplies no clock value."""
+
+    return occurred_at if recorded_at is None else recorded_at
+
+
 def approval_receipt_event(
     receipt: PersonalMemoryApprovalReceipt,
     *,
-    recorded_at: datetime,
+    recorded_at: datetime | None = None,
 ) -> AuditEventDraft:
     if not isinstance(receipt, PersonalMemoryApprovalReceipt):
         raise TypeError("receipt must be PersonalMemoryApprovalReceipt")
@@ -50,7 +60,9 @@ def approval_receipt_event(
         actor_id=receipt.actor_id,
         idempotency_key=f"audit-approval-{receipt.approval_id}",
         occurred_at=receipt.approved_at,
-        recorded_at=recorded_at,
+        recorded_at=_stable_recorded_at(
+            recorded_at, occurred_at=receipt.approved_at
+        ),
         event_payload={
             "state": "APPROVED",
             "approval_id": receipt.approval_id,
@@ -71,7 +83,7 @@ def approval_receipt_event(
 def commit_receipt_event(
     receipt: PersonalMemoryCommitReceipt,
     *,
-    recorded_at: datetime,
+    recorded_at: datetime | None = None,
 ) -> AuditEventDraft:
     if not isinstance(receipt, PersonalMemoryCommitReceipt):
         raise TypeError("receipt must be PersonalMemoryCommitReceipt")
@@ -87,7 +99,9 @@ def commit_receipt_event(
         actor_id=receipt.actor_id,
         idempotency_key=f"audit-commit-{receipt.commit_id}",
         occurred_at=receipt.committed_at,
-        recorded_at=recorded_at,
+        recorded_at=_stable_recorded_at(
+            recorded_at, occurred_at=receipt.committed_at
+        ),
         event_payload={
             "state": "COMMITTED",
             "commit_id": receipt.commit_id,
@@ -106,7 +120,7 @@ def commit_receipt_event(
 def activation_receipt_event(
     receipt: PersonalMemoryActivationReceipt,
     *,
-    recorded_at: datetime,
+    recorded_at: datetime | None = None,
 ) -> AuditEventDraft:
     if not isinstance(receipt, PersonalMemoryActivationReceipt):
         raise TypeError("receipt must be PersonalMemoryActivationReceipt")
@@ -122,7 +136,9 @@ def activation_receipt_event(
         actor_id=receipt.actor_id,
         idempotency_key=f"audit-activation-{receipt.activation_id}",
         occurred_at=receipt.activated_at,
-        recorded_at=recorded_at,
+        recorded_at=_stable_recorded_at(
+            recorded_at, occurred_at=receipt.activated_at
+        ),
         event_payload={
             "state": "ACTIVE",
             "activation_id": receipt.activation_id,
@@ -141,7 +157,7 @@ def activation_receipt_event(
 def supersession_event(
     record: PersonalMemoryPatchSupersession,
     *,
-    recorded_at: datetime,
+    recorded_at: datetime | None = None,
 ) -> AuditEventDraft:
     if not isinstance(record, PersonalMemoryPatchSupersession):
         raise TypeError("record must be PersonalMemoryPatchSupersession")
@@ -157,7 +173,9 @@ def supersession_event(
         actor_id=record.actor_id,
         idempotency_key=f"audit-supersession-{record.supersession_id}",
         occurred_at=record.effective_at,
-        recorded_at=recorded_at,
+        recorded_at=_stable_recorded_at(
+            recorded_at, occurred_at=record.effective_at
+        ),
         event_payload={
             "state": "SUPERSEDED",
             "new_patch_id": record.new_patch_id,
@@ -176,7 +194,7 @@ def supersession_event(
 def revocation_event(
     record: PersonalMemoryPatchRevocation,
     *,
-    recorded_at: datetime,
+    recorded_at: datetime | None = None,
 ) -> AuditEventDraft:
     if not isinstance(record, PersonalMemoryPatchRevocation):
         raise TypeError("record must be PersonalMemoryPatchRevocation")
@@ -197,7 +215,9 @@ def revocation_event(
         actor_id=record.actor_id,
         idempotency_key=f"audit-revocation-{record.revocation_id}",
         occurred_at=record.effective_at,
-        recorded_at=recorded_at,
+        recorded_at=_stable_recorded_at(
+            recorded_at, occurred_at=record.effective_at
+        ),
         event_payload={
             "state": "REVOKED",
             "business_reasons": [item.value for item in record.reason_codes],
@@ -213,7 +233,7 @@ def revocation_event(
 def deletion_event(
     result: PersonalMemoryDeletionResult,
     *,
-    recorded_at: datetime,
+    recorded_at: datetime | None = None,
 ) -> AuditEventDraft:
     if not isinstance(result, PersonalMemoryDeletionResult):
         raise TypeError("result must be PersonalMemoryDeletionResult")
@@ -229,7 +249,9 @@ def deletion_event(
         actor_id=result.owner_user_id,
         idempotency_key=f"audit-deletion-{result.deletion_id}",
         occurred_at=result.deleted_at,
-        recorded_at=recorded_at,
+        recorded_at=_stable_recorded_at(
+            recorded_at, occurred_at=result.deleted_at
+        ),
         event_payload={
             "state": "DELETED",
             "logical_delete": True,
@@ -246,7 +268,7 @@ def deletion_event(
 def lifecycle_export_event(
     bundle: PersonalMemoryLifecycleExportBundle,
     *,
-    recorded_at: datetime,
+    recorded_at: datetime | None = None,
 ) -> AuditEventDraft:
     if not isinstance(bundle, PersonalMemoryLifecycleExportBundle):
         raise TypeError("bundle must be PersonalMemoryLifecycleExportBundle")
@@ -262,7 +284,9 @@ def lifecycle_export_event(
         actor_id=bundle.owner_user_id,
         idempotency_key=f"audit-export-{bundle.export_id}",
         occurred_at=bundle.exported_at,
-        recorded_at=recorded_at,
+        recorded_at=_stable_recorded_at(
+            recorded_at, occurred_at=bundle.exported_at
+        ),
         event_payload={
             "record_count": len(bundle.records),
             "owner_private": True,
@@ -280,7 +304,7 @@ def lifecycle_export_event(
 def shared_promotion_event(
     proposal: SharedMemoryPromotionProposal,
     *,
-    recorded_at: datetime,
+    recorded_at: datetime | None = None,
 ) -> AuditEventDraft:
     if not isinstance(proposal, SharedMemoryPromotionProposal):
         raise TypeError("proposal must be SharedMemoryPromotionProposal")
@@ -296,7 +320,9 @@ def shared_promotion_event(
         actor_id=proposal.owner_user_id,
         idempotency_key=f"audit-promotion-{proposal.promotion_id}",
         occurred_at=proposal.created_at,
-        recorded_at=recorded_at,
+        recorded_at=_stable_recorded_at(
+            recorded_at, occurred_at=proposal.created_at
+        ),
         event_payload={
             "state": "SHARED_PROMOTION_PROPOSED",
             "review_required": True,

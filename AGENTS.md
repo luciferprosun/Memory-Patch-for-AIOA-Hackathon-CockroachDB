@@ -233,7 +233,18 @@ At roadmap adoption and in subsequent audited closure records:
   It is completion evidence only after the closure commit is reachable on
   `origin/main`.
 - `Step 36: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 37: NOT STARTED`. Step 36 completion does not authorize Step 37.
+- Step 37 adds a closed test-only failure-point registry, production-safe
+  `NoOpFailureInjector`, deterministic bounded campaigns for CockroachDB
+  retry/acknowledgement loss, process and saga resume, provider, fake S3,
+  temporary external volume, audit, Personal Memory, review handoff and
+  missing-capability failures. Exact replay preserves immutable identity,
+  derived cache remains non-authoritative, Object Lock is not weakened, and
+  recovery never widens credentials, tenant/owner scope, RLS or business
+  authority. The controlled CockroachDB v26.2.4 proof applies and replays all
+  18 migrations, detects `40001` and conflicting replay, and cleans up its
+  exact owned runtime without force-kill or panic.
+- `Step 37: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 38: NOT STARTED`. Step 37 completion does not authorize Step 38.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this
