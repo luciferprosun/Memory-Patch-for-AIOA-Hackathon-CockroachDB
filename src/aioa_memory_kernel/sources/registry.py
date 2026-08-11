@@ -20,6 +20,7 @@ from aioa_memory_kernel.persistence import (
     SerializableTransactionRunner,
 )
 from aioa_memory_kernel.persistence.protocols import TransactionProtocol
+from aioa_memory_kernel.security.credentials import CredentialPurpose
 
 from .eligibility import evaluate_publication_eligibility
 from .errors import (
@@ -1016,6 +1017,9 @@ class SourceRegistryService:
         reviewer_reference: str | None = None,
         created_at: datetime | None = None,
     ) -> PublicationStateEvent:
+        self._runner.require_credential_purpose(
+            CredentialPurpose.SOURCE_PUBLICATION_DATABASE
+        )
         if not isinstance(actor, SourceRegistryActor):
             raise SourceRegistryValidationError(
                 "publication transition requires a trusted typed actor",

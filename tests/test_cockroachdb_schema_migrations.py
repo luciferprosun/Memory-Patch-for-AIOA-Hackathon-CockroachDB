@@ -1,4 +1,4 @@
-"""Offline safety and contract tests for the Step 4–5 migration chain."""
+"""Offline safety and contract tests for the canonical migration chain."""
 
 from __future__ import annotations
 
@@ -65,7 +65,7 @@ class OfflineManifestTests(unittest.TestCase):
         result = migrations.offline_validate()
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["target_version"], "v26.2.4")
-        self.assertEqual(result["migration_count"], 17)
+        self.assertEqual(result["migration_count"], 18)
         self.assertEqual(result["step4_table_count"], 29)
         self.assertEqual(result["schema_table_count"], 43)
         self.assertEqual(result["protected_table_count"], 40)
@@ -110,6 +110,7 @@ class OfflineManifestTests(unittest.TestCase):
                 "0015_step32_personal_memory_lifecycle",
                 "0016_step33_audit_ledger_hash_chain",
                 "0017_step34_human_review_workspace",
+                "0018_step36_credential_authority_hardening",
             ],
         )
 
@@ -137,6 +138,7 @@ class OfflineManifestTests(unittest.TestCase):
             migrations.SECURITY_MANIFEST_PATH,
             migrations.SOURCE_REGISTRY_MANIFEST_PATH,
             migrations.CORRECTION_CANDIDATE_SECURITY_MANIFEST_PATH,
+            migrations.CREDENTIAL_AUTHORITY_SECURITY_MANIFEST_PATH,
         ):
             value = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(path.read_bytes(), migrations.canonical_json_bytes(value))
@@ -701,7 +703,7 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
         ):
             result = migrations.apply_migrations(client, "mp_step5_noop")
         self.assertEqual(result["applied_count"], 0)
-        self.assertEqual(result["skipped_count"], 17)
+        self.assertEqual(result["skipped_count"], 18)
         client.execute.assert_not_called()
 
     def test_applied_checksum_mismatch_fails_closed(self) -> None:

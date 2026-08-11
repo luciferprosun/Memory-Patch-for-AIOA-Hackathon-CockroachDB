@@ -20,6 +20,7 @@ import shutil
 import signal
 import socket
 import subprocess
+import sys
 import tempfile
 import time
 import uuid
@@ -30,6 +31,14 @@ from typing import Any, Mapping, Sequence
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+SOURCE_ROOT = REPOSITORY_ROOT / "src"
+if str(SOURCE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SOURCE_ROOT))
+
+from aioa_memory_kernel.security.credentials import (  # noqa: E402
+    build_minimal_subprocess_environment,
+)
+
 MIGRATION_ROOT = REPOSITORY_ROOT / "sql" / "cockroachdb" / "migrations"
 MIGRATION_MANIFEST_PATH = MIGRATION_ROOT / "manifest.json"
 SCHEMA_MANIFEST_PATH = (
@@ -98,10 +107,16 @@ REVIEW_WORKSPACE_SECURITY_MANIFEST_PATH = (
     / "cockroachdb"
     / "review-workspace-security-1a.json"
 )
+CREDENTIAL_AUTHORITY_SECURITY_MANIFEST_PATH = (
+    REPOSITORY_ROOT
+    / "config"
+    / "cockroachdb"
+    / "credential-authority-security-1a.json"
+)
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "15.0.0"
+RUNNER_VERSION = "16.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
@@ -131,6 +146,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step33_",
     "mp_step34_",
     "mp_step35_",
+    "mp_step36_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
@@ -306,6 +322,21 @@ STEP34_FUNCTION_SIGNATURES = {
     ),
     "step34_reviewer_owner_authorized": (
         "step34_reviewer_owner_authorized(text, text)"
+    ),
+}
+STEP36_MIGRATION_ID = "0018_step36_credential_authority_hardening"
+STEP36_MIGRATION_SHA256 = (
+    "8ef9ab3a7ea7908b7e8bb408c385076d32c9d7f35ec854962624fd0ff1edf12c"
+)
+STEP36_CLUSTER_ROLE_BEGIN = "-- STEP36_CLUSTER_ROLE_DDL_BEGIN"
+STEP36_CLUSTER_ROLE_END = "-- STEP36_CLUSTER_ROLE_DDL_END"
+STEP36_FUNCTION_SIGNATURES = {
+    "guard_step36_source_publication_authority": (
+        "guard_step36_source_publication_authority()"
+    ),
+    "step36_audit_reader_authorized": "step36_audit_reader_authorized()",
+    "step36_source_publisher_authorized": (
+        "step36_source_publisher_authorized()"
     ),
 }
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
@@ -597,7 +628,7 @@ class SqlClient:
     def _command(self, database: str, sql: str) -> tuple[list[str], dict[str, str]]:
         validate_database_identifier(database)
         require_loopback(self.host)
-        environment = os.environ.copy()
+        environment = build_minimal_subprocess_environment(os.environ)
         for variable in (
             "COCKROACH_URL",
             "COCKROACH_SQL_URL",
@@ -826,7 +857,7 @@ class LocalRuntime:
 
     @staticmethod
     def _client_environment() -> dict[str, str]:
-        environment = os.environ.copy()
+        environment = build_minimal_subprocess_environment(os.environ)
         for variable in (
             "COCKROACH_URL",
             "COCKROACH_SQL_URL",
@@ -1955,6 +1986,79 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
             re.IGNORECASE,
         ):
             raise MigrationError("Step 34 starts the Step 35 UI boundary")
+    elif migration_id == STEP36_MIGRATION_ID:
+        forbidden_patterns = ()
+        cluster_role_sql, database_sql = split_cluster_role_ddl(
+            sql,
+            begin_marker=STEP36_CLUSTER_ROLE_BEGIN,
+            end_marker=STEP36_CLUSTER_ROLE_END,
+            role_name="mp_source_publication_worker",
+        )
+        for fragment in (
+            "CREATE ROLE IF NOT EXISTS mp_source_publication_worker",
+            "CREATE ROLE IF NOT EXISTS mp_audit_reader",
+            "NOLOGIN NOCREATEROLE NOCREATEDB NOBYPASSRLS",
+            "REVOKE admin FROM mp_source_publication_worker",
+            "REVOKE admin FROM mp_audit_reader",
+            "REVOKE mp_app_runtime FROM mp_source_publication_worker",
+            "REVOKE mp_personal_memory_commit_helper FROM mp_audit_reader",
+        ):
+            if fragment not in cluster_role_sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required Step 36 role fragment: "
+                    f"{fragment}"
+                )
+        for fragment in (
+            "step36_source_publisher_authorized",
+            "step36_audit_reader_authorized",
+            "CREATE OR REPLACE FUNCTION memory_patch.step30_commit_helper_authorized",
+            "CREATE OR REPLACE FUNCTION memory_patch.step34_reviewer_authorized",
+            "CREATE OR REPLACE FUNCTION memory_patch.step34_review_service_authorized",
+            "guard_step36_source_publication_authority",
+            "source_registry_entries_s36_publication_authority",
+            "source_publication_events_s36_authority",
+            "REVOKE UPDATE ON TABLE memory_patch.source_registry_entries",
+            "REVOKE INSERT ON TABLE memory_patch.source_publication_events",
+            "GRANT SELECT, UPDATE ON TABLE memory_patch.source_registry_entries",
+            "GRANT SELECT, INSERT ON TABLE memory_patch.source_publication_events",
+            "operation_kind = 'PUBLICATION_STATE_TRANSITION'",
+            "hat_scopes_s36_source_publication_select",
+            "persistence_operations_s36_publication_insert",
+            "audit_events_s36_reader_select",
+            "audit_chain_heads_s36_reader_select",
+            "REVOKE INSERT, UPDATE, DELETE ON TABLE memory_patch.audit_events",
+            "OWNER TO mp_schema_owner",
+            "SECURITY INVOKER",
+        ):
+            if fragment not in database_sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required Step 36 fragment: {fragment}"
+                )
+        if re.search(r"\bTO\s+PUBLIC\b", database_sql, re.IGNORECASE):
+            raise MigrationError("Step 36 policy or grant targets PUBLIC")
+        if re.search(
+            r"\b(?:USING|WITH\s+CHECK)\s*\(\s*(?:true|1\s*=\s*1)\s*\)",
+            database_sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 36 contains an allow-all RLS policy")
+        if re.search(
+            r"^\s*(?:CREATE\s+TABLE|ALTER\s+TABLE.*ADD\s+COLUMN|"
+            r"DELETE\s+FROM|TRUNCATE|DROP\s+TABLE)\b",
+            database_sql,
+            re.IGNORECASE | re.MULTILINE,
+        ):
+            raise MigrationError("Step 36 exceeds the bounded authority delta")
+        if re.search(r"\bWITH\s+BYPASSRLS\b", cluster_role_sql, re.IGNORECASE):
+            raise MigrationError("Step 36 grants broad RLS bypass")
+        if re.search(r"\bWITH\s+LOGIN\b", cluster_role_sql, re.IGNORECASE):
+            raise MigrationError("Step 36 creates a credential-bearing role")
+        if re.search(
+            r"failure_injection|chaos|network_partition|outage_simulation",
+            database_sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("Step 36 starts the Step 37 boundary")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -1964,11 +2068,11 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 15:
-        raise MigrationError("migration manifest schema_version must be 15")
+    if manifest.get("schema_version") != 16:
+        raise MigrationError("migration manifest schema_version must be 16")
     if (
         manifest.get("manifest_id")
-        != "memory-patch-step34-human-review-workspace-1a"
+        != "memory-patch-step36-credential-authority-hardening-1a"
     ):
         raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
@@ -1986,7 +2090,8 @@ def load_migrations() -> list[Migration]:
         "STEP28_ONE_TRANSACTION_STEP29_ONE_TRANSACTION_"
         "STEP30_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL_"
         "STEP32_ONE_TRANSACTION_STEP33_ONE_TRANSACTION_"
-        "STEP34_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL"
+        "STEP34_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL_"
+        "STEP36_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -2075,6 +2180,8 @@ def load_migrations() -> list[Migration]:
             raise MigrationError("Step 33 checksum differs from the audited migration")
         if migration_id == STEP34_MIGRATION_ID and checksum != STEP34_MIGRATION_SHA256:
             raise MigrationError("Step 34 checksum differs from the audited migration")
+        if migration_id == STEP36_MIGRATION_ID and checksum != STEP36_MIGRATION_SHA256:
+            raise MigrationError("Step 36 checksum differs from the audited migration")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -2100,13 +2207,14 @@ def load_migrations() -> list[Migration]:
         STEP32_MIGRATION_ID,
         STEP33_MIGRATION_ID,
         STEP34_MIGRATION_ID,
+        STEP36_MIGRATION_ID,
     ]
     if identifiers != expected_identifiers:
         raise MigrationError(
             "migration chain is not the exact Step 4 -> Step 5 -> Step 6 -> "
             "Step 9 -> Step 10 -> Step 11 -> Step 12 -> Step 19 -> "
             "Step 27 -> Step 28 -> Step 29 -> Step 30 -> Step 32 -> Step 33 -> "
-            "Step 34 chain"
+            "Step 34 -> Step 36 chain"
         )
     return migrations
 
@@ -3350,6 +3458,101 @@ def load_review_workspace_security_manifest() -> dict[str, Any]:
     return manifest
 
 
+def load_credential_authority_security_manifest() -> dict[str, Any]:
+    manifest = load_json(CREDENTIAL_AUTHORITY_SECURITY_MANIFEST_PATH)
+    if set(manifest) != {
+        "audit_reader",
+        "authority",
+        "database_roles",
+        "exclusive_authority_functions",
+        "manifest_id",
+        "schema_version",
+        "source_publication_worker",
+        "target_cockroachdb_version",
+    }:
+        raise MigrationError("Step 36 security manifest shape is invalid")
+    if (
+        manifest.get("schema_version") != 1
+        or manifest.get("manifest_id")
+        != "memory-patch-step36-credential-authority-security-1a"
+        or manifest.get("target_cockroachdb_version") != PINNED_VERSION
+    ):
+        raise MigrationError("Step 36 security manifest identity differs")
+    if manifest.get("database_roles") != [
+        {
+            "bypass_rls": False,
+            "login": False,
+            "role": "mp_source_publication_worker",
+        },
+        {
+            "bypass_rls": False,
+            "login": False,
+            "role": "mp_audit_reader",
+        },
+    ]:
+        raise MigrationError("Step 36 dedicated role decision differs")
+    if manifest.get("authority") != {
+        "app_bypass_rls": False,
+        "audit_reader_business_mutation": False,
+        "commit_helper_can_approve": False,
+        "commit_helper_composed_role_allowed": False,
+        "master_credential_fallback": False,
+        "reviewer_composed_role_allowed": False,
+        "source_publisher_composed_role_allowed": False,
+    }:
+        raise MigrationError("Step 36 authority decision differs")
+    if manifest.get("source_publication_worker") != {
+        "app_runtime_may_publish": False,
+        "idempotency_operation_kind": "PUBLICATION_STATE_TRANSITION",
+        "privileges": {
+            "hat_scopes": ["SELECT"],
+            "persistence_operations": ["INSERT", "SELECT", "UPDATE"],
+            "source_provenance_edges": ["SELECT"],
+            "source_publication_events": ["INSERT", "SELECT"],
+            "source_registry_entries": ["SELECT", "UPDATE"],
+        },
+        "role": "mp_source_publication_worker",
+    }:
+        raise MigrationError("Step 36 source-publisher boundary differs")
+    if manifest.get("audit_reader") != {
+        "business_mutation": False,
+        "owner_private_only": True,
+        "privileges": {
+            "audit_chain_heads": ["SELECT"],
+            "audit_events": ["SELECT"],
+        },
+        "role": "mp_audit_reader",
+    }:
+        raise MigrationError("Step 36 audit-reader boundary differs")
+    functions = manifest.get("exclusive_authority_functions")
+    expected_functions = {
+        "step36_source_publisher_authorized": "mp_source_publication_worker",
+        "step36_audit_reader_authorized": "mp_audit_reader",
+        "step30_commit_helper_authorized": (
+            "mp_personal_memory_commit_helper"
+        ),
+        "step34_reviewer_authorized": "mp_human_reviewer",
+        "step34_reviewer_owner_authorized": "mp_human_reviewer",
+        "step34_review_service_authorized": "mp_review_service",
+    }
+    if (
+        not isinstance(functions, list)
+        or {
+            item.get("function"): item.get("required_role")
+            for item in functions
+            if isinstance(item, dict)
+        }
+        != expected_functions
+        or any(
+            set(item) != {"function", "required_role", "security_type"}
+            or item["security_type"] != "INVOKER"
+            for item in functions
+        )
+    ):
+        raise MigrationError("Step 36 exclusive authority function set differs")
+    return manifest
+
+
 def offline_validate() -> dict[str, Any]:
     pin = load_version_pin()
     migrations = load_migrations()
@@ -3365,6 +3568,9 @@ def offline_validate() -> dict[str, Any]:
     lifecycle_security_manifest = load_lifecycle_security_manifest()
     audit_ledger_security_manifest = load_audit_ledger_security_manifest()
     review_workspace_security_manifest = load_review_workspace_security_manifest()
+    credential_authority_security_manifest = (
+        load_credential_authority_security_manifest()
+    )
     step4_sql = "\n".join(
         migration.sql
         for migration in migrations
@@ -3434,6 +3640,11 @@ def offline_validate() -> dict[str, Any]:
         migration.sql
         for migration in migrations
         if migration.migration_id == STEP34_MIGRATION_ID
+    )
+    step36_sql = next(
+        migration.sql
+        for migration in migrations
+        if migration.migration_id == STEP36_MIGRATION_ID
     )
     historical_sql = step4_sql + "\n" + step5_sql
     step4_tables = sorted(
@@ -4245,6 +4456,76 @@ def offline_validate() -> dict[str, Any]:
         )
     ):
         raise MigrationError("Step 34 lifecycle or audit boundary is incomplete")
+    step36_cluster_sql, step36_database_sql = split_cluster_role_ddl(
+        step36_sql,
+        begin_marker=STEP36_CLUSTER_ROLE_BEGIN,
+        end_marker=STEP36_CLUSTER_ROLE_END,
+        role_name="mp_source_publication_worker",
+    )
+    step36_roles = re.findall(
+        r"^CREATE ROLE IF NOT EXISTS ([a-z0-9_]+);$",
+        step36_cluster_sql,
+        re.MULTILINE,
+    )
+    if step36_roles != ["mp_source_publication_worker", "mp_audit_reader"]:
+        raise MigrationError("Step 36 dedicated role set differs")
+    if re.search(
+        r"^CREATE TABLE memory_patch\.", step36_database_sql, re.MULTILINE
+    ):
+        raise MigrationError("Step 36 unexpectedly creates a business table")
+    step36_policies = set(
+        re.findall(
+            r"^CREATE POLICY ([a-z0-9_]+)",
+            step36_database_sql,
+            re.MULTILINE,
+        )
+    )
+    expected_step36_policies = {
+        "audit_chain_heads_s36_reader_select",
+        "audit_events_s36_reader_select",
+        "hat_scopes_s36_source_publication_select",
+        "persistence_operations_s36_publication_insert",
+        "persistence_operations_s36_publication_select",
+        "persistence_operations_s36_publication_update",
+        "source_publication_events_s36_publication_insert",
+        "source_publication_events_s36_publication_select",
+        "source_provenance_edges_s36_publication_select",
+        "source_registry_entries_s36_publication_select",
+        "source_registry_entries_s36_publication_update",
+    }
+    if step36_policies != expected_step36_policies:
+        raise MigrationError("Step 36 authority policy set differs")
+    step36_triggers = set(
+        re.findall(
+            r"^CREATE TRIGGER ([a-z0-9_]+)",
+            step36_database_sql,
+            re.MULTILINE,
+        )
+    )
+    if step36_triggers != {
+        "source_publication_events_s36_authority",
+        "source_registry_entries_s36_publication_authority",
+    }:
+        raise MigrationError("Step 36 publication guard trigger set differs")
+    if any(
+        fragment not in step36_database_sql
+        for fragment in (
+            "REVOKE UPDATE ON TABLE memory_patch.source_registry_entries",
+            "REVOKE INSERT ON TABLE memory_patch.source_publication_events",
+            "step36_source_publisher_authorized",
+            "step36_audit_reader_authorized",
+            "operation_kind = 'PUBLICATION_STATE_TRANSITION'",
+            "REVOKE INSERT, UPDATE, DELETE ON TABLE memory_patch.audit_events",
+            "CREATE OR REPLACE FUNCTION memory_patch.step30_commit_helper_authorized",
+            "CREATE OR REPLACE FUNCTION memory_patch.step34_reviewer_authorized",
+            "CREATE OR REPLACE FUNCTION memory_patch.step34_review_service_authorized",
+        )
+    ):
+        raise MigrationError("Step 36 capability separation is incomplete")
+    if credential_authority_security_manifest["source_publication_worker"][
+        "app_runtime_may_publish"
+    ]:
+        raise MigrationError("Step 36 manifest grants app publication authority")
     return {
         "migration_count": len(migrations),
         "migration_ids": [migration.migration_id for migration in migrations],
@@ -4259,6 +4540,7 @@ def offline_validate() -> dict[str, Any]:
         "step32_lifecycle_table_count": len(step32_tables),
         "step33_audit_ledger_table_count": len(step33_tables),
         "step34_review_workspace_table_count": len(step34_tables),
+        "step36_dedicated_role_count": len(step36_roles),
         "step4_table_count": len(step4_tables),
         "protected_table_count": (
             len(protected)
@@ -4293,6 +4575,9 @@ def offline_validate() -> dict[str, Any]:
         ),
         "review_workspace_boundary": (
             "STEP34_HUMAN_REVIEW_TYPED_HANDOFF_NO_STEP35_UI"
+        ),
+        "credential_authority_boundary": (
+            "STEP36_EXCLUSIVE_PUBLISHER_READ_ONLY_AUDIT_READER"
         ),
     }
 
@@ -4943,6 +5228,7 @@ def assert_step9_security_catalog(
     database: str,
 ) -> dict[str, Any]:
     manifest = load_source_registry_manifest()
+    step36_applied = STEP36_MIGRATION_ID in applied_migrations(client, database)
     table_names = [row["table"] for row in manifest["tables"]]
     quoted_tables = ", ".join(sql_literal(name) for name in table_names)
     table_rows = parse_tsv(
@@ -4990,6 +5276,36 @@ def assert_step9_security_catalog(
         for command in ("select", "insert", "update")
         if row[f"{command}_policy"] is not None
     }
+    if step36_applied:
+        expected_policies.update(
+            {
+                (
+                    "source_registry_entries",
+                    "source_registry_entries_s36_publication_select",
+                    "SELECT",
+                ),
+                (
+                    "source_registry_entries",
+                    "source_registry_entries_s36_publication_update",
+                    "UPDATE",
+                ),
+                (
+                    "source_publication_events",
+                    "source_publication_events_s36_publication_select",
+                    "SELECT",
+                ),
+                (
+                    "source_publication_events",
+                    "source_publication_events_s36_publication_insert",
+                    "INSERT",
+                ),
+                (
+                    "source_provenance_edges",
+                    "source_provenance_edges_s36_publication_select",
+                    "SELECT",
+                ),
+            }
+        )
     actual_policies = {
         (row["tablename"], row["policyname"], row["cmd"].upper())
         for row in policy_rows
@@ -4997,8 +5313,15 @@ def assert_step9_security_catalog(
     if actual_policies != expected_policies:
         raise MigrationError("Step 9 live policy set differs from manifest")
     for row in policy_rows:
-        if "mp_app_runtime" not in row["roles"]:
-            raise MigrationError("Step 9 policy lacks runtime role")
+        expected_role = (
+            "mp_source_publication_worker"
+            if row["policyname"].endswith("s36_publication_select")
+            or row["policyname"].endswith("s36_publication_update")
+            or row["policyname"].endswith("s36_publication_insert")
+            else "mp_app_runtime"
+        )
+        if expected_role not in row["roles"]:
+            raise MigrationError("Step 9 policy lacks its exact runtime role")
         command = row["cmd"].upper()
         if command == "SELECT" and not row["qual"]:
             raise MigrationError("Step 9 SELECT policy lacks USING")
@@ -5024,6 +5347,9 @@ def assert_step9_security_catalog(
         for row in manifest["tables"]
         for privilege in row["runtime_privileges"]
     )
+    if step36_applied:
+        expected_grants.remove(("source_registry_entries", "UPDATE"))
+        expected_grants.remove(("source_publication_events", "INSERT"))
     actual_grants = [
         (row["table_name"], row["privilege_type"]) for row in grant_rows
     ]
@@ -5044,16 +5370,28 @@ def assert_step9_security_catalog(
             "ON procedure.oid = trigger.tgfoid "
             "WHERE namespace.nspname = 'memory_patch' "
             "AND target.relname = 'source_registry_entries' "
-            "AND NOT trigger.tgisinternal",
+            "AND NOT trigger.tgisinternal ORDER BY trigger.tgname",
         )
     )
-    if trigger_rows != [
+    expected_triggers = [
         {
             "trigger_name": "source_registry_entries_s9_publication_guard",
             "table_name": "source_registry_entries",
             "function_name": "guard_source_registry_publication_update",
         }
-    ]:
+    ]
+    if step36_applied:
+        expected_triggers.append(
+            {
+                "trigger_name": (
+                    "source_registry_entries_s36_publication_authority"
+                ),
+                "table_name": "source_registry_entries",
+                "function_name": "guard_step36_source_publication_authority",
+            }
+        )
+        expected_triggers.sort(key=lambda row: row["trigger_name"])
+    if trigger_rows != expected_triggers:
         raise MigrationError("Step 9 publication consistency trigger differs")
     digest_input = {
         "grants": grant_rows,
@@ -6520,6 +6858,7 @@ def assert_step33_security_catalog(
     """Verify Step 33 append-only privileges, RLS, heads, and guards."""
 
     load_audit_ledger_security_manifest()
+    step36_applied = STEP36_MIGRATION_ID in applied_migrations(client, database)
     tables = ("audit_chain_heads", "audit_events")
     table_rows = parse_tsv(
         client.execute(
@@ -6573,11 +6912,22 @@ def assert_step33_security_catalog(
             "AND tablename = 'audit_chain_heads' ORDER BY policyname",
         )
     )
-    if [row["policyname"] for row in policies] != [
+    expected_policy_names = [
         "audit_chain_heads_s33_insert",
         "audit_chain_heads_s33_select",
         "audit_chain_heads_s33_update",
-    ] or any("mp_app_runtime" not in row["roles"] for row in policies):
+    ]
+    if step36_applied:
+        expected_policy_names.append("audit_chain_heads_s36_reader_select")
+    if [row["policyname"] for row in policies] != expected_policy_names or any(
+        (
+            "mp_audit_reader"
+            if row["policyname"] == "audit_chain_heads_s36_reader_select"
+            else "mp_app_runtime"
+        )
+        not in row["roles"]
+        for row in policies
+    ):
         raise MigrationError("Step 33 chain-head policies differ")
     function_names = sorted(STEP33_FUNCTION_SIGNATURES)
     function_rows = parse_tsv(
@@ -6803,6 +7153,291 @@ def assert_step34_security_catalog(
     }
 
 
+def assert_step36_security_catalog(
+    client: SqlClient,
+    database: str,
+) -> dict[str, Any]:
+    """Verify exclusive roles, publication split, and read-only audit access."""
+
+    manifest = load_credential_authority_security_manifest()
+    dedicated_roles = tuple(
+        item["role"] for item in manifest["database_roles"]
+    )
+    hardened_roles = (
+        "mp_app_runtime",
+        "mp_audit_reader",
+        "mp_human_reviewer",
+        "mp_personal_memory_commit_helper",
+        "mp_review_service",
+        "mp_source_publication_worker",
+    )
+    role_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT rolname, rolcanlogin, rolcreaterole, rolcreatedb, "
+            "rolbypassrls FROM pg_catalog.pg_roles WHERE rolname IN ("
+            + ", ".join(sql_literal(role) for role in hardened_roles)
+            + ") ORDER BY rolname",
+        )
+    )
+    if role_rows != [
+        {
+            "rolname": role,
+            "rolcanlogin": "f",
+            "rolcreaterole": "f",
+            "rolcreatedb": "f",
+            "rolbypassrls": "f",
+        }
+        for role in hardened_roles
+    ]:
+        raise MigrationError("Step 36 hardened role options differ")
+    parent_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT parent.rolname AS parent_role, member.rolname AS member_role "
+            "FROM pg_catalog.pg_auth_members AS membership "
+            "JOIN pg_catalog.pg_roles AS parent ON parent.oid = membership.roleid "
+            "JOIN pg_catalog.pg_roles AS member ON member.oid = membership.member "
+            "WHERE member.rolname IN ("
+            + ", ".join(sql_literal(role) for role in dedicated_roles)
+            + ") ORDER BY parent.rolname, member.rolname",
+        )
+    )
+    if parent_rows:
+        raise MigrationError("Step 36 dedicated role inherits another role")
+
+    grantees = dedicated_roles
+    grant_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT grantee, table_name, privilege_type "
+            "FROM information_schema.table_privileges "
+            "WHERE table_schema = 'memory_patch' AND grantee IN ("
+            + ", ".join(sql_literal(role) for role in grantees)
+            + ") ORDER BY grantee, table_name, privilege_type",
+        )
+    )
+    expected_grants = sorted(
+        (
+            role,
+            table,
+            privilege,
+        )
+        for role, boundary in (
+            (
+                "mp_source_publication_worker",
+                manifest["source_publication_worker"],
+            ),
+            ("mp_audit_reader", manifest["audit_reader"]),
+        )
+        for table, privileges in boundary["privileges"].items()
+        for privilege in privileges
+    )
+    actual_grants = [
+        (row["grantee"], row["table_name"], row["privilege_type"])
+        for row in grant_rows
+    ]
+    if actual_grants != expected_grants:
+        raise MigrationError("Step 36 dedicated table grants differ")
+
+    app_publication_grants = parse_tsv(
+        client.execute(
+            database,
+            "SELECT table_name, privilege_type "
+            "FROM information_schema.table_privileges "
+            "WHERE table_schema = 'memory_patch' "
+            "AND grantee = 'mp_app_runtime' AND (("
+            "table_name = 'source_registry_entries' "
+            "AND privilege_type = 'UPDATE') OR ("
+            "table_name = 'source_publication_events' "
+            "AND privilege_type = 'INSERT'))",
+        )
+    )
+    if app_publication_grants:
+        raise MigrationError("Step 36 app runtime retains publication authority")
+
+    policy_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT tablename, policyname, cmd, roles, qual, with_check "
+            "FROM pg_catalog.pg_policies WHERE schemaname = 'memory_patch' "
+            "AND policyname LIKE '%s36%' ORDER BY policyname",
+        )
+    )
+    expected_policies = {
+        "audit_chain_heads_s36_reader_select": (
+            "audit_chain_heads",
+            "SELECT",
+            "mp_audit_reader",
+        ),
+        "audit_events_s36_reader_select": (
+            "audit_events",
+            "SELECT",
+            "mp_audit_reader",
+        ),
+        "hat_scopes_s36_source_publication_select": (
+            "hat_scopes",
+            "SELECT",
+            "mp_source_publication_worker",
+        ),
+        "persistence_operations_s36_publication_insert": (
+            "persistence_operations",
+            "INSERT",
+            "mp_source_publication_worker",
+        ),
+        "persistence_operations_s36_publication_select": (
+            "persistence_operations",
+            "SELECT",
+            "mp_source_publication_worker",
+        ),
+        "persistence_operations_s36_publication_update": (
+            "persistence_operations",
+            "UPDATE",
+            "mp_source_publication_worker",
+        ),
+        "source_publication_events_s36_publication_insert": (
+            "source_publication_events",
+            "INSERT",
+            "mp_source_publication_worker",
+        ),
+        "source_publication_events_s36_publication_select": (
+            "source_publication_events",
+            "SELECT",
+            "mp_source_publication_worker",
+        ),
+        "source_provenance_edges_s36_publication_select": (
+            "source_provenance_edges",
+            "SELECT",
+            "mp_source_publication_worker",
+        ),
+        "source_registry_entries_s36_publication_select": (
+            "source_registry_entries",
+            "SELECT",
+            "mp_source_publication_worker",
+        ),
+        "source_registry_entries_s36_publication_update": (
+            "source_registry_entries",
+            "UPDATE",
+            "mp_source_publication_worker",
+        ),
+    }
+    if set(expected_policies) != {row["policyname"] for row in policy_rows}:
+        raise MigrationError("Step 36 live policy set differs")
+    for row in policy_rows:
+        table, command, role = expected_policies[row["policyname"]]
+        if (
+            row["tablename"] != table
+            or row["cmd"].upper() != command
+            or role not in row["roles"]
+            or (command in {"SELECT", "UPDATE"} and not row["qual"])
+            or (command in {"INSERT", "UPDATE"} and not row["with_check"])
+        ):
+            raise MigrationError("Step 36 policy predicate or role differs")
+
+    protected_tables = (
+        "audit_chain_heads",
+        "audit_events",
+        "hat_scopes",
+        "persistence_operations",
+        "source_provenance_edges",
+        "source_publication_events",
+        "source_registry_entries",
+    )
+    table_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT c.relname AS table_name, c.relrowsecurity, "
+            "c.relforcerowsecurity, owner.rolname AS owner_role "
+            "FROM pg_catalog.pg_class AS c "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = c.relnamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = c.relowner "
+            "WHERE namespace.nspname = 'memory_patch' AND c.relname IN ("
+            + ", ".join(sql_literal(table) for table in protected_tables)
+            + ") AND c.relkind = 'r' ORDER BY c.relname",
+        )
+    )
+    if table_rows != [
+        {
+            "table_name": table,
+            "relrowsecurity": "t",
+            "relforcerowsecurity": "t",
+            "owner_role": "mp_schema_owner",
+        }
+        for table in protected_tables
+    ]:
+        raise MigrationError("Step 36 table owner or FORCE RLS differs")
+
+    function_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT procedure.proname AS function_name, "
+            "owner.rolname AS owner_role, procedure.prosecdef "
+            "FROM pg_catalog.pg_proc AS procedure "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = procedure.pronamespace "
+            "JOIN pg_catalog.pg_roles AS owner ON owner.oid = procedure.proowner "
+            "WHERE namespace.nspname = 'memory_patch' "
+            "AND procedure.proname IN ("
+            + ", ".join(
+                sql_literal(name) for name in sorted(STEP36_FUNCTION_SIGNATURES)
+            )
+            + ") ORDER BY procedure.proname",
+        )
+    )
+    if function_rows != [
+        {
+            "function_name": name,
+            "owner_role": "mp_schema_owner",
+            "prosecdef": "f",
+        }
+        for name in sorted(STEP36_FUNCTION_SIGNATURES)
+    ]:
+        raise MigrationError("Step 36 helper ownership or mode differs")
+
+    trigger_rows = parse_tsv(
+        client.execute(
+            database,
+            "SELECT trigger.tgname AS trigger_name, target.relname AS table_name, "
+            "procedure.proname AS function_name "
+            "FROM pg_catalog.pg_trigger AS trigger "
+            "JOIN pg_catalog.pg_class AS target ON target.oid = trigger.tgrelid "
+            "JOIN pg_catalog.pg_namespace AS namespace "
+            "ON namespace.oid = target.relnamespace "
+            "JOIN pg_catalog.pg_proc AS procedure ON procedure.oid = trigger.tgfoid "
+            "WHERE namespace.nspname = 'memory_patch' AND trigger.tgname IN ("
+            "'source_publication_events_s36_authority', "
+            "'source_registry_entries_s36_publication_authority') "
+            "AND NOT trigger.tgisinternal ORDER BY trigger.tgname",
+        )
+    )
+    if trigger_rows != [
+        {
+            "trigger_name": "source_publication_events_s36_authority",
+            "table_name": "source_publication_events",
+            "function_name": "guard_step36_source_publication_authority",
+        },
+        {
+            "trigger_name": "source_registry_entries_s36_publication_authority",
+            "table_name": "source_registry_entries",
+            "function_name": "guard_step36_source_publication_authority",
+        },
+    ]:
+        raise MigrationError("Step 36 publication authority triggers differ")
+    return {
+        "app_publication_authority": False,
+        "audit_reader_business_mutation": False,
+        "dedicated_role_count": len(dedicated_roles),
+        "exclusive_function_count": len(
+            manifest["exclusive_authority_functions"]
+        ),
+        "force_rls_table_count": len(protected_tables),
+        "policy_count": len(policy_rows),
+        "source_publication_worker": True,
+        "trigger_count": len(trigger_rows),
+    }
+
+
 def apply_migrations(
     client: SqlClient,
     database: str,
@@ -7008,6 +7643,32 @@ def apply_migrations(
                     sqlstate=exc.sqlstate,
                 ) from exc
             assert_step34_security_catalog(client, database)
+            database_sql = ""
+        elif migration.migration_id == STEP36_MIGRATION_ID:
+            cluster_role_sql, database_sql = split_cluster_role_ddl(
+                migration.sql,
+                begin_marker=STEP36_CLUSTER_ROLE_BEGIN,
+                end_marker=STEP36_CLUSTER_ROLE_END,
+                role_name="mp_source_publication_worker",
+            )
+            client.execute(
+                database,
+                "SET allow_role_memberships_to_change_during_transaction = true;\n"
+                + cluster_role_sql,
+                timeout=timeout,
+            )
+            try:
+                client.execute(
+                    database,
+                    "BEGIN;\n" + database_sql + "\nCOMMIT;",
+                    timeout=timeout,
+                )
+            except SqlError as exc:
+                raise SqlError(
+                    f"{migration.migration_id} database transaction failed: {exc}",
+                    sqlstate=exc.sqlstate,
+                ) from exc
+            assert_step36_security_catalog(client, database)
             database_sql = ""
         migration_record_sql = (
             "INSERT INTO memory_patch.schema_migrations "

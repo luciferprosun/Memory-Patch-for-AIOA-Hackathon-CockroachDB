@@ -63,6 +63,7 @@ from aioa_memory_kernel.persistence import (  # noqa: E402
     RequestContext,
     extract_sqlstate,
 )
+from aioa_memory_kernel.security.credentials import CredentialPurpose  # noqa: E402
 
 
 START_SHA = "355a790b50a6412adcf64dd0a463219574a3f849"
@@ -500,22 +501,79 @@ def _tamper_matrix(entries, head: AuditChainHead) -> Mapping[str, str]:
     return result
 
 
+def _create_audit_reader_validation_role(root, role: str) -> None:
+    identifier = step27.rls_validation.role_identifier(role)
+    connection = step27._PgwireConnection(
+        port=root.sql_port,
+        database="defaultdb",
+        user="root",
+    )
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            "SET allow_role_memberships_to_change_during_transaction = true"
+        )
+        cursor.execute(
+            f"CREATE ROLE {identifier} "
+            "WITH LOGIN NOCREATEROLE NOCREATEDB NOBYPASSRLS"
+        )
+        cursor.execute(
+            "GRANT mp_audit_reader, mp_request_context_setter TO " + identifier
+        )
+        cursor.close()
+    finally:
+        connection.close()
+
+
+def _drop_audit_reader_validation_role(root, role: str) -> None:
+    identifier = step27.rls_validation.role_identifier(role)
+    connection = step27._PgwireConnection(
+        port=root.sql_port,
+        database="defaultdb",
+        user="root",
+    )
+    try:
+        cursor = connection.cursor()
+        cursor.execute(
+            "SET allow_role_memberships_to_change_during_transaction = true"
+        )
+        cursor.execute(
+            "REVOKE mp_audit_reader, mp_request_context_setter FROM " + identifier
+        )
+        cursor.execute("DROP ROLE IF EXISTS " + identifier)
+        cursor.close()
+    finally:
+        connection.close()
+
+
 def _validate_service(
     *,
     root,
     database: str,
     app_role: str,
+    audit_reader_role: str,
 ) -> Mapping[str, Any]:
     runner = step30._runner(
         port=root.sql_port,
         database=database,
         role=app_role,
+        credential_purpose=CredentialPurpose.AUDIT_APPENDER_DATABASE,
+        diagnostic=True,
+    )
+    reader_runner = step30._runner(
+        port=root.sql_port,
+        database=database,
+        role=audit_reader_role,
+        credential_purpose=CredentialPurpose.AUDIT_READER_DATABASE,
         diagnostic=True,
     )
     repository = AuditLedgerCockroachRepository()
     redaction_policy = AuditRedactionPolicy()
     service = AuditLedgerService(
-        runner, repository=repository, redaction_policy=redaction_policy
+        runner,
+        reader_transaction_runner=reader_runner,
+        repository=repository,
+        redaction_policy=redaction_policy,
     )
     owner_context = _context(TENANT_A, OWNER_A)
     concurrency_context = _context(TENANT_A, CONCURRENCY_OWNER)
@@ -995,6 +1053,7 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
     root = None
     database = None
     app_role = None
+    audit_reader_role = None
     cleanup: Mapping[str, Any] = {}
     cleanup_errors: list[str] = []
     primary_error: BaseException | None = None
@@ -1036,10 +1095,13 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
             root.execute(database, _seed_identity_sql(), timeout=120)
             app_role = "mp_s33_app_" + uuid.uuid4().hex[:12]
             step27._create_validation_role(root, app_role)
+            audit_reader_role = "mp_s33_reader_" + uuid.uuid4().hex[:12]
+            _create_audit_reader_validation_role(root, audit_reader_role)
             service_result = _validate_service(
                 root=root,
                 database=database,
                 app_role=app_role,
+                audit_reader_role=audit_reader_role,
             )
         except BaseException as error:
             _failure_progress("VALIDATE_STEP33_LEDGER", error)
@@ -1057,6 +1119,13 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
                         step27._drop_validation_role(root, app_role)
                     except BaseException:
                         cleanup_errors.append("APP_ROLE_CLEANUP_FAILED")
+                if audit_reader_role is not None:
+                    try:
+                        _drop_audit_reader_validation_role(
+                            root, audit_reader_role
+                        )
+                    except BaseException:
+                        cleanup_errors.append("AUDIT_READER_ROLE_CLEANUP_FAILED")
             if runtime is not None:
                 try:
                     cleanup = _stop_owned_runtime(runtime)
@@ -1098,6 +1167,7 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
         "chain_partition_policy": STEP33_CHAIN_POLICY_ID,
         "cleanup": {
             "app_role_removed": True,
+            "audit_reader_role_removed": True,
             "database_removed": True,
             "force_kill_used": cleanup["force_kill_used"],
             "pid_exited": cleanup["pid_exited"],

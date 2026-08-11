@@ -24,6 +24,7 @@ from aioa_memory_kernel.contracts.exceptions import ContractValidationError, Int
 from aioa_memory_kernel.contracts.serialization import canonical_sha256
 from aioa_memory_kernel.persistence import SerializableTransactionRunner
 from aioa_memory_kernel.persistence.errors import IdempotencyConflictError
+from aioa_memory_kernel.security.credentials import CredentialPurpose
 from aioa_memory_kernel.personal_memory import (
     PERSONAL_MEMORY_COMMIT_ROLE,
     STEP30_SCHEMA_VERSION,
@@ -328,13 +329,26 @@ class Step30ServiceTests(unittest.TestCase):
         self.proposals = InMemoryProposalRepository()
         self.proposals.values[self.value.awaiting.proposal.proposal_id] = self.value.awaiting
         self.idempotency = FakeIdempotency()
-        self.runner = SerializableTransactionRunner(lambda: None)
-        self.runner_patch = mock.patch.object(
-            self.runner,
+        self.app_runner = SerializableTransactionRunner(
+            lambda: None,
+            credential_purpose=CredentialPurpose.APPLICATION_DATABASE,
+        )
+        self.commit_runner = SerializableTransactionRunner(
+            lambda: None,
+            credential_purpose=CredentialPurpose.PERSONAL_MEMORY_COMMIT_DATABASE,
+        )
+        self.app_runner_patch = mock.patch.object(
+            self.app_runner,
             "run",
             side_effect=lambda context, callback, **kwargs: callback(object()),
         )
-        self.runner_patch.start()
+        self.commit_runner_patch = mock.patch.object(
+            self.commit_runner,
+            "run",
+            side_effect=lambda context, callback, **kwargs: callback(object()),
+        )
+        self.app_runner_patch.start()
+        self.commit_runner_patch.start()
         self.clock = MutableTrustedClock(
             self.value.awaiting.updated_at + timedelta(seconds=1)
         )
@@ -346,12 +360,15 @@ class Step30ServiceTests(unittest.TestCase):
             "idempotency": self.idempotency,
             "trusted_clock": self.clock,
         }
-        self.approvals = PersonalMemoryApprovalService(self.runner, **kwargs)
-        self.commits = PersonalMemoryCommitHelper(self.runner, **kwargs)
-        self.activations = PersonalMemoryActivationService(self.runner, **kwargs)
+        self.approvals = PersonalMemoryApprovalService(self.app_runner, **kwargs)
+        self.commits = PersonalMemoryCommitHelper(self.commit_runner, **kwargs)
+        self.activations = PersonalMemoryActivationService(
+            self.commit_runner, **kwargs
+        )
 
     def tearDown(self):
-        self.runner_patch.stop()
+        self.commit_runner_patch.stop()
+        self.app_runner_patch.stop()
 
     def test_services_run_three_edges_and_exact_replays(self):
         approval_request = build_personal_memory_approval_request(

@@ -983,9 +983,9 @@ class CorrectionCandidatePersistenceBoundaryTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
-        self.assertEqual(manifest["schema_version"], 15)
-        self.assertEqual(manifest["runner_version"], "15.0.0")
-        self.assertEqual(len(manifest["migrations"]), 17)
+        self.assertEqual(manifest["schema_version"], 16)
+        self.assertEqual(manifest["runner_version"], "16.0.0")
+        self.assertEqual(len(manifest["migrations"]), 18)
         latest = manifest["migrations"][11]
         self.assertEqual(latest["migration_id"], "0012_step28_correction_candidate_bridge")
         migration_bytes = (

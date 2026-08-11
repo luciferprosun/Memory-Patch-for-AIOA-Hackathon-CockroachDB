@@ -169,9 +169,14 @@ def offline_validate() -> dict[str, Any]:
     digest = digest_canonical_request({"a": 1, "b": 2})
     if digest != digest_canonical_request({"b": 2, "a": 1}):
         raise PersistenceValidationError("canonical request digest is unstable")
-    if migration["migration_count"] != 6:
+    migration_ids = tuple(migration["migration_ids"])
+    if (
+        migration["migration_count"] != len(migrations.load_migrations())
+        or migrations.STEP6_MIGRATION_ID not in migration_ids
+        or migrations.STEP36_MIGRATION_ID not in migration_ids
+    ):
         raise PersistenceValidationError(
-            "Step 6 baseline plus the forward Step 9 migration is incomplete"
+            "Step 6 baseline plus the canonical Step 36 migration is incomplete"
         )
     table = persistence["tables"][0]
     if (

@@ -12,6 +12,7 @@ from aioa_memory_kernel.persistence import (
     SerializableTransactionRunner,
 )
 from aioa_memory_kernel.persistence.protocols import TransactionProtocol
+from aioa_memory_kernel.security.credentials import CredentialPurpose
 
 from .audit import (
     review_case_claimed_event,
@@ -177,6 +178,9 @@ class ReviewCaseIntakeService:
     ) -> None:
         if not isinstance(transaction_runner, SerializableTransactionRunner):
             raise TypeError("transaction_runner must be SerializableTransactionRunner")
+        transaction_runner.require_credential_purpose(
+            CredentialPurpose.REVIEW_SERVICE_DATABASE
+        )
         self._runner = transaction_runner
         self._repository = repository or HumanReviewCockroachRepository()
         self._clock = trusted_clock
@@ -258,6 +262,9 @@ class HumanReviewWorkspaceService:
     ) -> None:
         if not isinstance(transaction_runner, SerializableTransactionRunner):
             raise TypeError("transaction_runner must be SerializableTransactionRunner")
+        transaction_runner.require_credential_purpose(
+            CredentialPurpose.HUMAN_REVIEWER_DATABASE
+        )
         self._runner = transaction_runner
         self._repository = repository or HumanReviewCockroachRepository()
         self._clock = trusted_clock
@@ -620,6 +627,9 @@ class ReviewDecisionHandoffService:
     ) -> None:
         if not isinstance(transaction_runner, SerializableTransactionRunner):
             raise TypeError("transaction_runner must be SerializableTransactionRunner")
+        transaction_runner.require_credential_purpose(
+            CredentialPurpose.REVIEW_SERVICE_DATABASE
+        )
         self._runner = transaction_runner
         self._repository = repository or HumanReviewCockroachRepository()
         self._clock = trusted_clock

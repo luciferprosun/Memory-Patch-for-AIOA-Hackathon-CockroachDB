@@ -54,6 +54,7 @@ from aioa_memory_kernel.contracts.exceptions import (
     IntegrityError,
 )
 from aioa_memory_kernel.contracts.serialization import canonical_sha256
+from aioa_memory_kernel.security.credentials import CredentialPurpose
 from aioa_memory_kernel.persistence import SerializableTransactionRunner
 from aioa_memory_kernel.routing import KnowledgePolicyDecision
 from aioa_memory_kernel.personal_memory import (
@@ -109,7 +110,11 @@ def chain(count: int = 4) -> tuple[AuditLedgerEntry, ...]:
 
 
 class MemoryRunner(SerializableTransactionRunner):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        purpose: CredentialPurpose = CredentialPurpose.AUDIT_APPENDER_DATABASE,
+    ) -> None:
+        super().__init__(lambda: None, credential_purpose=purpose)
         self.lock = threading.RLock()
 
     def run(self, context, callback, *, operation_kind=None):

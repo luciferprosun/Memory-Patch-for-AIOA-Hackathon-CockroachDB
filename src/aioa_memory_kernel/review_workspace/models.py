@@ -28,6 +28,7 @@ from aioa_memory_kernel.contracts.serialization import (
     to_canonical_data,
     verify_canonical_hash,
 )
+from aioa_memory_kernel.security.redaction import assert_secret_free
 from aioa_memory_kernel.persistence.errors import PersistenceError
 
 
@@ -309,6 +310,16 @@ def safe_review_context(value: object) -> Mapping[str, Any]:
         raise ContractValidationError("review context must be an object")
     _walk_safe(value)
     frozen = freeze_json(value)
+    try:
+        assert_secret_free(
+            frozen,
+            surface="review context",
+            reject_machine_paths=True,
+        )
+    except ValueError as error:
+        raise ContractValidationError(
+            "review context contains forbidden secret material"
+        ) from error
     if len(canonical_json_bytes(frozen)) > MAXIMUM_REVIEW_CONTEXT_BYTES:
         raise ContractValidationError("review context exceeds the byte bound")
     return frozen
@@ -1317,6 +1328,16 @@ class SubmitReviewDecision:
             lowered = note.casefold()
             if any(token in lowered for token in _SECRET_VALUES):
                 raise ContractValidationError("reviewer note contains secret-shaped text")
+            try:
+                assert_secret_free(
+                    note,
+                    surface="reviewer note",
+                    reject_machine_paths=True,
+                )
+            except ValueError as error:
+                raise ContractValidationError(
+                    "reviewer note contains forbidden secret material"
+                ) from error
             note_digest = canonical_sha256(note)
         object.__setattr__(self, "reviewer_note_digest", note_digest)
         if self.expected_state is not ReviewState.CLAIMED or self.expected_state_version != 2:

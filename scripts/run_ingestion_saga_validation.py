@@ -62,6 +62,10 @@ from aioa_memory_kernel.persistence import (  # noqa: E402
     SerializableTransactionRunner,
 )
 from aioa_memory_kernel.runtime import LinuxExternalVolumeProbe  # noqa: E402
+from aioa_memory_kernel.security.credentials import (  # noqa: E402
+    AWS_WORKLOAD_IDENTITY_ENVIRONMENT_NAMES,
+    build_minimal_subprocess_environment,
+)
 from aioa_memory_kernel.sources import (  # noqa: E402
     PUBLICATION_GENESIS_DIGEST,
     OriginMetadata,
@@ -645,7 +649,10 @@ def _aws_json(
     operation: str,
     parameters: Sequence[str] = (),
 ) -> Mapping[str, Any]:
-    environment = os.environ.copy()
+    environment = build_minimal_subprocess_environment(
+        os.environ,
+        allowed_names=AWS_WORKLOAD_IDENTITY_ENVIRONMENT_NAMES,
+    )
     environment["AWS_PAGER"] = ""
     command = [
         str(aws_binary),

@@ -22,10 +22,15 @@ from typing import Any, Mapping, Sequence
 
 
 SCRIPT_ROOT = Path(__file__).resolve().parent
-if str(SCRIPT_ROOT) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_ROOT))
+SOURCE_ROOT = SCRIPT_ROOT.parent / "src"
+for import_root in (SCRIPT_ROOT, SOURCE_ROOT):
+    if str(import_root) not in sys.path:
+        sys.path.insert(0, str(import_root))
 
 import run_cockroachdb_migrations as migrations  # noqa: E402
+from aioa_memory_kernel.security.credentials import (  # noqa: E402
+    build_minimal_subprocess_environment,
+)
 
 
 REPOSITORY_ROOT = SCRIPT_ROOT.parent
@@ -64,20 +69,7 @@ class RoleSqlClient:
         migrations.validate_database_identifier(database)
         migrations.require_loopback(self.host)
         validate_role_identifier(self.user)
-        environment = os.environ.copy()
-        for variable in (
-            "COCKROACH_URL",
-            "COCKROACH_SQL_URL",
-            "DATABASE_URL",
-            "PGDATABASE",
-            "PGHOST",
-            "PGPASSWORD",
-            "PGPORT",
-            "PGSERVICE",
-            "PGSERVICEFILE",
-            "PGUSER",
-        ):
-            environment.pop(variable, None)
+        environment = build_minimal_subprocess_environment(os.environ)
         return (
             [
                 str(self.binary),

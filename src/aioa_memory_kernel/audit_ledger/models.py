@@ -31,6 +31,7 @@ from aioa_memory_kernel.contracts.serialization import (
     to_canonical_data,
     verify_canonical_hash,
 )
+from aioa_memory_kernel.security.redaction import assert_secret_free
 from aioa_memory_kernel.persistence.errors import PersistenceError
 
 
@@ -343,6 +344,16 @@ def safe_audit_payload(value: object) -> Mapping[str, Any]:
         raise ContractValidationError("event_payload must be a mapping")
     _walk_payload(value)
     frozen = freeze_json(value)
+    try:
+        assert_secret_free(
+            frozen,
+            surface="audit payload",
+            reject_machine_paths=True,
+        )
+    except ValueError as error:
+        raise ContractValidationError(
+            "audit payload contains forbidden secret material"
+        ) from error
     if len(canonical_json_bytes(frozen)) > MAX_AUDIT_PAYLOAD_BYTES:
         raise ContractValidationError("event_payload exceeds the byte bound")
     return frozen

@@ -65,6 +65,7 @@ from aioa_memory_kernel.sources import (  # noqa: E402
     verify_publication_event_chain,
 )
 from aioa_memory_kernel.contracts.serialization import canonical_json  # noqa: E402
+from aioa_memory_kernel.security.credentials import CredentialPurpose  # noqa: E402
 
 
 NOW = datetime(2039, 4, 5, 6, 7, 8, tzinfo=UTC)
@@ -1260,7 +1261,10 @@ class Step9HardeningTests(unittest.TestCase):
         )
         context = RequestContext(TENANT_A, None, AccessMode.TENANT_SHARED)
         transaction = ScriptedTransaction()
-        runner = SerializableTransactionRunner(lambda: None)
+        runner = SerializableTransactionRunner(
+            lambda: None,
+            credential_purpose=CredentialPurpose.SOURCE_PUBLICATION_DATABASE,
+        )
         runner.run = mock.Mock(  # type: ignore[method-assign]
             side_effect=lambda received, callback, *, operation_kind: callback(
                 transaction
@@ -1323,7 +1327,10 @@ class Step9HardeningTests(unittest.TestCase):
         )
         context = RequestContext(TENANT_A, None, AccessMode.TENANT_SHARED)
         transaction = ScriptedTransaction()
-        runner = SerializableTransactionRunner(lambda: None)
+        runner = SerializableTransactionRunner(
+            lambda: None,
+            credential_purpose=CredentialPurpose.SOURCE_PUBLICATION_DATABASE,
+        )
         runner.run = mock.Mock(  # type: ignore[method-assign]
             side_effect=lambda received, callback, *, operation_kind: callback(
                 transaction

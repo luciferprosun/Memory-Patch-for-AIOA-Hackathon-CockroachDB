@@ -761,8 +761,8 @@ class Step32RetrievalPersistenceAndBoundaryTests(unittest.TestCase):
         manifest = json.loads(
             (ROOT / "sql/cockroachdb/migrations/manifest.json").read_text()
         )
-        self.assertEqual(manifest["schema_version"], 15)
-        self.assertEqual(manifest["runner_version"], "15.0.0")
+        self.assertEqual(manifest["schema_version"], 16)
+        self.assertEqual(manifest["runner_version"], "16.0.0")
         step32 = next(
             item for item in manifest["migrations"]
             if item["migration_id"] == "0015_step32_personal_memory_lifecycle"

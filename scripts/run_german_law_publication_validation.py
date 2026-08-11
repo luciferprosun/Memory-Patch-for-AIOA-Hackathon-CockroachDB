@@ -71,6 +71,10 @@ from aioa_memory_kernel.persistence import (  # noqa: E402
     SerializableTransactionRunner,
 )
 from aioa_memory_kernel.runtime import LinuxExternalVolumeProbe  # noqa: E402
+from aioa_memory_kernel.security.credentials import (  # noqa: E402
+    AWS_WORKLOAD_IDENTITY_ENVIRONMENT_NAMES,
+    build_minimal_subprocess_environment,
+)
 from aioa_memory_kernel.sources import (  # noqa: E402
     OriginMetadata,
     ParserIdentity,
@@ -479,6 +483,11 @@ def _aws_binary() -> Path:
 
 
 def _aws_identity(binary: Path) -> Mapping[str, Any]:
+    environment = build_minimal_subprocess_environment(
+        os.environ,
+        allowed_names=AWS_WORKLOAD_IDENTITY_ENVIRONMENT_NAMES,
+    )
+    environment["AWS_PAGER"] = ""
     try:
         completed = subprocess.run(
             [str(binary), "sts", "get-caller-identity", "--profile", AWS_PROFILE, "--region", AWS_REGION, "--no-cli-pager", "--output", "json"],
@@ -488,7 +497,7 @@ def _aws_identity(binary: Path) -> Mapping[str, Any]:
             text=True,
             encoding="utf-8",
             timeout=60,
-            env={**os.environ, "AWS_PAGER": ""},
+            env=environment,
             check=False,
         )
         value = json.loads(completed.stdout or "{}") if completed.returncode == 0 else {}

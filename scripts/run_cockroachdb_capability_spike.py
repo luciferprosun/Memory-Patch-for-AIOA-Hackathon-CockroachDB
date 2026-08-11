@@ -33,6 +33,14 @@ from urllib.parse import urlsplit
 
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+SOURCE_ROOT = REPOSITORY_ROOT / "src"
+if str(SOURCE_ROOT) not in sys.path:
+    sys.path.insert(0, str(SOURCE_ROOT))
+
+from aioa_memory_kernel.security.credentials import (  # noqa: E402
+    build_minimal_subprocess_environment,
+)
+
 PIN_PATH = REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 MATRIX_PATH = (
     REPOSITORY_ROOT
@@ -220,7 +228,7 @@ class SqlClient:
             "--format=tsv",
             "--set=errexit=true",
         ]
-        environment = os.environ.copy()
+        environment = build_minimal_subprocess_environment(os.environ)
         if self.sql_url is not None:
             environment["COCKROACH_URL"] = self.sql_url
         else:

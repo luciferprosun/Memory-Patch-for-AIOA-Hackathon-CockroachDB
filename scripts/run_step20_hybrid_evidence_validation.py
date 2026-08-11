@@ -100,6 +100,9 @@ from aioa_memory_kernel.routing import (  # noqa: E402
     PolicyGateResult,
     Step17ReasonCode,
 )
+from aioa_memory_kernel.security.credentials import (  # noqa: E402
+    build_minimal_subprocess_environment,
+)
 from aioa_memory_kernel.sources import (  # noqa: E402
     SourceAuthorityLevel,
     SourcePublicationState,
@@ -173,13 +176,13 @@ def _enter_isolated_runtime(config: object) -> None:
             check=True,
             timeout=1800,
             env={
-                **os.environ,
+                **build_minimal_subprocess_environment(os.environ),
                 "PIP_CACHE_DIR": str(config.data_root / step19.PIP_RELATIVE),
             },
         )
     if Path(sys.prefix).resolve() != runtime.resolve(strict=True):
         environment = {
-            **os.environ,
+            **build_minimal_subprocess_environment(os.environ),
             "STEP20_ISOLATED_RUNTIME": "1",
             "HF_HOME": str(config.data_root / step19.HF_RELATIVE),
             "HF_HUB_CACHE": str(config.data_root / step19.HF_RELATIVE / "hub"),

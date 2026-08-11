@@ -223,7 +223,17 @@ At roadmap adoption and in subsequent audited closure records:
   disposable CockroachDB validation. It is completion evidence only after
   that commit is reachable on `origin/main`.
 - `Step 35: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 36: NOT STARTED`. Step 35 completion does not authorize Step 36.
+- Step 36 adds a closed purpose-bound credential inventory, fail-closed
+  loading without admin/master fallback, shared secret redaction, minimal
+  child environments, browser/provider/storage isolation and migration 0018.
+  It moves source publication to an exact worker, adds a read-only audit
+  reader, strengthens non-composed Commit Helper/reviewer/review-service
+  authority, preserves RLS/FORCE RLS and proves the boundaries through full
+  migration replay plus real Step 30/34 disposable CockroachDB validation.
+  It is completion evidence only after the closure commit is reachable on
+  `origin/main`.
+- `Step 36: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 37: NOT STARTED`. Step 36 completion does not authorize Step 37.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

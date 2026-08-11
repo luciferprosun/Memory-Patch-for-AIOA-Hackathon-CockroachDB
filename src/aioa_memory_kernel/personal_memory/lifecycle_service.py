@@ -19,6 +19,7 @@ from aioa_memory_kernel.persistence import (
     SerializableTransactionRunner,
 )
 from aioa_memory_kernel.persistence.protocols import TransactionProtocol
+from aioa_memory_kernel.security.credentials import CredentialPurpose
 
 from .candidate_repository import CorrectionCandidateCockroachRepository
 from .lifecycle import (
@@ -279,6 +280,9 @@ class PersonalMemoryApprovalService:
     ) -> None:
         if not isinstance(transaction_runner, SerializableTransactionRunner):
             raise TypeError("transaction_runner must be SerializableTransactionRunner")
+        transaction_runner.require_credential_purpose(
+            CredentialPurpose.APPLICATION_DATABASE
+        )
         self._runner = transaction_runner
         self._lifecycle = lifecycle_repository or PersonalMemoryPatchLifecycleCockroachRepository()
         self._slots = slot_repository or PersonalMemoryCockroachRepository()
@@ -421,6 +425,9 @@ class PersonalMemoryCommitHelper:
     ) -> None:
         if not isinstance(commit_transaction_runner, SerializableTransactionRunner):
             raise TypeError("commit_transaction_runner must be SerializableTransactionRunner")
+        commit_transaction_runner.require_credential_purpose(
+            CredentialPurpose.PERSONAL_MEMORY_COMMIT_DATABASE
+        )
         self._runner = commit_transaction_runner
         self._lifecycle = lifecycle_repository or PersonalMemoryPatchLifecycleCockroachRepository()
         self._slots = slot_repository or PersonalMemoryCockroachRepository()
@@ -567,6 +574,9 @@ class PersonalMemoryActivationService:
     ) -> None:
         if not isinstance(activation_transaction_runner, SerializableTransactionRunner):
             raise TypeError("activation_transaction_runner must be SerializableTransactionRunner")
+        activation_transaction_runner.require_credential_purpose(
+            CredentialPurpose.PERSONAL_MEMORY_COMMIT_DATABASE
+        )
         self._runner = activation_transaction_runner
         self._lifecycle = lifecycle_repository or PersonalMemoryPatchLifecycleCockroachRepository()
         self._slots = slot_repository or PersonalMemoryCockroachRepository()

@@ -19,6 +19,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from aioa_memory_kernel.security.credentials import (
+    AWS_WORKLOAD_IDENTITY_ENVIRONMENT_NAMES,
+    build_minimal_subprocess_environment,
+)
+
 
 _AWS_ERROR = re.compile(r"An error occurred \(([A-Za-z0-9._-]{1,128})\)")
 _SSO_SESSION_ERROR = re.compile(
@@ -171,7 +176,10 @@ class AwsCliS3Client:
     def _run(self, arguments: Sequence[str]) -> dict[str, Any]:
         if _file_sha256(self._aws) != self._expected_binary_sha256:
             raise AwsCliS3Error("AwsCliBinaryIdentityChanged")
-        environment = os.environ.copy()
+        environment = build_minimal_subprocess_environment(
+            os.environ,
+            allowed_names=AWS_WORKLOAD_IDENTITY_ENVIRONMENT_NAMES,
+        )
         environment["AWS_PAGER"] = ""
         try:
             completed = subprocess.run(

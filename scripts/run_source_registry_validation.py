@@ -36,6 +36,9 @@ import run_cockroachdb_persistence_validation as persistence  # noqa: E402
 import run_cockroachdb_rls_validation as rls  # noqa: E402
 from aioa_memory_kernel.contracts import MemoryTargetScope  # noqa: E402
 from aioa_memory_kernel.contracts.serialization import canonical_json  # noqa: E402
+from aioa_memory_kernel.security.credentials import (  # noqa: E402
+    build_minimal_subprocess_environment,
+)
 from aioa_memory_kernel.sources import (  # noqa: E402
     PUBLICATION_GENESIS_DIGEST,
     OriginMetadata,
@@ -70,9 +73,14 @@ RUN_PREFIX = "mp_step9_"
 ROLE_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
 FIXED_ROLES = (
     "mp_app_runtime",
+    "mp_audit_reader",
+    "mp_human_reviewer",
+    "mp_personal_memory_commit_helper",
     "mp_request_context_setter",
+    "mp_review_service",
     "mp_schema_owner",
     "mp_security_owner",
+    "mp_source_publication_worker",
 )
 FIXTURE_TIME = datetime(2039, 4, 5, 6, 7, 8, tzinfo=UTC)
 
@@ -425,7 +433,7 @@ def quoted_role(role: str) -> str:
 
 
 def run_unit_suite() -> dict[str, Any]:
-    environment = os.environ.copy()
+    environment = build_minimal_subprocess_environment(os.environ)
     environment["PYTHONDONTWRITEBYTECODE"] = "1"
     result = migrations.run_process(
         [
@@ -484,8 +492,8 @@ def offline_validate(*, run_tests: bool = True) -> dict[str, Any]:
         raise SourceRegistryValidationError(
             "source publication policy identity differs"
         )
-    if migration["migration_count"] != 6:
-        raise SourceRegistryValidationError("migration chain is not 0001-0006")
+    if migration["migration_count"] != 18:
+        raise SourceRegistryValidationError("migration chain is not 0001-0018")
     if migration["source_registry_table_count"] != 3:
         raise SourceRegistryValidationError(
             "source-registry table coverage differs"
@@ -1082,6 +1090,11 @@ def create_test_roles(
             "GRANT mp_app_runtime, mp_request_context_setter TO "
             f"{quoted_role(roles[key])}"
         )
+    for key in ("publisher_a", "publisher_b"):
+        statements.append(
+            "GRANT mp_source_publication_worker, mp_request_context_setter TO "
+            f"{quoted_role(roles[key])}"
+        )
     statements.append(
         f"GRANT mp_app_runtime TO {quoted_role(roles['runtime_only'])}"
     )
@@ -1155,6 +1168,8 @@ def run_live_validation(paths: LiveValidationPaths) -> dict[str, Any]:
         "a1": run_id + "_role_a1",
         "a2": run_id + "_role_a2",
         "b1": run_id + "_role_b1",
+        "publisher_a": run_id + "_publisher_a",
+        "publisher_b": run_id + "_publisher_b",
         "runtime_only": run_id + "_runtime_only",
         "owner_probe": run_id + "_owner_probe",
     }
@@ -1226,21 +1241,21 @@ def run_live_validation(paths: LiveValidationPaths) -> dict[str, Any]:
         recorder.check(
             "LIVE-003",
             "migration",
-            first_apply["applied_count"] == 6,
-            "six migrations applied from zero",
+            first_apply["applied_count"] == 18,
+            "eighteen migrations applied from zero",
         )
         recorder.check(
             "LIVE-004",
             "migration",
             no_op_apply["applied_count"] == 0
-            and no_op_apply["skipped_count"] == 6,
+            and no_op_apply["skipped_count"] == 18,
             "checksum-verified migration replay was a complete no-op",
         )
         recorder.check(
             "LIVE-005",
             "migration",
-            reproduction_apply["applied_count"] == 6,
-            "second fresh database applied the same six migrations",
+            reproduction_apply["applied_count"] == 18,
+            "second fresh database applied the same eighteen migrations",
         )
         primary_schema = migrations.schema_catalog(root, primary_database)
         reproduction_schema = migrations.schema_catalog(
@@ -1280,6 +1295,50 @@ def run_live_validation(paths: LiveValidationPaths) -> dict[str, Any]:
         )
         create_test_roles(root, roles)
         roles_created = True
+        disposable_roles_sql = ", ".join(
+            migrations.sql_literal(role) for role in sorted(roles.values())
+        )
+        membership_rows = migrations.parse_tsv(
+            root.execute(
+                "defaultdb",
+                "SELECT parent.rolname AS parent_role, "
+                "member.rolname AS member_role "
+                "FROM pg_catalog.pg_auth_members AS membership "
+                "JOIN pg_catalog.pg_roles AS parent "
+                "ON parent.oid = membership.roleid "
+                "JOIN pg_catalog.pg_roles AS member "
+                "ON member.oid = membership.member "
+                f"WHERE member.rolname IN ({disposable_roles_sql}) "
+                "ORDER BY parent.rolname, member.rolname",
+            )
+        )
+        actual_memberships = {
+            (row["parent_role"], row["member_role"])
+            for row in membership_rows
+        }
+        expected_memberships = {
+            ("mp_app_runtime", roles["a1"]),
+            ("mp_request_context_setter", roles["a1"]),
+            ("mp_app_runtime", roles["a2"]),
+            ("mp_request_context_setter", roles["a2"]),
+            ("mp_app_runtime", roles["b1"]),
+            ("mp_request_context_setter", roles["b1"]),
+            ("mp_app_runtime", roles["runtime_only"]),
+            ("mp_schema_owner", roles["owner_probe"]),
+            ("mp_app_runtime", roles["owner_probe"]),
+            ("mp_request_context_setter", roles["owner_probe"]),
+            ("mp_source_publication_worker", roles["publisher_a"]),
+            ("mp_request_context_setter", roles["publisher_a"]),
+            ("mp_source_publication_worker", roles["publisher_b"]),
+            ("mp_request_context_setter", roles["publisher_b"]),
+        }
+        recorder.check(
+            "LIVE-STEP36-ROLE-001",
+            "roles",
+            actual_memberships == expected_memberships,
+            "publication LOGINs inherit only publisher and trusted-context "
+            "capabilities while registration LOGINs retain only app authority",
+        )
         root.execute(primary_database, base_fixture_sql(ids), timeout=180)
         print("LIVE PROGRESS: roles and base fixtures ready", file=sys.stderr, flush=True)
         assert runtime.sql_port is not None
@@ -1657,31 +1716,50 @@ def run_live_validation(paths: LiveValidationPaths) -> dict[str, Any]:
                 created_at=FIXTURE_TIME + timedelta(minutes=offset),
             )
             transition_operation_id = f"{run_id}_transition_{offset}"
-            clients["a1"].execute(
+            transition_sql = durable_mutation_sql(
+                tenant_id=current.tenant_id,
+                owner_user_id=None,
+                operation_id=transition_operation_id,
+                operation_kind="PUBLICATION_STATE_TRANSITION",
+                idempotency_key=f"publication-transition-{offset}",
+                request_digest=event.event_digest,
+                scope_digest=current.scope.scope_digest,
+                result_ref=event.event_id,
+                result_digest=event.event_digest,
+                occurred_at=event.created_at,
+                mutation_sql=publication_transaction_sql(current, event),
+            )
+            if offset == 1:
+                app_publication_state = expect_context_error(
+                    clients["a1"],
+                    primary_database,
+                    ids["tenant_a"],
+                    None,
+                    "TENANT_SHARED",
+                    transition_sql,
+                    {"42501"},
+                )
+                recorder.check(
+                    "LIVE-STEP36-PUBLISHER-002",
+                    "publication_negative",
+                    app_publication_state == "42501",
+                    "normal app registration authority cannot perform a "
+                    "publication transition",
+                    sqlstate=app_publication_state,
+                )
+            clients["publisher_a"].execute(
                 primary_database,
                 rls.context_transaction(
                     ids["tenant_a"],
                     None,
                     "TENANT_SHARED",
-                    durable_mutation_sql(
-                        tenant_id=current.tenant_id,
-                        owner_user_id=None,
-                        operation_id=transition_operation_id,
-                        operation_kind="PUBLICATION_STATE_TRANSITION",
-                        idempotency_key=f"publication-transition-{offset}",
-                        request_digest=event.event_digest,
-                        scope_digest=current.scope.scope_digest,
-                        result_ref=event.event_id,
-                        result_digest=event.event_digest,
-                        occurred_at=event.created_at,
-                        mutation_sql=publication_transaction_sql(current, event),
-                    ),
+                    transition_sql,
                 ),
             )
             events.append(event)
             current = advance_registry_state(current, event)
         final_state = scalar_in_context(
-            clients["a1"],
+            clients["publisher_a"],
             primary_database,
             ids["tenant_a"],
             None,
@@ -1753,7 +1831,7 @@ def run_live_validation(paths: LiveValidationPaths) -> dict[str, Any]:
             "all publication transitions reused durable Step 6 operation state",
         )
         stale_pointer = scalar_in_context(
-            clients["a1"],
+            clients["publisher_a"],
             primary_database,
             ids["tenant_a"],
             None,
@@ -1776,7 +1854,7 @@ def run_live_validation(paths: LiveValidationPaths) -> dict[str, Any]:
             "stale publication compare-and-set changed zero rows",
         )
         tamper_state = expect_context_error(
-            clients["a1"],
+            clients["publisher_a"],
             primary_database,
             ids["tenant_a"],
             None,
@@ -1794,7 +1872,7 @@ def run_live_validation(paths: LiveValidationPaths) -> dict[str, Any]:
             sqlstate=tamper_state,
         )
         delete_event_state = expect_context_error(
-            clients["a1"],
+            clients["publisher_a"],
             primary_database,
             ids["tenant_a"],
             None,
@@ -1846,7 +1924,7 @@ def run_live_validation(paths: LiveValidationPaths) -> dict[str, Any]:
             ),
         )
         wrong_link_state = expect_context_error(
-            clients["a1"],
+            clients["publisher_a"],
             primary_database,
             ids["tenant_a"],
             None,
@@ -1895,7 +1973,7 @@ def run_live_validation(paths: LiveValidationPaths) -> dict[str, Any]:
         )
         print("LIVE PROGRESS: publication chain passed", file=sys.stderr, flush=True)
         illegal_state = expect_context_error(
-            clients["b1"],
+            clients["publisher_b"],
             primary_database,
             ids["tenant_b"],
             None,
@@ -1928,7 +2006,7 @@ def run_live_validation(paths: LiveValidationPaths) -> dict[str, Any]:
         )
         for forbidden_actor in ("MODEL", "HAT", "CRITIC"):
             actor_state = expect_context_error(
-                clients["b1"],
+                clients["publisher_b"],
                 primary_database,
                 ids["tenant_b"],
                 None,
@@ -1981,7 +2059,7 @@ def run_live_validation(paths: LiveValidationPaths) -> dict[str, Any]:
             "answer authority",
         )
         update_state = expect_context_error(
-            clients["b1"],
+            clients["publisher_b"],
             primary_database,
             ids["tenant_b"],
             None,

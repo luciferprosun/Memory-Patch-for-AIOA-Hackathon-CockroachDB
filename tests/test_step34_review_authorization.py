@@ -40,6 +40,7 @@ from aioa_memory_kernel.review_workspace import (
     build_claim_review_case_request,
     build_reviewer_authorization,
 )
+from aioa_memory_kernel.security.credentials import CredentialPurpose
 
 
 ROOT = REPOSITORY_ROOT
@@ -55,13 +56,14 @@ AGENTS = ROOT / "AGENTS.md"
 class Step34AuthorizationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.repo = MemoryReviewRepository()
-        self.runner = MemoryRunner()
+        self.reviewer_runner = MemoryRunner()
+        self.service_runner = MemoryRunner(CredentialPurpose.REVIEW_SERVICE_DATABASE)
         self.clock = FrozenClock()
         self.workspace = HumanReviewWorkspaceService(
-            self.runner, repository=self.repo, trusted_clock=self.clock
+            self.reviewer_runner, repository=self.repo, trusted_clock=self.clock
         )
         self.intake = ReviewCaseIntakeService(
-            self.runner, repository=self.repo, trusted_clock=self.clock
+            self.service_runner, repository=self.repo, trusted_clock=self.clock
         )
         self.case, self.context = case_fixture()
         self.reviewer = principal()
@@ -198,11 +200,14 @@ class Step34AuthorizationTests(unittest.TestCase):
             "decided_at": NOW,
             "idempotency_key": "secret-note",
         }
-        with self.assertRaises(ContractValidationError):
-            SubmitReviewDecision(
-                **base,
-                reviewer_note="Authorization: Bearer private-token",
-            )
+        for note in (
+            "Authorization: Bearer private-token",
+            "AKIAABCDEFGHIJKLMNOP",
+            "-----BEGIN OPENSSH PRIVATE KEY-----",
+        ):
+            with self.subTest(note=note):
+                with self.assertRaises(ContractValidationError):
+                    SubmitReviewDecision(**base, reviewer_note=note)
 
     def test_concurrent_claim_has_exactly_one_winner(self):
         second = principal(reviewer="second-reviewer")
@@ -252,7 +257,7 @@ class Step34AuthorizationTests(unittest.TestCase):
 
     def test_handoff_service_requires_exact_dedicated_service_identity(self):
         service = ReviewDecisionHandoffService(
-            self.runner, repository=self.repo, trusted_clock=self.clock
+            self.service_runner, repository=self.repo, trusted_clock=self.clock
         )
         source = inspect_source(service)
         self.assertIn("STEP34_REVIEW_SERVICE_ACTOR_ID", source)

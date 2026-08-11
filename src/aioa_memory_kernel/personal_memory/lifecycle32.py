@@ -43,6 +43,7 @@ from aioa_memory_kernel.contracts.serialization import (
     verify_canonical_hash,
 )
 from aioa_memory_kernel.persistence.errors import PersistenceError
+from aioa_memory_kernel.security.redaction import assert_secret_free
 
 from .lifecycle import (
     PersonalMemoryPatchLifecycleState,
@@ -501,6 +502,16 @@ def _safe_export_payload(value: object) -> Mapping[str, Any]:
                 )
 
     walk(frozen)
+    try:
+        assert_secret_free(
+            frozen,
+            surface="Personal Memory owner export",
+            reject_machine_paths=True,
+        )
+    except ValueError as error:
+        raise ContractValidationError(
+            "export contains forbidden secret material"
+        ) from error
     return frozen
 
 

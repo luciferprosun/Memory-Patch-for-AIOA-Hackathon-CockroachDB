@@ -67,6 +67,7 @@ from aioa_memory_kernel.review_workspace import (
     transition_review_case,
     verify_human_review_case,
 )
+from aioa_memory_kernel.security.credentials import CredentialPurpose
 from aioa_memory_kernel.routing import KnowledgePolicyDecision
 
 
@@ -87,7 +88,14 @@ class FrozenClock:
 
 
 class MemoryRunner(SerializableTransactionRunner):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        purpose: CredentialPurpose = CredentialPurpose.HUMAN_REVIEWER_DATABASE,
+    ) -> None:
+        super().__init__(
+            lambda: None,
+            credential_purpose=purpose,
+        )
         self.lock = threading.RLock()
         self.contexts = []
 
@@ -446,16 +454,17 @@ def queue_request(value: ReviewerPrincipal, case_type: ReviewCaseType, page_size
 class Step34WorkspaceTests(unittest.TestCase):
     def setUp(self) -> None:
         self.repo = MemoryReviewRepository()
-        self.runner = MemoryRunner()
+        self.reviewer_runner = MemoryRunner()
+        self.service_runner = MemoryRunner(CredentialPurpose.REVIEW_SERVICE_DATABASE)
         self.clock = FrozenClock()
         self.intake = ReviewCaseIntakeService(
-            self.runner, repository=self.repo, trusted_clock=self.clock
+            self.service_runner, repository=self.repo, trusted_clock=self.clock
         )
         self.workspace = HumanReviewWorkspaceService(
-            self.runner, repository=self.repo, trusted_clock=self.clock
+            self.reviewer_runner, repository=self.repo, trusted_clock=self.clock
         )
         self.handoff = ReviewDecisionHandoffService(
-            self.runner, repository=self.repo, trusted_clock=self.clock
+            self.service_runner, repository=self.repo, trusted_clock=self.clock
         )
         self.case, self.context = case_fixture()
         self.reviewer = principal()

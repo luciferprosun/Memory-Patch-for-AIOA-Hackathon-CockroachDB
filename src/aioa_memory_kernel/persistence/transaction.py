@@ -8,7 +8,10 @@ import time
 from collections.abc import Callable
 from typing import TypeVar
 
+from aioa_memory_kernel.security.credentials import CredentialPurpose
+
 from .errors import (
+    PersistenceConfigurationError,
     PersistenceError,
     PersistenceTransactionError,
     RetryExhaustedError,
@@ -124,6 +127,7 @@ class SerializableTransactionRunner:
         self,
         connection_factory: ConnectionFactory,
         *,
+        credential_purpose: CredentialPurpose | None = None,
         retry_policy: RetryPolicy | None = None,
         sleep: Callable[[float], None] = time.sleep,
         backoff: Callable[[int], float] | None = None,
@@ -134,9 +138,32 @@ class SerializableTransactionRunner:
                 sanitized_code="INVALID_CONNECTION_FACTORY",
             )
         self._connection_factory = connection_factory
+        if credential_purpose is not None and not isinstance(
+            credential_purpose, CredentialPurpose
+        ):
+            raise PersistenceConfigurationError(
+                "credential purpose must be typed",
+                sanitized_code="INVALID_CREDENTIAL_PURPOSE",
+            )
+        self._credential_purpose = credential_purpose
         self._policy = retry_policy or RetryPolicy()
         self._sleep = sleep
         self._backoff = backoff or self._policy.backoff_seconds
+
+    @property
+    def credential_purpose(self) -> CredentialPurpose | None:
+        return self._credential_purpose
+
+    def require_credential_purpose(self, expected: CredentialPurpose) -> None:
+        """Fail before SQL when a service receives the wrong process credential."""
+
+        if not isinstance(expected, CredentialPurpose):
+            raise TypeError("expected credential purpose must be typed")
+        if self._credential_purpose is not expected:
+            raise PersistenceConfigurationError(
+                "dedicated service credential is required",
+                sanitized_code="DEDICATED_CREDENTIAL_PURPOSE_REQUIRED",
+            )
 
     def run(
         self,

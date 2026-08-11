@@ -35,6 +35,7 @@ from aioa_memory_kernel.persistence import (  # noqa: E402
     IdempotencyService,
     SerializableTransactionRunner,
 )
+from aioa_memory_kernel.security.credentials import CredentialPurpose  # noqa: E402
 from aioa_memory_kernel.personal_memory import (  # noqa: E402
     STEP27_SCHEMA_VERSION,
     STEP29_SCHEMA_VERSION,
@@ -328,6 +329,7 @@ def _runner(
     port: int,
     database: str,
     role: str,
+    credential_purpose: CredentialPurpose,
     diagnostic: bool = False,
 ) -> SerializableTransactionRunner:
     connection_type = (
@@ -339,6 +341,7 @@ def _runner(
             database=database,
             user=role,
         ),
+        credential_purpose=credential_purpose,
         sleep=lambda _delay: None,
     )
 
@@ -633,11 +636,17 @@ def _validate_service(
     now = request.temporal_result.trusted_now
     if root.sql_port is None:
         raise ValidationFailure("STEP30_SQL_PORT_MISSING")
-    app_runner = _runner(port=root.sql_port, database=database, role=app_role)
+    app_runner = _runner(
+        port=root.sql_port,
+        database=database,
+        role=app_role,
+        credential_purpose=CredentialPurpose.APPLICATION_DATABASE,
+    )
     commit_runner = _runner(
         port=root.sql_port,
         database=database,
         role=commit_role,
+        credential_purpose=CredentialPurpose.PERSONAL_MEMORY_COMMIT_DATABASE,
         diagnostic=True,
     )
     clock = lambda: now + timedelta(hours=1)  # noqa: E731
@@ -1124,6 +1133,7 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
     migration_result = None
     replay_result = None
     catalog_result = None
+    failure_stage = "STEP30_RUNTIME_SETUP"
 
     with tempfile.TemporaryDirectory(prefix="mp-step30-binary-", dir="/tmp") as temp:
         local_binary = Path(temp) / "cockroach"
@@ -1136,12 +1146,14 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
         run_id = "mp_step30_" + uuid.uuid4().hex[:12]
         runtime = migrations.LocalRuntime(local_binary, run_id)
         try:
+            failure_stage = "START_DISPOSABLE_COCKROACHDB"
             _progress("START_DISPOSABLE_COCKROACHDB")
             root = step18._start_disposable_runtime(runtime)
             root = _Step30HttpSqlClient(root.port, root.sql_port)
             client = _ProgressMigrationClient(root)
             database = run_id + "_db"
             migrations.create_database(root, database)
+            failure_stage = "APPLY_MIGRATIONS"
             _progress("APPLY_MIGRATIONS")
             try:
                 migration_result = migrations.apply_migrations(
@@ -1164,6 +1176,7 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
                 )
                 raise
             _progress("REPLAY_MIGRATIONS")
+            failure_stage = "REPLAY_MIGRATIONS"
             replay_result = migrations.apply_migrations(
                 client,
                 database,
@@ -1176,6 +1189,7 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
                 or len(replay_result["skipped"]) != expected
             ):
                 raise ValidationFailure("STEP30_MIGRATION_REPLAY_MISMATCH")
+            failure_stage = "SEED_STEP30_IDENTITY"
             root.execute(
                 database,
                 step29._seed_identity_sql(
@@ -1187,12 +1201,16 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
             )
             app_role = "mp_s30_app_" + uuid.uuid4().hex[:12]
             commit_role = "mp_s30_commit_" + uuid.uuid4().hex[:12]
+            failure_stage = "CREATE_STEP30_APP_ROLE"
             step27._create_validation_role(root, app_role)
+            failure_stage = "CREATE_STEP30_COMMIT_ROLE"
             _create_commit_validation_role(root, commit_role)
+            failure_stage = "VALIDATE_STEP30_CATALOG"
             catalog_result = migrations.assert_step30_security_catalog(
                 root,
                 database,
             )
+            failure_stage = "VALIDATE_STEP30_SERVICES"
             _progress("VALIDATE_STEP30_SERVICES")
             service_result = _validate_service(
                 root=root,
@@ -1201,6 +1219,7 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
                 commit_role=commit_role,
             )
         except BaseException as error:
+            _failure_progress(failure_stage, error)
             primary_error = error
         finally:
             _progress("CLEANUP_DISPOSABLE_RUNTIME")

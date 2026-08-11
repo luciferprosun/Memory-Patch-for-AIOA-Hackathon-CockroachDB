@@ -41,6 +41,10 @@ from aioa_memory_kernel.german_law.publication import (  # noqa: E402
     verify_german_law_publication_bundle,
 )
 from aioa_memory_kernel.runtime import LinuxExternalVolumeProbe  # noqa: E402
+from aioa_memory_kernel.security.credentials import (  # noqa: E402
+    AWS_WORKLOAD_IDENTITY_ENVIRONMENT_NAMES,
+    build_minimal_subprocess_environment,
+)
 from aioa_memory_kernel.storage import (  # noqa: E402
     EXTERNAL_VOLUME_EXPECTED_REMOTE,
     ExternalVolumeConfig,
@@ -317,6 +321,11 @@ def _aws_binary() -> Path:
 
 
 def _aws_json(binary: Path, service: str, operation: str) -> Mapping[str, Any]:
+    environment = build_minimal_subprocess_environment(
+        os.environ,
+        allowed_names=AWS_WORKLOAD_IDENTITY_ENVIRONMENT_NAMES,
+    )
+    environment["AWS_PAGER"] = ""
     try:
         completed = subprocess.run(
             [str(binary), service, operation, "--profile", AWS_PROFILE, "--region", AWS_REGION, "--no-cli-pager", "--output", "json"],
@@ -326,7 +335,7 @@ def _aws_json(binary: Path, service: str, operation: str) -> Mapping[str, Any]:
             text=True,
             encoding="utf-8",
             timeout=60,
-            env={**os.environ, "AWS_PAGER": ""},
+            env=environment,
             check=False,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:

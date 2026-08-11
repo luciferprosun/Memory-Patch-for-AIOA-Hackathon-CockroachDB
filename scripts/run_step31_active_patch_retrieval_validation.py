@@ -40,6 +40,7 @@ from aioa_memory_kernel.persistence import (  # noqa: E402
     IdempotencyService,
     SerializableTransactionRunner,
 )
+from aioa_memory_kernel.security.credentials import CredentialPurpose  # noqa: E402
 from aioa_memory_kernel.personal_memory import (  # noqa: E402
     DEFAULT_ACTIVE_PATCH_RESULTS,
     MAXIMUM_ACTIVE_PATCH_CANDIDATES,
@@ -428,11 +429,13 @@ def _validate_service(
         port=root.sql_port,
         database=database,
         role=app_role,
+        credential_purpose=CredentialPurpose.APPLICATION_DATABASE,
     )
     commit_runner = step30._runner(
         port=root.sql_port,
         database=database,
         role=commit_role,
+        credential_purpose=CredentialPurpose.PERSONAL_MEMORY_COMMIT_DATABASE,
         diagnostic=True,
     )
     clock = _TrustedClock(now + timedelta(hours=1))

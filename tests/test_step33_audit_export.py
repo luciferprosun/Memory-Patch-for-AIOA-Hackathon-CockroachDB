@@ -26,6 +26,7 @@ from aioa_memory_kernel.audit_ledger import (
 )
 from aioa_memory_kernel.contracts.exceptions import ContractValidationError
 from aioa_memory_kernel.contracts.serialization import canonical_sha256
+from aioa_memory_kernel.security.credentials import CredentialPurpose
 
 
 ROOT = REPOSITORY_ROOT
@@ -33,7 +34,13 @@ ROOT = REPOSITORY_ROOT
 
 def populated_service(count: int = 6):
     repository = MemoryRepository()
-    service = AuditLedgerService(MemoryRunner(), repository=repository)
+    service = AuditLedgerService(
+        MemoryRunner(CredentialPurpose.AUDIT_APPENDER_DATABASE),
+        reader_transaction_runner=MemoryRunner(
+            CredentialPurpose.AUDIT_READER_DATABASE
+        ),
+        repository=repository,
+    )
     for index in range(1, count + 1):
         service.append_event(
             draft(index),

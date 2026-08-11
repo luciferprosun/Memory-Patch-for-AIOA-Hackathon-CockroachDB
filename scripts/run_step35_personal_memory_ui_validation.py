@@ -53,6 +53,7 @@ from aioa_memory_kernel.contracts.serialization import (  # noqa: E402
     canonical_json,
     canonical_sha256,
 )
+from aioa_memory_kernel.security.credentials import CredentialPurpose  # noqa: E402
 from aioa_memory_kernel.personal_memory import (  # noqa: E402
     PersonalMemoryLifecycle32Service,
     PersonalMemoryMutationActor,
@@ -306,8 +307,27 @@ def _service_validation(*, root, database: str, app_role: str, commit_role: str)
     pipeline_request, _ = hat_lineage()
     if root.sql_port is None:
         raise ValidationFailure("STEP35_SQL_PORT_MISSING")
-    app_runner = step30._runner(port=root.sql_port, database=database, role=app_role, diagnostic=True)
-    commit_runner = step30._runner(port=root.sql_port, database=database, role=commit_role, diagnostic=True)
+    app_runner = step30._runner(
+        port=root.sql_port,
+        database=database,
+        role=app_role,
+        credential_purpose=CredentialPurpose.APPLICATION_DATABASE,
+        diagnostic=True,
+    )
+    commit_runner = step30._runner(
+        port=root.sql_port,
+        database=database,
+        role=commit_role,
+        credential_purpose=CredentialPurpose.PERSONAL_MEMORY_COMMIT_DATABASE,
+        diagnostic=True,
+    )
+    audit_runner = step30._runner(
+        port=root.sql_port,
+        database=database,
+        role=app_role,
+        credential_purpose=CredentialPurpose.AUDIT_APPENDER_DATABASE,
+        diagnostic=True,
+    )
     base = pipeline_request.temporal_result.trusted_now
     clock = step32._TrustedClock(base + timedelta(minutes=1))
     personal, candidates, proposals, approvals, commits, activations = step31._lifecycle_services(
@@ -408,7 +428,7 @@ def _service_validation(*, root, database: str, app_role: str, commit_role: str)
         )
     )
     audit_time = delete_request_at + timedelta(seconds=2)
-    audit = AuditLedgerService(app_runner)
+    audit = AuditLedgerService(audit_runner)
     audit_entry, _ = audit.append_event(
         AuditEventDraft(
             event_type=AuditEventType.PERSONAL_MEMORY_ACTIVATED,

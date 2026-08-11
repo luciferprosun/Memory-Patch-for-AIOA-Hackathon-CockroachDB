@@ -68,6 +68,9 @@ from aioa_memory_kernel.persistence import (  # noqa: E402
 )
 from aioa_memory_kernel.routing import KnowledgeRouteResult, Step17ReasonCode  # noqa: E402
 from aioa_memory_kernel.runtime import LinuxExternalVolumeProbe  # noqa: E402
+from aioa_memory_kernel.security.credentials import (  # noqa: E402
+    build_minimal_subprocess_environment,
+)
 from aioa_memory_kernel.sources import (  # noqa: E402
     SourceAuthorityLevel,
     SourcePublicationState,
@@ -324,13 +327,13 @@ def _bootstrap_environment(
             check=True,
             timeout=1800,
             env={
-                **os.environ,
+                **build_minimal_subprocess_environment(os.environ),
                 "PIP_CACHE_DIR": str(config.data_root / PIP_RELATIVE),
             },
         )
     if Path(sys.prefix).resolve() != runtime.resolve(strict=True):
         environment = {
-            **os.environ,
+            **build_minimal_subprocess_environment(os.environ),
             "STEP19_ISOLATED_RUNTIME": "1",
             "HF_HOME": str(config.data_root / HF_RELATIVE),
             "HF_HUB_CACHE": str(config.data_root / HF_RELATIVE / "hub"),

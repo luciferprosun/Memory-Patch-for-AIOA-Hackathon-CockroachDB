@@ -82,6 +82,7 @@ from aioa_memory_kernel.review_workspace import (  # noqa: E402
     review_to_jsonb,
     transition_review_case,
 )
+from aioa_memory_kernel.security.credentials import CredentialPurpose  # noqa: E402
 from aioa_memory_kernel.routing import KnowledgePolicyDecision  # noqa: E402
 
 
@@ -505,27 +506,51 @@ def _validate_services(
     root,
     database: str,
     app_role: str,
+    audit_reader_role: str,
     reviewer_role: str,
     isolated_reviewer_role: str,
     service_role: str,
 ) -> Mapping[str, Any]:
     clock = FrozenClock()
     app_runner = step30._runner(
-        port=root.sql_port, database=database, role=app_role, diagnostic=True
+        port=root.sql_port,
+        database=database,
+        role=app_role,
+        credential_purpose=CredentialPurpose.AUDIT_APPENDER_DATABASE,
+        diagnostic=True,
+    )
+    audit_reader_runner = step30._runner(
+        port=root.sql_port,
+        database=database,
+        role=audit_reader_role,
+        credential_purpose=CredentialPurpose.AUDIT_READER_DATABASE,
+        diagnostic=True,
     )
     reviewer_runner = step30._runner(
-        port=root.sql_port, database=database, role=reviewer_role, diagnostic=True
+        port=root.sql_port,
+        database=database,
+        role=reviewer_role,
+        credential_purpose=CredentialPurpose.HUMAN_REVIEWER_DATABASE,
+        diagnostic=True,
     )
     isolated_runner = step30._runner(
         port=root.sql_port,
         database=database,
         role=isolated_reviewer_role,
+        credential_purpose=CredentialPurpose.HUMAN_REVIEWER_DATABASE,
         diagnostic=True,
     )
     service_runner = step30._runner(
-        port=root.sql_port, database=database, role=service_role, diagnostic=True
+        port=root.sql_port,
+        database=database,
+        role=service_role,
+        credential_purpose=CredentialPurpose.REVIEW_SERVICE_DATABASE,
+        diagnostic=True,
     )
-    audit_service = AuditLedgerService(app_runner)
+    audit_service = AuditLedgerService(
+        app_runner,
+        reader_transaction_runner=audit_reader_runner,
+    )
     intake = ReviewCaseIntakeService(service_runner, trusted_clock=clock)
     workspace = HumanReviewWorkspaceService(reviewer_runner, trusted_clock=clock)
     isolated_workspace = HumanReviewWorkspaceService(
@@ -1021,11 +1046,16 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
 
             suffix = uuid.uuid4().hex[:10]
             app_role = "mp_s34_app_" + suffix
+            audit_reader_role = "mp_s34_audit_reader_" + suffix
             reviewer_role = "mp_s34_reviewer_" + suffix
             isolated_reviewer_role = "mp_s34_isolated_" + suffix
             service_role = "mp_s34_service_" + suffix
             role_specs = (
                 (app_role, ("mp_app_runtime", "mp_request_context_setter")),
+                (
+                    audit_reader_role,
+                    ("mp_audit_reader", "mp_request_context_setter"),
+                ),
                 (
                     reviewer_role,
                     ("mp_human_reviewer", "mp_request_context_setter"),
@@ -1043,6 +1073,7 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
                 root=root,
                 database=database,
                 app_role=app_role,
+                audit_reader_role=audit_reader_role,
                 reviewer_role=reviewer_role,
                 isolated_reviewer_role=isolated_reviewer_role,
                 service_role=service_role,

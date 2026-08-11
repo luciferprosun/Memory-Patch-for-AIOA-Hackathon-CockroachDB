@@ -38,6 +38,7 @@ from aioa_memory_kernel.contracts.serialization import (  # noqa: E402
     canonical_sha256,
 )
 from aioa_memory_kernel.persistence import IdempotencyService  # noqa: E402
+from aioa_memory_kernel.security.credentials import CredentialPurpose  # noqa: E402
 from aioa_memory_kernel.personal_memory import (  # noqa: E402
     STEP29_SCHEMA_VERSION,
     ActivePatchRetrievalCockroachRepository,
@@ -340,12 +341,14 @@ def _validate_service(
         port=root.sql_port,
         database=database,
         role=app_role,
+        credential_purpose=CredentialPurpose.APPLICATION_DATABASE,
         diagnostic=True,
     )
     commit_runner = step30._runner(
         port=root.sql_port,
         database=database,
         role=commit_role,
+        credential_purpose=CredentialPurpose.PERSONAL_MEMORY_COMMIT_DATABASE,
         diagnostic=True,
     )
     now = pipeline_request.temporal_result.trusted_now

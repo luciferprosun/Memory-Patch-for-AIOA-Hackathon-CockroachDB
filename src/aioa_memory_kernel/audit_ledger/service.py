@@ -10,6 +10,7 @@ from aioa_memory_kernel.persistence import (
     RequestContext,
     SerializableTransactionRunner,
 )
+from aioa_memory_kernel.security.credentials import CredentialPurpose
 
 from .models import (
     AuditActorType,
@@ -81,12 +82,27 @@ class AuditLedgerService:
         self,
         transaction_runner: SerializableTransactionRunner,
         *,
+        reader_transaction_runner: SerializableTransactionRunner | None = None,
         repository: AuditLedgerCockroachRepository | None = None,
         redaction_policy: AuditRedactionPolicy | None = None,
     ) -> None:
         if not isinstance(transaction_runner, SerializableTransactionRunner):
             raise TypeError("transaction_runner must be SerializableTransactionRunner")
-        self._runner = transaction_runner
+        transaction_runner.require_credential_purpose(
+            CredentialPurpose.AUDIT_APPENDER_DATABASE
+        )
+        if reader_transaction_runner is not None:
+            if not isinstance(
+                reader_transaction_runner, SerializableTransactionRunner
+            ):
+                raise TypeError(
+                    "reader_transaction_runner must be SerializableTransactionRunner"
+                )
+            reader_transaction_runner.require_credential_purpose(
+                CredentialPurpose.AUDIT_READER_DATABASE
+            )
+        self._append_runner = transaction_runner
+        self._reader_runner = reader_transaction_runner
         self._repository = repository or AuditLedgerCockroachRepository()
         self._redaction_policy = redaction_policy or AuditRedactionPolicy()
 
@@ -161,7 +177,7 @@ class AuditLedgerService:
             )
             return entry, False
 
-        return self._runner.run(
+        return self._append_runner.run(
             _context(draft.tenant_id, draft.owner_user_id),
             work,
             operation_kind="STEP33_AUDIT_APPEND",
@@ -175,6 +191,8 @@ class AuditLedgerService:
         authenticated_tenant_id: str,
         authenticated_owner_user_id: str,
     ):
+        if self._reader_runner is None:
+            raise AuditLedgerError(AuditReasonCode.AUDIT_REVIEWER_UNAUTHORIZED)
         if tenant_id != authenticated_tenant_id:
             raise AuditLedgerError(AuditReasonCode.AUDIT_TENANT_MISMATCH)
         if owner_user_id != authenticated_owner_user_id:
@@ -203,7 +221,7 @@ class AuditLedgerService:
             )
             return verify_audit_chain(chain_id, entries, expected_head=head)
 
-        return self._runner.run(
+        return self._reader_runner.run(
             _context(tenant_id, owner_user_id),
             work,
             operation_kind="STEP33_AUDIT_VERIFY",
@@ -216,6 +234,8 @@ class AuditLedgerService:
         authenticated_tenant_id: str,
         authenticated_owner_user_id: str,
     ) -> AuditExportBundle:
+        if self._reader_runner is None:
+            raise AuditLedgerError(AuditReasonCode.AUDIT_REVIEWER_UNAUTHORIZED)
         if not isinstance(request, AuditExportRequest):
             raise TypeError("request must be AuditExportRequest")
         if request.tenant_id != authenticated_tenant_id:
@@ -318,7 +338,7 @@ class AuditLedgerService:
                 exported_at=request.requested_at,
             )
 
-        return self._runner.run(
+        return self._reader_runner.run(
             _context(request.tenant_id, request.owner_user_id),
             work,
             operation_kind="STEP33_AUDIT_EXPORT",

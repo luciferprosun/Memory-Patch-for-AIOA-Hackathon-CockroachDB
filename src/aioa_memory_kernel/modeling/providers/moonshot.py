@@ -13,6 +13,11 @@ from decimal import Decimal
 from typing import Any
 
 from aioa_memory_kernel.contracts.exceptions import ContractValidationError, IntegrityError
+from aioa_memory_kernel.security.credentials import (
+    CredentialPurpose,
+    SecretValue,
+    load_required_credential,
+)
 
 from ..models import (
     MAXIMUM_DRAFT_UTF8_BYTES,
@@ -108,20 +113,33 @@ class MoonshotDraftV1Adapter:
 
     def __init__(
         self,
-        api_key: str,
+        api_key: str | SecretValue,
         *,
         transport: Transport = _default_transport,
         spec: ProviderSpec | None = None,
     ) -> None:
-        if not isinstance(api_key, str) or not api_key or len(api_key) > 4096:
-            raise ModelAdapterError(ModelReasonCode.MODEL_AUTHENTICATION_FAILED)
+        if isinstance(api_key, SecretValue):
+            if api_key.purpose is not CredentialPurpose.MODEL_PROVIDER:
+                raise ModelAdapterError(ModelReasonCode.MODEL_AUTHENTICATION_FAILED)
+            secret = api_key
+        else:
+            try:
+                secret = SecretValue(
+                    api_key,
+                    purpose=CredentialPurpose.MODEL_PROVIDER,
+                    source_name="injected-model-provider-credential",
+                )
+            except (TypeError, ValueError, RuntimeError) as exc:
+                raise ModelAdapterError(
+                    ModelReasonCode.MODEL_AUTHENTICATION_FAILED
+                ) from exc
         if not callable(transport):
             raise TypeError("transport must be callable")
         approved = spec or load_approved_provider_spec()
         checked = load_approved_provider_spec()
         if approved != checked:
             raise ModelAdapterError(ModelReasonCode.MODEL_IDENTITY_MISMATCH)
-        self._api_key = api_key
+        self._api_key = secret
         self._spec = approved
         self._identity = approved.provider_identity()
         self._transport = transport
@@ -129,8 +147,11 @@ class MoonshotDraftV1Adapter:
     @classmethod
     def from_environment(cls) -> "MoonshotDraftV1Adapter":
         spec = load_approved_provider_spec()
-        key = os.environ.get(spec.credential_environment_variable)
-        if not key:
+        if spec.credential_environment_variable != "MOONSHOT_API_KEY":
+            raise ModelAdapterError(ModelReasonCode.MODEL_IDENTITY_MISMATCH)
+        try:
+            key = load_required_credential(CredentialPurpose.MODEL_PROVIDER, os.environ)
+        except RuntimeError:
             raise ModelAdapterError(ModelReasonCode.MODEL_ADAPTER_UNAVAILABLE)
         return cls(key, spec=spec)
 
@@ -185,7 +206,8 @@ class MoonshotDraftV1Adapter:
         ).encode("utf-8")
         endpoint = self._spec.api_origin + self._spec.chat_completions_path
         headers = {
-            "Authorization": f"Bearer {self._api_key}",
+            "Authorization": "Bearer "
+            + self._api_key.reveal_for(CredentialPurpose.MODEL_PROVIDER),
             "Content-Type": "application/json; charset=utf-8",
             "Accept": "application/json",
             "User-Agent": "aioa-memory-kernel-step22/1a",

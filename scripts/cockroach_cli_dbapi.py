@@ -21,6 +21,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from aioa_memory_kernel.security.credentials import (
+    build_minimal_subprocess_environment,
+)
+
 
 _SAFE_IDENTIFIER = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
 _SQLSTATE = re.compile(r"SQLSTATE:\s*([0-9A-Z]{5})")
@@ -250,20 +254,7 @@ class CockroachCliConnection:
         log_name = f"dbapi-{os.getpid()}-{uuid.uuid4().hex[:12]}.log"
         self._log_path = log_directory / log_name
         self._stderr = self._log_path.open("w+", encoding="utf-8")
-        environment = os.environ.copy()
-        for variable in (
-            "COCKROACH_URL",
-            "COCKROACH_SQL_URL",
-            "DATABASE_URL",
-            "PGDATABASE",
-            "PGHOST",
-            "PGPASSWORD",
-            "PGPORT",
-            "PGSERVICE",
-            "PGSERVICEFILE",
-            "PGUSER",
-        ):
-            environment.pop(variable, None)
+        environment = build_minimal_subprocess_environment(os.environ)
         self._process = subprocess.Popen(
             [
                 str(binary),

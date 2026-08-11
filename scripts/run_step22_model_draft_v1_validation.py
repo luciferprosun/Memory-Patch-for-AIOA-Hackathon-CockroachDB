@@ -28,6 +28,11 @@ from aioa_memory_kernel.modeling import (  # noqa: E402
     verify_draft_v1_hash,
 )
 from aioa_memory_kernel.modeling.providers import MoonshotDraftV1Adapter  # noqa: E402
+from aioa_memory_kernel.security.credentials import (  # noqa: E402
+    CredentialBoundaryError,
+    CredentialPurpose,
+    load_required_credential,
+)
 from tests.test_step21_temporal_resolution import bundle_outcome, metadata, resolve  # noqa: E402
 
 
@@ -142,13 +147,15 @@ def _validate_fake(request) -> dict[str, Any]:
 
 def _validate_real(request) -> dict[str, Any]:
     spec = load_approved_provider_spec()
-    if not os.environ.get(spec.credential_environment_variable):
+    try:
+        key = load_required_credential(CredentialPurpose.MODEL_PROVIDER, os.environ)
+    except CredentialBoundaryError:
         return {
             "status": "UNAVAILABLE",
             "reason": "APPROVED_CREDENTIAL_NOT_PRESENT",
             "provider_calls": 0,
         }
-    adapter = MoonshotDraftV1Adapter.from_environment()
+    adapter = MoonshotDraftV1Adapter(key)
     try:
         receipt = DraftV1Service(adapter, clock=FixedClock()).generate(request)
     except ModelAdapterError as exc:
@@ -182,13 +189,15 @@ def _validate_real(request) -> dict[str, Any]:
 
 def _validate_provider_registry() -> dict[str, Any]:
     spec = load_approved_provider_spec()
-    key = os.environ.get(spec.credential_environment_variable)
-    if not key:
+    try:
+        key = load_required_credential(CredentialPurpose.MODEL_PROVIDER, os.environ)
+    except CredentialBoundaryError:
         return {"status": "UNAVAILABLE", "reason": "APPROVED_CREDENTIAL_NOT_PRESENT"}
     request = urllib.request.Request(
         spec.api_origin + "/v1/models",
         headers={
-            "Authorization": "Bearer " + key,
+            "Authorization": "Bearer "
+            + key.reveal_for(CredentialPurpose.MODEL_PROVIDER),
             "Accept": "application/json",
             "User-Agent": "aioa-memory-kernel-step22-validation/1a",
         },

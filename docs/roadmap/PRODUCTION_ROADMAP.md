@@ -781,12 +781,26 @@ Pokazać cały Kernel człowiekowi, zapewnić trwały audyt, izolację credentia
   [validation evidence](../evidence/ui/step35-personal-memory-ui-validation.json),
   [rekord zamknięcia](../audits/STEP_35_PERSONAL_MEMORY_UI_CLOSURE_1A.md).
 
-- [ ] **Step 36 — Credential Separation and Commit Authority Hardening 1A**
-  Kernel bez commit credentials, Model Adapter bez DB credentials, Approval/Commit Helper z ograniczoną rolą, negative capability tests.
-  `Step 36: NOT STARTED`. Step 35 completion does not authorize Step 36.
+- [x] **Step 36 — Credential Separation and Commit Authority Hardening 1A**
+  Kernel bez commit credentials, Model Adapter bez DB credentials,
+  Approval/Commit Helper z ograniczoną rolą, negative capability tests.
+  `Step 36: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje zamknięty credential-purpose inventory, brak fallbacku
+  do admin/master, redakcję sekretów, minimalne środowiska procesów potomnych,
+  migration 0018, wydzielone role source publisher i audit reader, dokładne
+  niekomponowalne role Commit Helper/reviewer/review service, RLS/FORCE RLS,
+  zero browser/provider/AWS credential exposure oraz kontrolowaną walidację
+  CockroachDB z pełnym replayem, Step 30/34 i cleanup.
+  [Architektura](../architecture/CREDENTIAL_SEPARATION_COMMIT_AUTHORITY_HARDENING_1A.md),
+  [ADR-043](../adr/ADR-043-credential-separation-commit-authority-hardening.md),
+  [capability matrix](../security/STEP36_CREDENTIAL_CAPABILITY_MATRIX_1A.md),
+  [runbook](../operations/STEP_36_CREDENTIAL_AUTHORITY_VALIDATION_1A.md),
+  [validation evidence](../evidence/security/step36-credential-authority-validation.json),
+  [rekord zamknięcia](../audits/STEP_36_CREDENTIAL_SEPARATION_COMMIT_AUTHORITY_CLOSURE_1A.md).
 
 - [ ] **Step 37 — Failure Injection and Recovery Matrix 1A**
   CockroachDB down, S3 down, USB missing/read-only, model failure, vector index stale, conflicting evidence, failed approval, interrupted transaction i recovery/resume.
+  `Step 37: NOT STARTED`. Step 36 completion does not authorize Step 37.
 
 ### Gate fazy 8
 
