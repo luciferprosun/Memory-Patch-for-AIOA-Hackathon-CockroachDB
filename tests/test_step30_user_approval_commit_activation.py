@@ -52,6 +52,7 @@ from aioa_memory_kernel.personal_memory import (
     verify_personal_memory_commit_receipt,
     verify_personal_memory_patch_lifecycle_state,
 )
+from aioa_memory_kernel.personal_memory import lifecycle as lifecycle_models
 
 
 ROOT = REPOSITORY_ROOT
@@ -141,6 +142,33 @@ class Step30ContractTests(unittest.TestCase):
         tampered["committed_patch"]["patch_statement"] = "different"
         with self.assertRaises((ContractValidationError, IntegrityError)):
             parse_personal_memory_patch_lifecycle_state(tampered)
+
+    def test_json_scope_parser_restores_timestamp_and_string_set_types(self):
+        parsed = lifecycle_models._scope_from_json(
+            [
+                {
+                    "name": "knowledge_as_of",
+                    "value": "2026-08-01T21:51:24Z",
+                    "value_type": "TIMESTAMP",
+                    "comparison_mode": "TIMESTAMP",
+                    "source": "step38-regression",
+                    "required": True,
+                },
+                {
+                    "name": "legal_source_class",
+                    "value": ["DE_FEDERAL_OFFICIAL_CONSOLIDATED_LAW"],
+                    "value_type": "STRING_SET",
+                    "comparison_mode": "IN_SET",
+                    "source": "step38-regression",
+                    "required": True,
+                },
+            ]
+        )
+        self.assertEqual(parsed[0].value.isoformat(), "2026-08-01T21:51:24+00:00")
+        self.assertEqual(
+            parsed[1].value,
+            ("DE_FEDERAL_OFFICIAL_CONSOLIDATED_LAW",),
+        )
 
     def test_owner_human_approval_is_exact_and_non_executable(self):
         value = fixture()
@@ -718,7 +746,10 @@ class Step30PersistenceAndBoundaryTests(unittest.TestCase):
         self.assertIn("- [x] **Step 35", roadmap)
         self.assertIn("- [x] **Step 36", roadmap)
         self.assertIn("- [x] **Step 37", roadmap)
-        self.assertIn("- [ ] **Step 38", roadmap)
+        self.assertIn("- [x] **Step 38", roadmap)
+        self.assertIn("- [ ] **Step 39", roadmap)
+        self.assertIn("Step 39: NOT STARTED", roadmap)
+        self.assertIn("Step 38 completion does not authorize Step 39.", roadmap)
         self.assertIn("Step 30: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 31: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 32: COMPLETE AND PUSHED", agents)
@@ -727,7 +758,9 @@ class Step30PersistenceAndBoundaryTests(unittest.TestCase):
         self.assertIn("Step 35: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 36: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 37: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 38: NOT STARTED", agents)
+        self.assertIn("Step 38: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 39: NOT STARTED", agents)
+        self.assertIn("Step 38 completion does not authorize Step 39.", agents)
 
 
 if __name__ == "__main__":

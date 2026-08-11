@@ -244,7 +244,14 @@ At roadmap adoption and in subsequent audited closure records:
   18 migrations, detects `40001` and conflicting replay, and cleans up its
   exact owned runtime without force-kill or panic.
 - `Step 37: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 38: NOT STARTED`. Step 37 completion does not authorize Step 38.
+- Step 38 closes the German Law HAT full-system path with exact published
+  evidence, real OpenRouter/Kimi Draft V1 and evidence-bound Draft V2,
+  Verified Answer, owner-approved Personal Memory activation and later reuse,
+  audit/review/UI/recovery proofs, tenant/owner negatives, and one completely
+  cleaned disposable CockroachDB runtime. Canonical live evidence digest:
+  `b3536f019354226c77f8672464d21986b4dc37e63f8e0d725352e57f5d7e0042`.
+- `Step 38: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 39: NOT STARTED`. Step 38 completion does not authorize Step 39.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

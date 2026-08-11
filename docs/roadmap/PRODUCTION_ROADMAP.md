@@ -191,7 +191,15 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   semantic effects, authority violations or scope widening. Controlled
   CockroachDB v26.2.4 validation applies and replays all 18 migrations and
   cleans its exact owned runtime.
-- `Step 38: NOT STARTED`. Step 37 completion does not authorize Step 38.
+- `Step 38: COMPLETE AND PUSHED at actual closure commit`.
+  The German Law HAT now has one coherent, real-provider full-system proof:
+  exact published-source retrieval, temporal resolution, evidence-blind Draft
+  V1, evidence-bound correction and Verified Answer, owner-approved Personal
+  Memory activation and later reuse, audit/review/UI/recovery negatives, and
+  one owned CockroachDB runtime with complete cleanup. The canonical live
+  evidence digest is
+  `b3536f019354226c77f8672464d21986b4dc37e63f8e0d725352e57f5d7e0042`.
+- `Step 39: NOT STARTED`. Step 38 completion does not authorize Step 39.
 
 ## Zasada prowadzenia prac
 
@@ -847,12 +855,23 @@ Pokazać cały Kernel człowiekowi, zapewnić trwały audyt, izolację credentia
 
 Zamknąć działający Knowledge Kernel jako pełny system AIOA, a nie pojedynczy przykład prawny.
 
-- [ ] **Step 38 — German Law HAT Full End-to-End Integration 1A**
-  Pełny przebieg na dowolnych pytaniach wybranych później przez użytkownika: routing, temporal retrieval, correction, approval, personal reuse i audit.
-  `Step 38: NOT STARTED`. Step 37 completion does not authorize Step 38.
+- [x] **Step 38 — German Law HAT Full End-to-End Integration 1A**
+  Zamknięty, spójny przebieg obejmuje routing, rzeczywisty Step 17-21 retrieval,
+  zatwierdzony OpenRouter/Kimi, typed correction i Verified Answer, zatwierdzenie
+  użytkownika, aktywację i późniejsze użycie Personal Memory, audit/review/UI,
+  recovery oraz negatywy izolacji na jednej jednorazowej bazie CockroachDB.
+  `Step 38: COMPLETE AND PUSHED at actual closure commit`.
+  [Architektura](../architecture/GERMAN_LAW_FULL_END_TO_END_1A.md),
+  [ADR-045](../adr/ADR-045-german-law-full-end-to-end-1a.md),
+  [runbook](../operations/STEP_38_GERMAN_LAW_E2E_VALIDATION_1A.md),
+  [golden cases](../demo/GERMAN_LAW_GOLDEN_CASES_1A.md),
+  [live evidence](../evidence/e2e/step38-german-law-full-e2e-validation.json),
+  [demo trace](../evidence/e2e/step38-german-law-demo-trace.json),
+  [rekord zamknięcia](../audits/STEP_38_GERMAN_LAW_FULL_E2E_CLOSURE_1A.md).
 
 - [ ] **Step 39 — AOIA Critic Prompt Loop Production Bridge 1A**
   Most z istniejącym Critic Loop; tylko proposal input, brak authority escalation, hash-bound correction events i wspólne run references.
+  `Step 39: NOT STARTED`. Step 38 completion does not authorize Step 39.
 
 - [ ] **Step 40 — Resource and Deployment Optimization for 4 GB Hardware 1A**
   Lekki local Kernel/UI, zdalny CockroachDB/model/embedding tam, gdzie trzeba, precomputed assets, limity pamięci, cache, startup preflight i honest offline/degraded mode.

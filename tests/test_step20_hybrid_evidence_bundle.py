@@ -206,6 +206,7 @@ def lexical_candidate(
     publication_state: SourcePublicationState = SourcePublicationState.PUBLISHED,
     authority_basis: object | None = None,
     structured_metadata: object | None = None,
+    effective_scope: tuple[ScopeDimension, ...] | None = None,
 ) -> RetrievalCandidate:
     body = content if content is not None else content_for(chunk_id)
     return RetrievalCandidate(
@@ -236,7 +237,7 @@ def lexical_candidate(
             "effective_from": "2024-01-01",
             "is_current": True,
         },  # type: ignore[arg-type]
-        effective_scope=scope(),
+        effective_scope=effective_scope or scope(),
         retrieval_mode=mode,
         retrieval_score="0.75" if mode in {RetrievalMode.FULL_TEXT, RetrievalMode.KEYWORD} else None,
     )

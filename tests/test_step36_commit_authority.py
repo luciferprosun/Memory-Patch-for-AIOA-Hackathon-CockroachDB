@@ -13,7 +13,7 @@ from unittest import mock
 from tests._support import REPOSITORY_ROOT  # noqa: F401
 
 from aioa_memory_kernel.modeling import ModelAdapterError, ModelReasonCode
-from aioa_memory_kernel.modeling.providers.moonshot import MoonshotDraftV1Adapter
+from aioa_memory_kernel.modeling.providers import OpenRouterDraftV1Adapter
 from aioa_memory_kernel.persistence import (
     PersistenceConfigurationError,
     SerializableTransactionRunner,
@@ -179,7 +179,7 @@ class ProviderAuthorityIsolationTests(unittest.TestCase):
             source_name="DATABASE_URL_COMMIT_HELPER",
         )
         with self.assertRaises(ModelAdapterError) as caught:
-            MoonshotDraftV1Adapter(secret)
+            OpenRouterDraftV1Adapter(secret)
         self.assertIs(caught.exception.reason_code, ModelReasonCode.MODEL_AUTHENTICATION_FAILED)
         self.assertNotIn(raw, str(caught.exception))
 
@@ -192,16 +192,16 @@ class ProviderAuthorityIsolationTests(unittest.TestCase):
         }
         with mock.patch.dict(os.environ, environment, clear=True):
             with self.assertRaises(ModelAdapterError) as caught:
-                MoonshotDraftV1Adapter.from_environment()
+                OpenRouterDraftV1Adapter.from_environment()
         self.assertIs(caught.exception.reason_code, ModelReasonCode.MODEL_ADAPTER_UNAVAILABLE)
 
     def test_provider_adapter_has_no_database_personal_memory_or_review_mutation_port(self) -> None:
         secret = SecretValue(
             "step36-fake-provider-sentinel",
             purpose=CredentialPurpose.MODEL_PROVIDER,
-            source_name="MOONSHOT_API_KEY",
+            source_name="OPENROUTER_API_KEY",
         )
-        adapter = MoonshotDraftV1Adapter(secret, transport=lambda *args: {})
+        adapter = OpenRouterDraftV1Adapter(secret, transport=lambda *args: {})
         public = {
             name
             for name, value in inspect.getmembers(type(adapter))

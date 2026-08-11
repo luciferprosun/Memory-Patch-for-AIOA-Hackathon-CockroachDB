@@ -19,7 +19,13 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-from aioa_memory_kernel.claims import ClaimAtomicity, ClaimType
+from aioa_memory_kernel.claims import (
+    ClaimAtomicity,
+    ClaimEvidenceLink,
+    ClaimEvidenceRelation,
+    ClaimType,
+    verify_claim_evidence_link_hash,
+)
 from aioa_memory_kernel.contracts.enums import StableStringEnum
 from aioa_memory_kernel.contracts.exceptions import ContractValidationError, IntegrityError
 from aioa_memory_kernel.contracts.scope import ScopeDimension
@@ -60,6 +66,7 @@ DRAFT_V2_ATTEMPT_POLICY_ID = "draft-v2-retry-1a"
 SEMANTIC_VERIFIER_PROMPT_ID = "draft-v2-semantic-claim-verifier-1a"
 SEMANTIC_VERIFIER_PROMPT_VERSION = "1"
 SEMANTIC_VERIFIER_POLICY_ID = "draft-v2-semantic-verifier-1a"
+CORRECTED_EVIDENCE_PROOF_VERSION = "step25-corrected-evidence-proof-1a"
 DRAFT_V2_CLAIM_SPAN_CONVENTION = (
     "draft-v2-unicode-codepoints-start-inclusive-end-exclusive-v1"
 )
@@ -111,6 +118,9 @@ class Step25ReasonCode(StableStringEnum):
     SEMANTIC_VERIFIER_UNCERTAIN = "SEMANTIC_VERIFIER_UNCERTAIN"
     SEMANTIC_VERIFIER_UNAVAILABLE = "SEMANTIC_VERIFIER_UNAVAILABLE"
     SEMANTIC_VERIFIER_INVALID = "SEMANTIC_VERIFIER_INVALID"
+    CORRECTED_EVIDENCE_SUPPORTS = "CORRECTED_EVIDENCE_SUPPORTS"
+    CORRECTED_EVIDENCE_UNCERTAIN = "CORRECTED_EVIDENCE_UNCERTAIN"
+    CORRECTED_EVIDENCE_INVALID = "CORRECTED_EVIDENCE_INVALID"
     CLAIM_VERIFIED_SUPPORTED = "CLAIM_VERIFIED_SUPPORTED"
     CLAIM_VERIFIED_REFUTED = "CLAIM_VERIFIED_REFUTED"
     CLAIM_UNVERIFIED = "CLAIM_UNVERIFIED"
@@ -160,6 +170,12 @@ class SemanticCandidateVerdict(StableStringEnum):
     UNAVAILABLE = "UNAVAILABLE"
     INVALID = "INVALID"
     NOT_REQUIRED = "NOT_REQUIRED"
+
+
+class CorrectedEvidenceVerdict(StableStringEnum):
+    SUPPORTS = "SUPPORTS"
+    UNCERTAIN = "UNCERTAIN"
+    INVALID = "INVALID"
 
 
 class FinalStep25ClaimVerdict(StableStringEnum):
@@ -888,6 +904,174 @@ class SemanticVerifierSignal:
 
 
 @dataclass(frozen=True, slots=True)
+class CorrectedEvidenceVerifierRequest:
+    """Claim-local request for deterministic corrected-source evidence only."""
+
+    claim_id: str
+    claim_hash: str
+    draft_v2_hash: str
+    correction_packet_hash: str
+    claim_text: str
+    satisfied_correction_ids: tuple[str, ...]
+    cited_citation_ids: tuple[str, ...]
+    request_hash: str = field(init=False)
+
+    def __post_init__(self) -> None:
+        if _DRAFT_V2_CLAIM_ID.fullmatch(self.claim_id) is None:
+            raise ContractValidationError("corrected-evidence claim_id is invalid")
+        for value, name in (
+            (self.claim_hash, "claim_hash"),
+            (self.draft_v2_hash, "draft_v2_hash"),
+            (self.correction_packet_hash, "correction_packet_hash"),
+        ):
+            require_sha256_hex(value, name)
+        _text(self.claim_text, "claim_text", MAX_DRAFT_V2_CLAIM_UTF8_BYTES)
+        corrections = _string_tuple(
+            self.satisfied_correction_ids,
+            "satisfied_correction_ids",
+            MAX_DRAFT_V2_CLAIMS,
+        )
+        citations = _string_tuple(
+            self.cited_citation_ids,
+            "cited_citation_ids",
+            MAX_SEMANTIC_EVIDENCE_ITEMS,
+        )
+        if not corrections or not citations:
+            raise ContractValidationError(
+                "corrected-evidence request requires correction and citation"
+            )
+        object.__setattr__(self, "satisfied_correction_ids", corrections)
+        object.__setattr__(self, "cited_citation_ids", citations)
+        object.__setattr__(
+            self,
+            "request_hash",
+            canonical_sha256(self, exclude_fields=("request_hash",)),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class CorrectedEvidenceProof:
+    """Reconstructible proof for one exact correction of a refuted V1 claim.
+
+    The proof intentionally persists no new raw evidence text.  The original
+    Step 23 link carries the canonical span digest, and the target corrected
+    claim is bound by its citation-stripped text digest.
+    """
+
+    proof_version: str
+    request_hash: str
+    correction_packet_hash: str
+    target_claim_id: str
+    target_claim_hash: str
+    target_claim_text_sha256: str
+    satisfied_correction_ids: tuple[str, ...]
+    packet_citation_id: str
+    packet_citation_hash: str
+    evidence_context_hash: str
+    original_evidence_link: ClaimEvidenceLink
+    evidence_span_text_sha256: str
+    proof_hash: str = field(init=False)
+
+    def __post_init__(self) -> None:
+        if self.proof_version != CORRECTED_EVIDENCE_PROOF_VERSION:
+            raise ContractValidationError("unsupported corrected evidence proof")
+        for value, name in (
+            (self.request_hash, "request_hash"),
+            (self.correction_packet_hash, "correction_packet_hash"),
+            (self.target_claim_hash, "target_claim_hash"),
+            (self.target_claim_text_sha256, "target_claim_text_sha256"),
+            (self.packet_citation_hash, "packet_citation_hash"),
+            (self.evidence_context_hash, "evidence_context_hash"),
+            (self.evidence_span_text_sha256, "evidence_span_text_sha256"),
+        ):
+            require_sha256_hex(value, name)
+        if _DRAFT_V2_CLAIM_ID.fullmatch(self.target_claim_id) is None:
+            raise ContractValidationError("corrected proof target_claim_id is invalid")
+        corrections = _string_tuple(
+            self.satisfied_correction_ids,
+            "satisfied_correction_ids",
+            MAX_DRAFT_V2_CLAIMS,
+        )
+        if not corrections:
+            raise ContractValidationError(
+                "corrected proof requires a satisfied correction"
+            )
+        object.__setattr__(self, "satisfied_correction_ids", corrections)
+        _text(self.packet_citation_id, "packet_citation_id", 255)
+        if not isinstance(self.original_evidence_link, ClaimEvidenceLink):
+            raise ContractValidationError(
+                "original_evidence_link must be ClaimEvidenceLink"
+            )
+        try:
+            verify_claim_evidence_link_hash(self.original_evidence_link)
+        except (ContractValidationError, IntegrityError) as exc:
+            raise IntegrityError("corrected proof evidence link is invalid") from exc
+        if self.original_evidence_link.relation is not ClaimEvidenceRelation.REFUTES:
+            raise ContractValidationError(
+                "corrected proof requires an original REFUTES link"
+            )
+        if (
+            self.original_evidence_link.evidence_span_text_sha256 is None
+            or self.original_evidence_link.evidence_span_text_sha256
+            != self.evidence_span_text_sha256
+        ):
+            raise IntegrityError("corrected proof evidence span digest is detached")
+        if self.target_claim_text_sha256 != self.evidence_span_text_sha256:
+            raise IntegrityError(
+                "corrected proof target text does not match the evidence span"
+            )
+        object.__setattr__(
+            self,
+            "proof_hash",
+            canonical_sha256(self, exclude_fields=("proof_hash",)),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class CorrectedEvidenceVerifierSignal:
+    request_hash: str
+    verdict: CorrectedEvidenceVerdict
+    evidence_reference_ids: tuple[str, ...]
+    proof: CorrectedEvidenceProof | None
+    signal_hash: str = field(init=False)
+
+    def __post_init__(self) -> None:
+        require_sha256_hex(self.request_hash, "request_hash")
+        require_enum_member(self.verdict, CorrectedEvidenceVerdict, "verdict")
+        references = _string_tuple(
+            self.evidence_reference_ids,
+            "evidence_reference_ids",
+            MAX_SEMANTIC_EVIDENCE_ITEMS,
+        )
+        object.__setattr__(self, "evidence_reference_ids", references)
+        if self.verdict is CorrectedEvidenceVerdict.SUPPORTS:
+            if not isinstance(self.proof, CorrectedEvidenceProof):
+                raise ContractValidationError(
+                    "corrected support requires a typed proof"
+                )
+            try:
+                verify_corrected_evidence_proof_hash(self.proof)
+            except (ContractValidationError, IntegrityError) as exc:
+                raise IntegrityError("corrected evidence proof is invalid") from exc
+            if (
+                self.proof.request_hash != self.request_hash
+                or references != (self.proof.packet_citation_id,)
+            ):
+                raise ContractValidationError(
+                    "corrected support proof is detached from its signal"
+                )
+        elif references or self.proof is not None:
+            raise ContractValidationError(
+                "non-support corrected signal cannot carry proof authority"
+            )
+        object.__setattr__(
+            self,
+            "signal_hash",
+            canonical_sha256(self, exclude_fields=("signal_hash",)),
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class LayeredClaimVerification:
     claim_id: str
     claim_hash: str
@@ -903,6 +1087,9 @@ class LayeredClaimVerification:
     final_step25_verdict: FinalStep25ClaimVerdict
     reason_codes: tuple[Step25ReasonCode, ...]
     limitations: tuple[str, ...]
+    corrected_evidence_signal_hash: str | None = None
+    corrected_evidence_proof: CorrectedEvidenceProof | None = None
+    corrected_evidence_proof_hash: str | None = None
     verification_hash: str = field(init=False)
 
     def __post_init__(self) -> None:
@@ -923,7 +1110,89 @@ class LayeredClaimVerification:
             require_enum_member(value, enum_type, name)
         if not isinstance(self.semantic_verifier_result, SemanticVerifierSignal):
             raise ContractValidationError("semantic_verifier_result must be typed")
+        if self.corrected_evidence_signal_hash is not None:
+            require_sha256_hex(
+                self.corrected_evidence_signal_hash,
+                "corrected_evidence_signal_hash",
+            )
+        if self.corrected_evidence_proof_hash is not None:
+            require_sha256_hex(
+                self.corrected_evidence_proof_hash,
+                "corrected_evidence_proof_hash",
+            )
+        if self.corrected_evidence_proof is not None:
+            if not isinstance(self.corrected_evidence_proof, CorrectedEvidenceProof):
+                raise ContractValidationError(
+                    "corrected_evidence_proof must be typed"
+                )
+            try:
+                verify_corrected_evidence_proof_hash(
+                    self.corrected_evidence_proof
+                )
+            except (ContractValidationError, IntegrityError) as exc:
+                raise IntegrityError("corrected evidence proof is invalid") from exc
+        if self.corrected_evidence_signal_hash is None and (
+            self.corrected_evidence_proof is not None
+            or self.corrected_evidence_proof_hash is not None
+        ):
+            raise ContractValidationError(
+                "corrected evidence proof requires a bound signal"
+            )
+        if (self.corrected_evidence_proof is None) != (
+            self.corrected_evidence_proof_hash is None
+        ):
+            raise ContractValidationError(
+                "corrected evidence proof and proof hash must be bound together"
+            )
+        if (
+            self.corrected_evidence_proof is not None
+            and self.corrected_evidence_proof.proof_hash
+            != self.corrected_evidence_proof_hash
+        ):
+            raise IntegrityError("corrected evidence proof hash is detached")
         object.__setattr__(self, "reason_codes", _reason_tuple(self.reason_codes))
+        corrected_codes = {
+            Step25ReasonCode.CORRECTED_EVIDENCE_SUPPORTS,
+            Step25ReasonCode.CORRECTED_EVIDENCE_UNCERTAIN,
+            Step25ReasonCode.CORRECTED_EVIDENCE_INVALID,
+        } & set(self.reason_codes)
+        if self.corrected_evidence_signal_hash is None and corrected_codes:
+            raise ContractValidationError(
+                "corrected evidence reason requires a bound signal"
+            )
+        if self.corrected_evidence_signal_hash is not None and len(corrected_codes) != 1:
+            raise ContractValidationError(
+                "corrected evidence signal requires one corrected evidence reason"
+            )
+        if Step25ReasonCode.CORRECTED_EVIDENCE_SUPPORTS in corrected_codes and (
+            self.evidence_binding_result is not EvidenceBindingResult.SUPPORTED
+            or self.corrected_evidence_proof is None
+            or self.corrected_evidence_proof_hash is None
+            or self.final_step25_verdict
+            is not FinalStep25ClaimVerdict.VERIFIED_SUPPORTED
+        ):
+            raise ContractValidationError(
+                "corrected evidence support must produce supported evidence"
+            )
+        if (
+            Step25ReasonCode.CORRECTED_EVIDENCE_SUPPORTS not in corrected_codes
+            and self.corrected_evidence_proof_hash is not None
+        ):
+            raise ContractValidationError(
+                "only corrected evidence support may carry a proof hash"
+            )
+        if (
+            self.corrected_evidence_signal_hash is not None
+            and Step25ReasonCode.CORRECTED_EVIDENCE_SUPPORTS not in corrected_codes
+            and (
+                self.evidence_binding_result is EvidenceBindingResult.SUPPORTED
+                or self.final_step25_verdict
+                is FinalStep25ClaimVerdict.VERIFIED_SUPPORTED
+            )
+        ):
+            raise ContractValidationError(
+                "uncertain or invalid corrected evidence cannot support a claim"
+            )
         object.__setattr__(
             self,
             "limitations",
@@ -932,7 +1201,19 @@ class LayeredClaimVerification:
         object.__setattr__(
             self,
             "verification_hash",
-            canonical_sha256(self, exclude_fields=("verification_hash",)),
+            canonical_sha256(
+                self,
+                exclude_fields=(
+                    (
+                        "verification_hash",
+                        "corrected_evidence_signal_hash",
+                        "corrected_evidence_proof",
+                        "corrected_evidence_proof_hash",
+                    )
+                    if self.corrected_evidence_signal_hash is None
+                    else ("verification_hash",)
+                ),
+            ),
         )
 
 
@@ -1276,13 +1557,78 @@ def verify_semantic_signal_hash(value: SemanticVerifierSignal) -> None:
     verify_canonical_hash(value, value.signal_hash, exclude_fields=("signal_hash",))
 
 
+def verify_corrected_evidence_request_hash(
+    value: CorrectedEvidenceVerifierRequest,
+) -> None:
+    verify_canonical_hash(
+        value,
+        value.request_hash,
+        exclude_fields=("request_hash",),
+    )
+
+
+def verify_corrected_evidence_proof_hash(value: CorrectedEvidenceProof) -> None:
+    if not isinstance(value, CorrectedEvidenceProof):
+        raise ContractValidationError("value must be CorrectedEvidenceProof")
+    verify_claim_evidence_link_hash(value.original_evidence_link)
+    verify_canonical_hash(value, value.proof_hash, exclude_fields=("proof_hash",))
+    reconstructed = CorrectedEvidenceProof(
+        proof_version=value.proof_version,
+        request_hash=value.request_hash,
+        correction_packet_hash=value.correction_packet_hash,
+        target_claim_id=value.target_claim_id,
+        target_claim_hash=value.target_claim_hash,
+        target_claim_text_sha256=value.target_claim_text_sha256,
+        satisfied_correction_ids=value.satisfied_correction_ids,
+        packet_citation_id=value.packet_citation_id,
+        packet_citation_hash=value.packet_citation_hash,
+        evidence_context_hash=value.evidence_context_hash,
+        original_evidence_link=value.original_evidence_link,
+        evidence_span_text_sha256=value.evidence_span_text_sha256,
+    )
+    if reconstructed.proof_hash != value.proof_hash:
+        raise IntegrityError("corrected evidence proof reconstruction mismatch")
+
+
+def verify_corrected_evidence_signal_hash(
+    value: CorrectedEvidenceVerifierSignal,
+) -> None:
+    verify_canonical_hash(value, value.signal_hash, exclude_fields=("signal_hash",))
+    if value.proof is not None:
+        verify_corrected_evidence_proof_hash(value.proof)
+    reconstructed = CorrectedEvidenceVerifierSignal(
+        request_hash=value.request_hash,
+        verdict=value.verdict,
+        evidence_reference_ids=value.evidence_reference_ids,
+        proof=value.proof,
+    )
+    if reconstructed.signal_hash != value.signal_hash:
+        raise IntegrityError("corrected evidence signal reconstruction mismatch")
+
+
 def verify_layered_claim_verification_hash(value: LayeredClaimVerification) -> None:
     verify_canonical_hash(
         value,
         value.verification_hash,
-        exclude_fields=("verification_hash",),
+        exclude_fields=(
+            (
+                "verification_hash",
+                "corrected_evidence_signal_hash",
+                "corrected_evidence_proof",
+                "corrected_evidence_proof_hash",
+            )
+            if value.corrected_evidence_signal_hash is None
+            else ("verification_hash",)
+        ),
     )
     verify_semantic_signal_hash(value.semantic_verifier_result)
+    if value.corrected_evidence_proof is not None:
+        verify_corrected_evidence_proof_hash(value.corrected_evidence_proof)
+        if (
+            value.corrected_evidence_proof_hash
+            != value.corrected_evidence_proof.proof_hash
+        ):
+            raise IntegrityError("corrected evidence proof hash is detached")
 
 
 def verify_verification_summary_hash(value: DraftV2VerificationSummary) -> None:
@@ -1342,6 +1688,11 @@ def verify_draft_v2_pipeline_result_hash(value: DraftV2PipelineResult) -> None:
 __all__ = [
     "CheckResult",
     "CorrectionComplianceStatus",
+    "CORRECTED_EVIDENCE_PROOF_VERSION",
+    "CorrectedEvidenceProof",
+    "CorrectedEvidenceVerdict",
+    "CorrectedEvidenceVerifierRequest",
+    "CorrectedEvidenceVerifierSignal",
     "DRAFT_V2_ATTEMPT_POLICY_ID",
     "DRAFT_V2_CLAIM_SPAN_CONVENTION",
     "DRAFT_V2_GENERATION_POLICY_ID",
@@ -1379,6 +1730,9 @@ __all__ = [
     "encode_draft_v2_reference",
     "reason_codes",
     "verify_draft_v2_claim_hash",
+    "verify_corrected_evidence_proof_hash",
+    "verify_corrected_evidence_request_hash",
+    "verify_corrected_evidence_signal_hash",
     "verify_draft_v2_generation_request_hash",
     "verify_draft_v2_generation_result_hash",
     "verify_draft_v2_hash",

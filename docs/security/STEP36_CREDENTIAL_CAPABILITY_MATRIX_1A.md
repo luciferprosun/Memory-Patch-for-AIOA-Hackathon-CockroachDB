@@ -13,7 +13,7 @@ values.
 | Untrusted browser code | opaque session handle and CSRF token; neither is backend authority | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NOT_APPLICABLE | YES | expire session and reauthenticate |
 | Authenticated owner API | `DATABASE_URL_APP` | YES | NO | NO | NO | YES | YES | YES | NO | NO | NO | YES | NO | NO | NO | NO | NO | replace login credential and restart owner API |
 | Normal Kernel runtime | `DATABASE_URL_APP` | YES | YES | NO | NO | YES | YES | NO | NO | NO | NO | YES | NO | NO | NO | NO | NO | replace login credential and restart Kernel runtime |
-| Model provider adapter | `MOONSHOT_API_KEY` | NO | NO | NO | YES | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NOT_APPLICABLE | NO | replace provider key and restart adapter |
+| Model provider adapter | `OPENROUTER_API_KEY` | NO | NO | NO | YES | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NOT_APPLICABLE | NO | replace provider key and restart adapter |
 | Canonical ingestion worker | `DATABASE_URL_APP` currently; `DATABASE_URL_INGESTION` reserved | YES | YES | NO | NO | NO | NO | NO | NO | NO | NO | YES | NO | NO | NO | NO | NO | replace login credential and restart ingestion worker |
 | Source publication worker | `DATABASE_URL_SOURCE_PUBLICATION` | YES | NO | YES | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | replace login credential and restart publication worker |
 | Personal Memory Commit Helper | `DATABASE_URL_COMMIT_HELPER` | NO | NO | NO | NO | YES | NO | NO | YES | YES | NO | NO | NO | NO | NO | NO | NO | replace login credential and restart Step 30 technical services |

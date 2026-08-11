@@ -4,7 +4,20 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from .models import DraftV2
+from .models import (
+    CorrectedEvidenceVerifierRequest,
+    CorrectedEvidenceVerifierSignal,
+    DraftV2,
+)
+
+
+class CorrectedEvidenceVerifier(Protocol):
+    """Deterministic proof port; never backed by a model candidate signal."""
+
+    def verify(
+        self,
+        request: CorrectedEvidenceVerifierRequest,
+    ) -> CorrectedEvidenceVerifierSignal: ...
 
 
 class DraftV2Store(Protocol):
@@ -19,4 +32,4 @@ class DraftV2Store(Protocol):
     def put(self, draft: DraftV2) -> DraftV2: ...
 
 
-__all__ = ["DraftV2Store"]
+__all__ = ["CorrectedEvidenceVerifier", "DraftV2Store"]

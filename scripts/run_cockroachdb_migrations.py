@@ -148,6 +148,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step35_",
     "mp_step36_",
     "mp_step37_",
+    "mp_step38_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
@@ -794,6 +795,11 @@ class LocalRuntime:
     def start(self) -> SqlClient:
         if self.process is not None:
             raise MigrationError("runtime is already started")
+        # Validate the cleanup identity before allocating a filesystem path.
+        # Otherwise an unapproved run ID is rejected only after mkdtemp(),
+        # leaving behind an empty directory that the ownership guard then
+        # correctly refuses to remove.
+        assert_disposable_database(self.run_id)
         verify_binary_identity(self.binary)
         runtime_parent = self.runtime_parent.expanduser().resolve()
         assert_safe_runtime_parent(runtime_parent)

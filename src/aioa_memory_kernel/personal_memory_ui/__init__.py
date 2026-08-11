@@ -1,14 +1,15 @@
-"""Step 35 owner-facing Personal Memory workspace."""
+"""Step 35 owner-facing Personal Memory workspace.
 
-from .auth import (
-    HttpxOidcClient,
-    MemoryOwnerSessionStore,
-    OidcClient,
-    OidcSettings,
-    OwnerSession,
-    OwnerSessionStore,
-    pkce_challenge,
-)
+Core view-model and repository adapters stay importable in the pinned model
+runtime, which deliberately has no HTTP/UI dependencies.  OIDC and FastAPI
+exports retain the public package API but load only when a caller requests
+them.
+"""
+
+from __future__ import annotations
+
+import importlib
+
 from .backend import (
     KernelPersonalMemoryUiBackend,
     PersonalMemoryUiBackend,
@@ -29,7 +30,32 @@ from .models import (
     STEP35_SCHEMA_VERSION,
     SlotView,
 )
-from .web import create_personal_memory_app
+
+
+_AUTH_EXPORTS = frozenset(
+    {
+        "HttpxOidcClient",
+        "MemoryOwnerSessionStore",
+        "OidcClient",
+        "OidcSettings",
+        "OwnerSession",
+        "OwnerSessionStore",
+        "pkce_challenge",
+    }
+)
+_WEB_EXPORTS = frozenset({"create_personal_memory_app"})
+
+
+def __getattr__(name: str):
+    if name in _AUTH_EXPORTS:
+        module = importlib.import_module(f"{__name__}.auth")
+    elif name in _WEB_EXPORTS:
+        module = importlib.import_module(f"{__name__}.web")
+    else:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(module, name)
+    globals()[name] = value
+    return value
 
 __all__ = [
     "AuditEventView",

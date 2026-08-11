@@ -629,12 +629,24 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
         with self.assertRaises(migrations.MigrationError):
             migrations.assert_disposable_database("production_database")
         migrations.assert_disposable_database("mp_step5_safe_fixture")
+        migrations.assert_disposable_database("mp_step38_e2e_safe_fixture")
 
     def test_runtime_path_requires_direct_tmp_ownership(self) -> None:
         with self.assertRaises(migrations.MigrationError):
             migrations.assert_owned_runtime_path(Path("/tmp/unowned"))
         with self.assertRaises(migrations.MigrationError):
             migrations.assert_owned_runtime_path(Path("/tmp/parent/mp_step5_nested"))
+        migrations.assert_owned_runtime_path(Path("/tmp/mp_step38_owned_fixture"))
+
+    def test_unapproved_runtime_id_is_rejected_before_path_allocation(self) -> None:
+        runtime = migrations.LocalRuntime(
+            binary=Path("/nonexistent/cockroach"),
+            run_id="mp_step99_unapproved_fixture",
+        )
+        with mock.patch.object(migrations.tempfile, "mkdtemp") as mkdtemp:
+            with self.assertRaises(migrations.MigrationError):
+                runtime.start()
+        mkdtemp.assert_not_called()
 
     def test_timeout_is_bounded(self) -> None:
         migrations.validate_timeout(180)

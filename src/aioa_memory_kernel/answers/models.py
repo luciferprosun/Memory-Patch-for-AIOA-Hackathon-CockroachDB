@@ -64,6 +64,7 @@ from aioa_memory_kernel.verification import (
     DraftV2PipelineResult,
     FinalStep25ClaimVerdict,
     LayeredClaimVerification,
+    verify_corrected_evidence_proofs_against_packet,
     verify_draft_v2_pipeline_result_hash,
 )
 
@@ -416,6 +417,7 @@ class FinalAnswerRequest:
             verify_correction_packet_hash(packet)
             verify_integrity_receipt_hash(receipt)
             verify_draft_v2_pipeline_result_hash(pipeline)
+            verify_corrected_evidence_proofs_against_packet(pipeline, packet)
         except (ContractValidationError, IntegrityError, RuntimeError) as exc:
             raise Step26BoundaryError(Step26ReasonCode.INTEGRITY_FAILURE) from exc
 

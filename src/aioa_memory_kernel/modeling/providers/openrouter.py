@@ -1,4 +1,4 @@
-"""Pinned Moonshot text-only adapter for the evidence-blind Draft V1 call."""
+"""Pinned OpenRouter text-only adapter for the Step 38 provider boundary."""
 
 from __future__ import annotations
 
@@ -16,9 +16,13 @@ from aioa_memory_kernel.contracts.exceptions import ContractValidationError, Int
 from aioa_memory_kernel.security.credentials import (
     CredentialPurpose,
     SecretValue,
+    load_required_credential,
 )
 
 from ..models import (
+    APPROVED_CREDENTIAL_ENVIRONMENT_VARIABLE,
+    APPROVED_MODEL_ID,
+    APPROVED_PROVIDER_ID,
     MAXIMUM_DRAFT_UTF8_BYTES,
     ModelAdapterError,
     ModelReasonCode,
@@ -28,7 +32,7 @@ from ..models import (
     ProviderSpec,
     ProviderTextRequest,
     TimeoutPolicy,
-    load_step22_moonshot_provider_spec,
+    load_approved_provider_spec,
     verify_provider_call_request_hash,
     verify_provider_text_request_hash,
 )
@@ -54,11 +58,15 @@ def _default_transport(
         with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
             raw = response.read(MAXIMUM_PROVIDER_RESPONSE_BYTES + 1)
     except urllib.error.HTTPError as exc:
+        # Never read or surface the provider response body: it can contain
+        # echoed request content or provider diagnostics not safe for logs.
         if exc.code in {401, 403}:
             raise ModelAdapterError(ModelReasonCode.MODEL_AUTHENTICATION_FAILED) from None
         if exc.code in {400, 404, 405, 409, 415, 422}:
             raise ModelAdapterError(ModelReasonCode.MODEL_REQUEST_INVALID) from None
-        if exc.code == 429 or 500 <= exc.code <= 599:
+        if exc.code == 402:
+            raise ModelAdapterError(ModelReasonCode.MODEL_ADAPTER_UNAVAILABLE) from None
+        if exc.code in {408, 429} or 500 <= exc.code <= 599:
             raise ModelAdapterError(
                 ModelReasonCode.MODEL_TRANSIENT_FAILURE,
                 retryable=True,
@@ -75,6 +83,7 @@ def _default_transport(
         raise ModelAdapterError(
             ModelReasonCode.MODEL_TRANSIENT_FAILURE,
             retryable=True,
+            unknown_completion=True,
         ) from exc
     if len(raw) > MAXIMUM_PROVIDER_RESPONSE_BYTES:
         raise ModelAdapterError(ModelReasonCode.MODEL_RESPONSE_TOO_LARGE)
@@ -105,8 +114,8 @@ def _safe_usage(value: object) -> dict[str, int | None]:
     return result
 
 
-class MoonshotDraftV1Adapter:
-    """Exact Moonshot adapter with no tools, DB, filesystem, or action port."""
+class OpenRouterDraftV1Adapter:
+    """Exact OpenRouter adapter with no tool, DB, filesystem, or action port."""
 
     __slots__ = ("_api_key", "_identity", "_spec", "_transport")
 
@@ -134,8 +143,8 @@ class MoonshotDraftV1Adapter:
                 ) from exc
         if not callable(transport):
             raise TypeError("transport must be callable")
-        approved = spec or load_step22_moonshot_provider_spec()
-        checked = load_step22_moonshot_provider_spec()
+        approved = spec or load_approved_provider_spec()
+        checked = load_approved_provider_spec()
         if approved != checked:
             raise ModelAdapterError(ModelReasonCode.MODEL_IDENTITY_MISMATCH)
         self._api_key = secret
@@ -144,24 +153,27 @@ class MoonshotDraftV1Adapter:
         self._transport = transport
 
     @classmethod
-    def from_environment(cls) -> "MoonshotDraftV1Adapter":
-        spec = load_step22_moonshot_provider_spec()
-        if spec.credential_environment_variable != "MOONSHOT_API_KEY":
+    def from_environment(cls) -> "OpenRouterDraftV1Adapter":
+        spec = load_approved_provider_spec()
+        if (
+            spec.provider_id != APPROVED_PROVIDER_ID
+            or spec.model_id != APPROVED_MODEL_ID
+            or spec.credential_environment_variable
+            != APPROVED_CREDENTIAL_ENVIRONMENT_VARIABLE
+        ):
             raise ModelAdapterError(ModelReasonCode.MODEL_IDENTITY_MISMATCH)
         try:
-            key = SecretValue(
-                os.environ[spec.credential_environment_variable],
-                purpose=CredentialPurpose.MODEL_PROVIDER,
-                source_name=spec.credential_environment_variable,
-            )
-        except (KeyError, TypeError, ValueError, RuntimeError):
+            key = load_required_credential(CredentialPurpose.MODEL_PROVIDER, os.environ)
+        except RuntimeError:
             raise ModelAdapterError(ModelReasonCode.MODEL_ADAPTER_UNAVAILABLE) from None
+        if key.source_name != spec.credential_environment_variable:
+            raise ModelAdapterError(ModelReasonCode.MODEL_IDENTITY_MISMATCH)
         return cls(key, spec=spec)
 
     def __repr__(self) -> str:
         return (
-            "MoonshotDraftV1Adapter(provider_id='moonshot-ai', "
-            "model_id='moonshot-v1-8k', credential='<redacted>')"
+            "OpenRouterDraftV1Adapter(provider_id='openrouter', "
+            "model_id='moonshotai/kimi-k2', credential='<redacted>')"
         )
 
     def provider_identity(self) -> ProviderIdentity:
@@ -172,7 +184,9 @@ class MoonshotDraftV1Adapter:
         request: ProviderCallRequest | ProviderTextRequest,
         timeout_policy: TimeoutPolicy,
     ) -> ProviderResponse:
-        if not isinstance(request, (ProviderCallRequest, ProviderTextRequest)) or not isinstance(timeout_policy, TimeoutPolicy):
+        if not isinstance(
+            request, (ProviderCallRequest, ProviderTextRequest)
+        ) or not isinstance(timeout_policy, TimeoutPolicy):
             raise ModelAdapterError(ModelReasonCode.MODEL_REQUEST_INVALID)
         try:
             if isinstance(request, ProviderCallRequest):
@@ -213,7 +227,7 @@ class MoonshotDraftV1Adapter:
             + self._api_key.reveal_for(CredentialPurpose.MODEL_PROVIDER),
             "Content-Type": "application/json; charset=utf-8",
             "Accept": "application/json",
-            "User-Agent": "aioa-memory-kernel-step22/1a",
+            "User-Agent": "aioa-memory-kernel-step38/1a",
         }
         started = time.monotonic_ns()
         decoded = self._transport(
@@ -248,7 +262,15 @@ class MoonshotDraftV1Adapter:
             raise ModelAdapterError(ModelReasonCode.MODEL_TOOLING_BOUNDARY_VIOLATION)
         content = message.get("content")
         if not isinstance(content, str) or not content:
-            raise ModelAdapterError(ModelReasonCode.MODEL_RESPONSE_EMPTY)
+            # A successfully received empty completion has no text or external
+            # side effect to preserve.  Let the existing bounded generation
+            # policy retry it once; never substitute reasoning or diagnostics
+            # for the missing final answer.
+            raise ModelAdapterError(
+                ModelReasonCode.MODEL_RESPONSE_EMPTY,
+                retryable=True,
+                unknown_completion=False,
+            )
         if len(content.encode("utf-8")) > MAXIMUM_DRAFT_UTF8_BYTES:
             raise ModelAdapterError(ModelReasonCode.MODEL_RESPONSE_TOO_LARGE)
         finish_reason = choice.get("finish_reason")
@@ -273,4 +295,4 @@ class MoonshotDraftV1Adapter:
             raise ModelAdapterError(ModelReasonCode.MODEL_RESPONSE_INVALID) from exc
 
 
-__all__ = ["MoonshotDraftV1Adapter"]
+__all__ = ["OpenRouterDraftV1Adapter"]

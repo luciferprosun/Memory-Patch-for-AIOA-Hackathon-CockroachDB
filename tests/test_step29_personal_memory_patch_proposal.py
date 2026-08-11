@@ -9,7 +9,7 @@ import inspect
 import json
 import unittest
 from dataclasses import replace
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from functools import lru_cache
 from types import SimpleNamespace
 from unittest import mock
@@ -32,6 +32,8 @@ from aioa_memory_kernel.contracts.enums import (
     EvidenceStatus,
     PatchState,
     PersonalMemorySpaceState,
+    ScopeComparisonMode,
+    ScopeValueType,
 )
 from aioa_memory_kernel.contracts.evidence import ClaimCandidate
 from aioa_memory_kernel.contracts.exceptions import (
@@ -41,6 +43,7 @@ from aioa_memory_kernel.contracts.exceptions import (
 from aioa_memory_kernel.contracts.identities import KernelRunIdentity
 from aioa_memory_kernel.contracts.personal_memory import PersonalHatQuotaUsage
 from aioa_memory_kernel.contracts.serialization import canonical_sha256
+from aioa_memory_kernel.contracts.scope import ScopeDimension
 from aioa_memory_kernel.persistence import SerializableTransactionRunner
 from aioa_memory_kernel.corrections.models import CorrectionPacketBoundaryError
 from aioa_memory_kernel.personal_memory import (
@@ -92,6 +95,7 @@ from aioa_memory_kernel.personal_memory.candidates import (
 from aioa_memory_kernel.personal_memory.proposal_repository import (
     proposal_transition_id,
 )
+from aioa_memory_kernel.personal_memory import proposals as proposal_models
 
 
 ROOT = REPOSITORY_ROOT
@@ -359,6 +363,58 @@ class ProposalContractTests(unittest.TestCase):
         tampered["proposal"]["proposal_statement"] = "tampered"
         with self.assertRaises((IntegrityError, ContractValidationError)):
             parse_personal_memory_patch_state(tampered)
+
+    def test_json_scope_parser_restores_timestamp_and_string_set_types(self):
+        parsed = proposal_models._scope_from_json(
+            [
+                {
+                    "name": "knowledge_as_of",
+                    "value": "2026-08-01T21:51:24Z",
+                    "value_type": "TIMESTAMP",
+                    "comparison_mode": "TIMESTAMP",
+                    "source": "step38-regression",
+                    "required": True,
+                },
+                {
+                    "name": "legal_source_class",
+                    "value": ["DE_FEDERAL_OFFICIAL_CONSOLIDATED_LAW"],
+                    "value_type": "STRING_SET",
+                    "comparison_mode": "IN_SET",
+                    "source": "step38-regression",
+                    "required": True,
+                },
+            ]
+        )
+        self.assertEqual(parsed[0].value.isoformat(), "2026-08-01T21:51:24+00:00")
+        self.assertEqual(
+            parsed[1].value,
+            ("DE_FEDERAL_OFFICIAL_CONSOLIDATED_LAW",),
+        )
+
+    def test_public_state_json_roundtrip_preserves_step38_typed_scope(self):
+        value = fixture()
+        scope = (
+            ScopeDimension(
+                "knowledge_as_of",
+                datetime(2026, 8, 1, 21, 51, 24, tzinfo=timezone.utc),
+                ScopeValueType.TIMESTAMP,
+                ScopeComparisonMode.TIMESTAMP,
+                "step38-regression",
+                True,
+            ),
+            ScopeDimension(
+                "legal_source_class",
+                ("DE_FEDERAL_OFFICIAL_CONSOLIDATED_LAW",),
+                ScopeValueType.STRING_SET,
+                ScopeComparisonMode.IN_SET,
+                "step38-regression",
+                True,
+            ),
+        )
+        proposal = replace(value.proposed.proposal, proposal_scope=scope)
+        state = replace(value.proposed, proposal=proposal)
+        serialized = personal_memory_patch_state_to_jsonb(state)
+        self.assertEqual(parse_personal_memory_patch_state(serialized), state)
 
     def test_proposal_binds_candidate_owner_slot_route_and_exact_text(self):
         value = fixture()
@@ -1105,7 +1161,10 @@ class PersistenceAndBoundaryTests(unittest.TestCase):
         self.assertIn("- [x] **Step 35", roadmap)
         self.assertIn("- [x] **Step 36", roadmap)
         self.assertIn("- [x] **Step 37", roadmap)
-        self.assertIn("- [ ] **Step 38", roadmap)
+        self.assertIn("- [x] **Step 38", roadmap)
+        self.assertIn("- [ ] **Step 39", roadmap)
+        self.assertIn("Step 39: NOT STARTED", roadmap)
+        self.assertIn("Step 38 completion does not authorize Step 39.", roadmap)
         self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 30: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 31: COMPLETE AND PUSHED", agents)
@@ -1115,7 +1174,9 @@ class PersistenceAndBoundaryTests(unittest.TestCase):
         self.assertIn("Step 35: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 36: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 37: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 38: NOT STARTED", agents)
+        self.assertIn("Step 38: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 39: NOT STARTED", agents)
+        self.assertIn("Step 38 completion does not authorize Step 39.", agents)
 
 
 if __name__ == "__main__":

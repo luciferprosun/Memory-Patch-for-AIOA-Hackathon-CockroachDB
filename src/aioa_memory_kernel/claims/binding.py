@@ -40,6 +40,22 @@ from .models import (
 
 
 _TOKEN = re.compile(r"[^\W_]+", re.UNICODE)
+_GERMAN_MONTH_NAMES = frozenset(
+    {
+        "januar",
+        "februar",
+        "märz",
+        "april",
+        "mai",
+        "juni",
+        "juli",
+        "august",
+        "september",
+        "oktober",
+        "november",
+        "dezember",
+    }
+)
 _NEGATIONS = frozenset(
     {
         "kein",
@@ -106,6 +122,36 @@ def _negation_counterparts(left: str, right: str) -> bool:
     return bool(left_base) and left_base == right_base
 
 
+def _quantitative_counterparts(left: str, right: str) -> bool:
+    """Detect a changed date/number in otherwise closely aligned claims."""
+
+    left_tokens = _tokens(left)
+    right_tokens = _tokens(right)
+
+    def facts(tokens: tuple[str, ...]) -> tuple[str, ...]:
+        return tuple(
+            token
+            for token in tokens
+            if token.isdigit() or token in _GERMAN_MONTH_NAMES
+        )
+
+    left_facts = facts(left_tokens)
+    right_facts = facts(right_tokens)
+    if not left_facts or not right_facts or left_facts == right_facts:
+        return False
+
+    excluded = _STOPWORDS | _GERMAN_MONTH_NAMES
+    left_base = {
+        token for token in left_tokens if not token.isdigit() and token not in excluded
+    }
+    right_base = {
+        token for token in right_tokens if not token.isdigit() and token not in excluded
+    }
+    shared = left_base & right_base
+    smaller = min(len(left_base), len(right_base))
+    return smaller >= 3 and len(shared) * 4 >= smaller * 3
+
+
 def _related(left: str, right: str) -> bool:
     left_tokens = {token for token in _tokens(left) if token not in _STOPWORDS}
     right_tokens = {token for token in _tokens(right) if token not in _STOPWORDS}
@@ -122,6 +168,8 @@ def _text_relation(claim: ClaimRecord, evidence: TextSpan) -> ClaimEvidenceRelat
     if claim.normalized_match_text == normalize_claim_for_match(evidence.text):
         return ClaimEvidenceRelation.SUPPORTS
     if _negation_counterparts(claim.exact_claim_text, evidence.text):
+        return ClaimEvidenceRelation.REFUTES
+    if _quantitative_counterparts(claim.exact_claim_text, evidence.text):
         return ClaimEvidenceRelation.REFUTES
     if _related(claim.exact_claim_text, evidence.text):
         return ClaimEvidenceRelation.RELATED_ONLY

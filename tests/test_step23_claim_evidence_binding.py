@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import copy
+import hashlib
 import json
 import unittest
 from dataclasses import FrozenInstanceError, replace
@@ -21,6 +22,7 @@ from aioa_memory_kernel.claims import (
     ClaimEvidenceRelation,
     ClaimReasonCode,
     ClaimType,
+    classify_claim,
     exact_text_spans,
     load_claim_processing_policy,
     prepare_claim_binding_request,
@@ -51,6 +53,11 @@ from tests.test_step21_temporal_resolution import (
 ROOT = REPOSITORY_ROOT
 CLAIMS_ROOT = ROOT / "src/aioa_memory_kernel/claims"
 NOW = datetime(2026, 8, 9, 4, 0, tzinfo=UTC)
+PROVISION_II = (
+    "Für besondere Fälle behalte ich mir die Ernennung und Entlassung der "
+    "unter I. genannten Beamtinnen und Beamten vor."
+)
+NEGATED_PROVISION_II = PROVISION_II.removesuffix("vor.") + "nicht vor."
 
 
 class FixedClock:
@@ -181,12 +188,110 @@ class ClaimContractTests(unittest.TestCase):
 
 
 class ExtractionTests(unittest.TestCase):
+    def test_german_calendar_ordinal_is_not_a_sentence_boundary(self) -> None:
+        text = (
+            "Diese Anordnung tritt am 1. Januar 2024 in Kraft. "
+            "Frühere Anordnungen gelten nicht mehr."
+        )
+        spans = exact_text_spans(text)
+        self.assertEqual(
+            [item.text for item in spans],
+            [
+                "Diese Anordnung tritt am 1. Januar 2024 in Kraft.",
+                "Frühere Anordnungen gelten nicht mehr.",
+            ],
+        )
+        for span in spans:
+            self.assertEqual(text[span.start_offset : span.end_offset], span.text)
+
     def test_sentences_and_bullets_preserve_exact_codepoint_spans(self) -> None:
         text = "Erste Aussage.\n• Zweite äöüß Aussage.\n3) Dritte Aussage."
         spans = exact_text_spans(text)
         self.assertEqual([item.text for item in spans], ["Erste Aussage.", "Zweite äöüß Aussage.", "Dritte Aussage."])
         for span in spans:
             self.assertEqual(text[span.start_offset : span.end_offset], span.text)
+
+    def test_narrow_roman_legal_references_preserve_lowercase_continuation(self) -> None:
+        for numeral in ("I", "II", "III"):
+            for separator in (" ", "\t", "  \t"):
+                with self.subTest(numeral=numeral, separator=repr(separator)):
+                    text = f"unter {numeral}.{separator}genannten Personen."
+                    spans = exact_text_spans(text)
+                    self.assertEqual(len(spans), 1)
+                    self.assertEqual(spans[0].text, text)
+                    self.assertEqual(
+                        (spans[0].start_offset, spans[0].end_offset),
+                        (0, len(text)),
+                    )
+
+        spans = exact_text_spans(PROVISION_II)
+        self.assertEqual(len(spans), 1)
+        self.assertEqual(spans[0].text, PROVISION_II)
+        self.assertEqual((spans[0].start_offset, spans[0].end_offset), (0, len(PROVISION_II)))
+        self.assertEqual(
+            hashlib.sha256(spans[0].text.encode("utf-8")).hexdigest(),
+            "6a12a5f19d7a4b61d71be5c5583d0a3a41b3111fcf00803892200fc42260d99e",
+        )
+
+    def test_roman_reference_exception_is_closed(self) -> None:
+        cases = (
+            (
+                "unter IV. genannten Personen.",
+                ("unter IV.", "genannten Personen."),
+            ),
+            (
+                "unter I. Genannten Personen.",
+                ("unter I.", "Genannten Personen."),
+            ),
+            (
+                "unter I.\ngenannten Personen.",
+                ("unter I.", "genannten Personen."),
+            ),
+            (
+                "unter II.\rgenannten Personen.",
+                ("unter II.", "genannten Personen."),
+            ),
+            (
+                "unter III.\r\ngenannten Personen.",
+                ("unter III.", "genannten Personen."),
+            ),
+        )
+        for text, expected in cases:
+            with self.subTest(text=text):
+                spans = exact_text_spans(text)
+                self.assertEqual(tuple(item.text for item in spans), expected)
+                for span in spans:
+                    self.assertEqual(
+                        text[span.start_offset : span.end_offset],
+                        span.text,
+                    )
+
+    def test_capitalized_nominal_coordination_is_not_clausal(self) -> None:
+        for connector in ("und", "oder", "sowie", "and", "or"):
+            with self.subTest(connector=connector):
+                _claim_type, atomicity = classify_claim(
+                    f"Ernennung {connector} Entlassung."
+                )
+                self.assertIs(atomicity, ClaimAtomicity.ATOMIC)
+        _claim_type, chained = classify_claim(
+            "Ernennung und Entlassung sowie Abberufung."
+        )
+        self.assertIs(chained, ClaimAtomicity.ATOMIC)
+
+    def test_clausal_and_non_allowlisted_coordination_stays_compound(self) -> None:
+        for text in (
+            "Der Anspruch besteht und die Frist läuft.",
+            "Der Anspruch besteht oder die Frist läuft.",
+            "Der Anspruch besteht sowie die Frist läuft.",
+            "The claim exists and the period runs.",
+            "The claim exists or the period runs.",
+            "Ernennung aber Entlassung.",
+            "rights and duties apply.",
+            "Ernennung und Entlassung gelten und die Frist läuft.",
+        ):
+            with self.subTest(text=text):
+                _claim_type, atomicity = classify_claim(text)
+                self.assertIs(atomicity, ClaimAtomicity.COMPOUND)
 
     def test_multiple_claims_preserve_draft_order_and_exact_text(self) -> None:
         text = "Erste Aussage. Zweite Aussage. Dritte Aussage."
@@ -224,6 +329,92 @@ class ExtractionTests(unittest.TestCase):
 
 
 class EvidenceBindingTests(unittest.TestCase):
+    def test_exact_provision_ii_is_one_atomic_supported_claim(self) -> None:
+        snapshot = pipeline(
+            PROVISION_II,
+            contents=(PROVISION_II,),
+        )[-1]
+        self.assertEqual(len(snapshot.ordered_claims), 1)
+        claim, assessment = assessment_for(snapshot, PROVISION_II)
+        self.assertIs(claim.claim_type, ClaimType.FACTUAL)
+        self.assertIs(claim.atomicity, ClaimAtomicity.ATOMIC)
+        self.assertNotIn(ClaimReasonCode.CLAIM_COMPOUND, claim.reason_codes)
+        self.assertIs(
+            assessment.candidate_status,
+            ClaimEvidenceCandidateStatus.SUPPORTED,
+        )
+        self.assertEqual(len(snapshot.ordered_evidence_links), 1)
+        link = snapshot.ordered_evidence_links[0]
+        self.assertIs(link.relation, ClaimEvidenceRelation.SUPPORTS)
+        self.assertEqual(
+            (link.evidence_start_offset, link.evidence_end_offset),
+            (0, len(PROVISION_II)),
+        )
+        self.assertEqual(
+            link.evidence_span_text_sha256,
+            hashlib.sha256(PROVISION_II.encode("utf-8")).hexdigest(),
+        )
+
+    def test_negated_provision_ii_is_one_atomic_refuted_claim(self) -> None:
+        snapshot = pipeline(
+            NEGATED_PROVISION_II,
+            contents=(PROVISION_II,),
+        )[-1]
+        self.assertEqual(len(snapshot.ordered_claims), 1)
+        claim, assessment = assessment_for(snapshot, NEGATED_PROVISION_II)
+        self.assertIs(claim.claim_type, ClaimType.FACTUAL)
+        self.assertIs(claim.atomicity, ClaimAtomicity.ATOMIC)
+        self.assertNotIn(ClaimReasonCode.CLAIM_COMPOUND, claim.reason_codes)
+        self.assertIs(
+            assessment.candidate_status,
+            ClaimEvidenceCandidateStatus.REFUTED,
+        )
+        self.assertEqual(len(snapshot.ordered_evidence_links), 1)
+        link = snapshot.ordered_evidence_links[0]
+        self.assertIs(link.relation, ClaimEvidenceRelation.REFUTES)
+        self.assertEqual(
+            (link.evidence_start_offset, link.evidence_end_offset),
+            (0, len(PROVISION_II)),
+        )
+        self.assertEqual(
+            link.evidence_span_text_sha256,
+            hashlib.sha256(PROVISION_II.encode("utf-8")).hexdigest(),
+        )
+
+    def test_closely_aligned_german_date_mismatch_is_refuted(self) -> None:
+        snapshot = pipeline(
+            "Diese Anordnung tritt am 1. Januar 2025 in Kraft.",
+            contents=("Diese Anordnung tritt am 1. Januar 2024 in Kraft.",),
+        )[-1]
+        _, assessment = assessment_for(
+            snapshot,
+            "Diese Anordnung tritt am 1. Januar 2025 in Kraft.",
+        )
+        self.assertIs(
+            assessment.candidate_status,
+            ClaimEvidenceCandidateStatus.REFUTED,
+        )
+        link = next(
+            item
+            for item in snapshot.ordered_evidence_links
+            if item.claim_id == assessment.claim_id
+        )
+        self.assertIs(link.relation, ClaimEvidenceRelation.REFUTES)
+
+    def test_unrelated_number_change_is_not_promoted_to_refutation(self) -> None:
+        snapshot = pipeline(
+            "Die Behörde bearbeitet 5 Anträge.",
+            contents=("Die Frist beträgt 10 Tage.",),
+        )[-1]
+        _, assessment = assessment_for(
+            snapshot,
+            "Die Behörde bearbeitet 5 Anträge.",
+        )
+        self.assertIs(
+            assessment.candidate_status,
+            ClaimEvidenceCandidateStatus.UNVERIFIED,
+        )
+
     def test_exact_support_refutation_related_and_no_evidence(self) -> None:
         snapshot = pipeline(
             "Die Vorschrift ist aufgehoben. Das Gesetz gilt. Die Behörde entscheidet schriftlich. Ohne Nachweis bleibt die Behauptung offen.",
@@ -493,7 +684,10 @@ class DocumentationClosureTests(unittest.TestCase):
         self.assertIn("- [x] **Step 35", roadmap)
         self.assertIn("- [x] **Step 36", roadmap)
         self.assertIn("- [x] **Step 37", roadmap)
-        self.assertIn("- [ ] **Step 38", roadmap)
+        self.assertIn("- [x] **Step 38", roadmap)
+        self.assertIn("- [ ] **Step 39", roadmap)
+        self.assertIn("Step 39: NOT STARTED", roadmap)
+        self.assertIn("Step 38 completion does not authorize Step 39.", roadmap)
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("Step 23 exact-span deterministic claim extraction", agents)
         self.assertIn("Step 24 verified frozen Step 23 input binding", agents)
@@ -510,7 +704,9 @@ class DocumentationClosureTests(unittest.TestCase):
         self.assertIn("Step 35: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 36: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 37: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 38: NOT STARTED", agents)
+        self.assertIn("Step 38: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 39: NOT STARTED", agents)
+        self.assertIn("Step 38 completion does not authorize Step 39.", agents)
 
 
 if __name__ == "__main__":

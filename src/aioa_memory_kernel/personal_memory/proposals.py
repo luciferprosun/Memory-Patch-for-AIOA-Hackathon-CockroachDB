@@ -14,7 +14,10 @@ import unicodedata
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, fields as dataclass_fields
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from aioa_memory_kernel.german_law.e2e import EvidenceBoundCorrectionContext
 
 from aioa_memory_kernel.answers.models import (
     VerifiedAnswer,
@@ -74,6 +77,16 @@ from aioa_memory_kernel.temporal.models import (
     TemporalResolutionResult,
     verify_temporal_result_hash,
 )
+from aioa_memory_kernel.verification.models import (
+    CorrectionComplianceStatus,
+    DraftV2PipelineResult,
+    EvidenceBindingResult,
+    FinalStep25ClaimVerdict,
+    Step25ReasonCode,
+    VerificationSummaryStatus,
+    verify_corrected_evidence_proof_hash,
+    verify_draft_v2_pipeline_result_hash,
+)
 
 from .candidates import (
     CorrectionCandidateEnvelope,
@@ -86,6 +99,13 @@ from .candidates import (
 
 
 STEP29_SCHEMA_VERSION = "1.0.0"
+CORRECTED_CLAIM_EVIDENCE_REFERENCE_SCHEMA_VERSION = "1.0.0"
+CORRECTED_CLAIM_EVIDENCE_REFERENCE_CONTRACT_TYPE = (
+    "PersonalMemoryCorrectedClaimEvidenceReference"
+)
+CORRECTED_CLAIM_EVIDENCE_BRIDGE_KIND = (
+    "REFUTED_DRAFT_V1_TO_VERIFIED_SUPPORTED_DRAFT_V2"
+)
 PERSONAL_MEMORY_PATCH_PROPOSAL_CONTRACT_TYPE = "PersonalMemoryPatchProposal"
 PERSONAL_MEMORY_PATCH_STATE_CONTRACT_TYPE = "PersonalMemoryPatchProposalState"
 PERSONAL_MEMORY_PATCH_VALIDATION_POLICY_ID = (
@@ -124,6 +144,8 @@ STEP29_ELIGIBLE_SLOT_STATES = frozenset(
 
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 _LOGICAL_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:+-]{0,254}$")
+_DRAFT_V2_CLAIM_ID = re.compile(r"^draft-v2-claim-[a-f0-9]{64}$")
+_DRAFT_V2_CITATION = re.compile(r"\[citation:[A-Za-z0-9._:-]{1,255}\]")
 _NEGATION = frozenset(
     {"not", "no", "never", "nicht", "kein", "keine", "keinen", "ohne"}
 )
@@ -292,6 +314,11 @@ def normalize_proposal_statement(value: str) -> str:
     if not normalized:
         raise ContractValidationError("proposal statement normalizes to empty")
     return normalized
+
+
+def _exact_text_without_citations(value: str) -> str:
+    compact = " ".join(_DRAFT_V2_CITATION.sub(" ", value).split())
+    return re.sub(r"\s+([,.;:!?])", r"\1", compact)
 
 
 def proposal_conflict_subject(value: str) -> tuple[str, bool]:
@@ -724,6 +751,162 @@ class PersonalMemoryPatchEvidenceReference:
 
 
 @dataclass(frozen=True, slots=True)
+class PersonalMemoryCorrectedClaimEvidenceReference:
+    """Versioned proof from one refuted Draft V1 claim to a supported Draft V2 claim.
+
+    The source refutation and target support are deliberately separate.  The
+    target evidence link keeps its original Step 23 source claim and relation;
+    no existing evidence-link identity is ever repointed to the Draft V2 claim.
+    """
+
+    schema_version: str
+    contract_type: str
+    bridge_kind: str
+    source_claim_id: str
+    source_claim_assessment_hash: str
+    source_relation: ClaimEvidenceRelation
+    source_evidence_link_hash: str
+    source_citation_id: str
+    source_citation_hash: str
+    required_correction_id: str
+    required_correction_hash: str
+    required_correction_compliance_hash: str
+    target_draft_v2_claim_id: str
+    target_draft_v2_claim_hash: str
+    target_draft_v2_hash: str
+    target_verification_hash: str
+    target_verdict: FinalStep25ClaimVerdict
+    corrected_evidence_signal_hash: str
+    corrected_evidence_proof_hash: str
+    evidence_context_hash: str
+    evidence_span_text_sha256: str
+    step25_result_hash: str
+    verification_summary_hash: str
+    verified_answer_hash: str
+    verified_answer_claim_reference_hash: str
+    target_citation_id: str
+    target_citation_hash: str
+    evidence_link_hash: str
+    step20_bundle_hash: str
+    step20_item_hash: str
+    candidate_identity_hash: str
+    evidence_id: str
+    source_id: str
+    knowledge_version_id: str
+    chunk_id: str
+    content_sha256: str
+    authority_level: SourceAuthorityLevel
+    publication_state: SourcePublicationState
+    temporal_assessment_hash: str
+    temporal_applicability: TemporalApplicability
+    freshness_status: FreshnessStatus
+    conflict_group_id: str | None
+    reference_hash: str = field(init=False)
+
+    def __post_init__(self) -> None:
+        if (
+            self.schema_version
+            != CORRECTED_CLAIM_EVIDENCE_REFERENCE_SCHEMA_VERSION
+            or self.contract_type
+            != CORRECTED_CLAIM_EVIDENCE_REFERENCE_CONTRACT_TYPE
+            or self.bridge_kind != CORRECTED_CLAIM_EVIDENCE_BRIDGE_KIND
+        ):
+            raise ContractValidationError(
+                "corrected-claim evidence reference discriminator is invalid"
+            )
+        for value, name in (
+            (self.source_claim_id, "source_claim_id"),
+            (self.source_citation_id, "source_citation_id"),
+            (self.required_correction_id, "required_correction_id"),
+            (self.target_draft_v2_claim_id, "target_draft_v2_claim_id"),
+            (self.target_citation_id, "target_citation_id"),
+            (self.evidence_id, "evidence_id"),
+            (self.source_id, "source_id"),
+            (self.knowledge_version_id, "knowledge_version_id"),
+            (self.chunk_id, "chunk_id"),
+        ):
+            _logical_id(value, name)
+        if _DRAFT_V2_CLAIM_ID.fullmatch(self.target_draft_v2_claim_id) is None:
+            raise ContractValidationError("target Draft V2 claim identity is invalid")
+        for value, name in (
+            (self.source_claim_assessment_hash, "source_claim_assessment_hash"),
+            (self.source_evidence_link_hash, "source_evidence_link_hash"),
+            (self.source_citation_hash, "source_citation_hash"),
+            (self.required_correction_hash, "required_correction_hash"),
+            (
+                self.required_correction_compliance_hash,
+                "required_correction_compliance_hash",
+            ),
+            (self.target_draft_v2_claim_hash, "target_draft_v2_claim_hash"),
+            (self.target_draft_v2_hash, "target_draft_v2_hash"),
+            (self.target_verification_hash, "target_verification_hash"),
+            (
+                self.corrected_evidence_signal_hash,
+                "corrected_evidence_signal_hash",
+            ),
+            (
+                self.corrected_evidence_proof_hash,
+                "corrected_evidence_proof_hash",
+            ),
+            (self.evidence_context_hash, "evidence_context_hash"),
+            (
+                self.evidence_span_text_sha256,
+                "evidence_span_text_sha256",
+            ),
+            (self.step25_result_hash, "step25_result_hash"),
+            (self.verification_summary_hash, "verification_summary_hash"),
+            (self.verified_answer_hash, "verified_answer_hash"),
+            (
+                self.verified_answer_claim_reference_hash,
+                "verified_answer_claim_reference_hash",
+            ),
+            (self.target_citation_hash, "target_citation_hash"),
+            (self.evidence_link_hash, "evidence_link_hash"),
+            (self.step20_bundle_hash, "step20_bundle_hash"),
+            (self.step20_item_hash, "step20_item_hash"),
+            (self.candidate_identity_hash, "candidate_identity_hash"),
+            (self.content_sha256, "content_sha256"),
+            (self.temporal_assessment_hash, "temporal_assessment_hash"),
+        ):
+            require_sha256_hex(value, name)
+        if self.source_relation is not ClaimEvidenceRelation.REFUTES:
+            raise ContractValidationError("corrected-claim source must be refuted")
+        if self.target_verdict is not FinalStep25ClaimVerdict.VERIFIED_SUPPORTED:
+            raise ContractValidationError("corrected-claim target must be verified supported")
+        if self.source_evidence_link_hash != self.evidence_link_hash:
+            raise ContractValidationError(
+                "corrected-claim evidence must retain its source link identity"
+            )
+        if (
+            self.source_citation_id != self.target_citation_id
+            or self.source_citation_hash != self.target_citation_hash
+        ):
+            raise ContractValidationError(
+                "corrected-claim target must cite the exact source refutation"
+            )
+        if not isinstance(self.authority_level, SourceAuthorityLevel):
+            raise ContractValidationError("authority_level is invalid")
+        if self.authority_level in {
+            SourceAuthorityLevel.DERIVED,
+            SourceAuthorityLevel.UNKNOWN,
+        }:
+            raise ContractValidationError("derived/unknown evidence cannot bind a patch")
+        if self.publication_state is not SourcePublicationState.PUBLISHED:
+            raise ContractValidationError("only published evidence may bind a patch")
+        if not isinstance(self.temporal_applicability, TemporalApplicability):
+            raise ContractValidationError("temporal_applicability is invalid")
+        if not isinstance(self.freshness_status, FreshnessStatus):
+            raise ContractValidationError("freshness_status is invalid")
+        if self.conflict_group_id is not None:
+            _text(self.conflict_group_id, "conflict_group_id", 512)
+        object.__setattr__(
+            self,
+            "reference_hash",
+            canonical_sha256(self, exclude_fields=("reference_hash",)),
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class PersonalMemoryPatchEvidenceBinding:
     schema_version: str
     proposal_id: str
@@ -739,7 +922,11 @@ class PersonalMemoryPatchEvidenceBinding:
     claim_assessment_hashes: tuple[str, ...]
     correction_packet_hash: str
     verified_answer_hash: str
-    ordered_evidence_references: tuple[PersonalMemoryPatchEvidenceReference, ...]
+    ordered_evidence_references: tuple[
+        PersonalMemoryPatchEvidenceReference
+        | PersonalMemoryCorrectedClaimEvidenceReference,
+        ...,
+    ]
     evidence_status: EvidenceStatus
     conflict_group_hashes: tuple[str, ...]
     prohibited_claim_hashes: tuple[str, ...]
@@ -784,12 +971,24 @@ class PersonalMemoryPatchEvidenceBinding:
         )
         references = tuple(self.ordered_evidence_references)
         if not references or len(references) > MAXIMUM_EVIDENCE_REFERENCES or any(
-            not isinstance(item, PersonalMemoryPatchEvidenceReference)
+            not isinstance(
+                item,
+                (
+                    PersonalMemoryPatchEvidenceReference,
+                    PersonalMemoryCorrectedClaimEvidenceReference,
+                ),
+            )
             for item in references
         ):
             raise ContractValidationError("ordered_evidence_references are invalid")
+        if len({type(item) for item in references}) != 1:
+            raise ContractValidationError(
+                "legacy and corrected-claim references cannot be mixed"
+            )
         ordered = tuple(sorted(references, key=lambda item: item.evidence_link_hash))
-        if references != ordered or len({item.evidence_link_hash for item in references}) != len(references):
+        if references != ordered or len(
+            {item.evidence_link_hash for item in references}
+        ) != len(references):
             raise ContractValidationError("evidence references must be unique and ordered")
         object.__setattr__(self, "ordered_evidence_references", references)
         if not isinstance(self.evidence_status, EvidenceStatus):
@@ -1151,6 +1350,104 @@ def _bundle_item_map(
     return result
 
 
+def _personal_memory_patch_evidence_reference(
+    link: ClaimEvidenceLink,
+    *,
+    claim_id: str,
+) -> PersonalMemoryPatchEvidenceReference:
+    return PersonalMemoryPatchEvidenceReference(
+        claim_id=claim_id,
+        evidence_link_hash=link.link_hash,
+        step20_bundle_hash=link.step20_bundle_hash,
+        step20_item_hash=link.step20_item_hash,
+        candidate_identity_hash=link.candidate_identity_hash,
+        evidence_id=link.evidence_id,
+        source_id=link.source_id,
+        knowledge_version_id=link.knowledge_version_id,
+        chunk_id=link.chunk_id,
+        content_sha256=link.content_sha256,
+        authority_level=link.authority_level,
+        publication_state=link.publication_state,
+        temporal_assessment_hash=link.temporal_assessment_hash,
+        temporal_applicability=link.temporal_applicability,
+        freshness_status=link.freshness_status,
+        conflict_group_id=link.conflict_group_id,
+        relation=link.relation,
+    )
+
+
+def _corrected_claim_evidence_reference(
+    link: ClaimEvidenceLink,
+    *,
+    source_claim_id: str,
+    source_claim_assessment_hash: str,
+    source_evidence_link_hash: str,
+    source_citation_id: str,
+    source_citation_hash: str,
+    required_correction_id: str,
+    required_correction_hash: str,
+    required_correction_compliance_hash: str,
+    target_claim_id: str,
+    target_claim_hash: str,
+    target_draft_v2_hash: str,
+    target_verification_hash: str,
+    corrected_evidence_signal_hash: str,
+    corrected_evidence_proof_hash: str,
+    evidence_context_hash: str,
+    evidence_span_text_sha256: str,
+    step25_result_hash: str,
+    verification_summary_hash: str,
+    verified_answer_hash: str,
+    verified_answer_claim_reference_hash: str,
+    target_citation_id: str,
+    target_citation_hash: str,
+) -> PersonalMemoryCorrectedClaimEvidenceReference:
+    return PersonalMemoryCorrectedClaimEvidenceReference(
+        schema_version=CORRECTED_CLAIM_EVIDENCE_REFERENCE_SCHEMA_VERSION,
+        contract_type=CORRECTED_CLAIM_EVIDENCE_REFERENCE_CONTRACT_TYPE,
+        bridge_kind=CORRECTED_CLAIM_EVIDENCE_BRIDGE_KIND,
+        source_claim_id=source_claim_id,
+        source_claim_assessment_hash=source_claim_assessment_hash,
+        source_relation=ClaimEvidenceRelation.REFUTES,
+        source_evidence_link_hash=source_evidence_link_hash,
+        source_citation_id=source_citation_id,
+        source_citation_hash=source_citation_hash,
+        required_correction_id=required_correction_id,
+        required_correction_hash=required_correction_hash,
+        required_correction_compliance_hash=required_correction_compliance_hash,
+        target_draft_v2_claim_id=target_claim_id,
+        target_draft_v2_claim_hash=target_claim_hash,
+        target_draft_v2_hash=target_draft_v2_hash,
+        target_verification_hash=target_verification_hash,
+        target_verdict=FinalStep25ClaimVerdict.VERIFIED_SUPPORTED,
+        corrected_evidence_signal_hash=corrected_evidence_signal_hash,
+        corrected_evidence_proof_hash=corrected_evidence_proof_hash,
+        evidence_context_hash=evidence_context_hash,
+        evidence_span_text_sha256=evidence_span_text_sha256,
+        step25_result_hash=step25_result_hash,
+        verification_summary_hash=verification_summary_hash,
+        verified_answer_hash=verified_answer_hash,
+        verified_answer_claim_reference_hash=verified_answer_claim_reference_hash,
+        target_citation_id=target_citation_id,
+        target_citation_hash=target_citation_hash,
+        evidence_link_hash=link.link_hash,
+        step20_bundle_hash=link.step20_bundle_hash,
+        step20_item_hash=link.step20_item_hash,
+        candidate_identity_hash=link.candidate_identity_hash,
+        evidence_id=link.evidence_id,
+        source_id=link.source_id,
+        knowledge_version_id=link.knowledge_version_id,
+        chunk_id=link.chunk_id,
+        content_sha256=link.content_sha256,
+        authority_level=link.authority_level,
+        publication_state=link.publication_state,
+        temporal_assessment_hash=link.temporal_assessment_hash,
+        temporal_applicability=link.temporal_applicability,
+        freshness_status=link.freshness_status,
+        conflict_group_id=link.conflict_group_id,
+    )
+
+
 def build_personal_memory_patch_evidence_binding(
     state: PersonalMemoryPatchProposalState,
     *,
@@ -1160,6 +1457,8 @@ def build_personal_memory_patch_evidence_binding(
     claim_assessments: Sequence[ClaimEvidenceAssessment],
     correction_packet: CorrectionPacketV1A,
     verified_answer: VerifiedAnswer,
+    step25_result: DraftV2PipelineResult | None = None,
+    evidence_context: EvidenceBoundCorrectionContext | None = None,
     bound_at: datetime,
 ) -> PersonalMemoryPatchEvidenceBinding:
     verify_personal_memory_patch_state(state)
@@ -1235,63 +1534,374 @@ def build_personal_memory_patch_evidence_binding(
     ):
         raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
     claim_ids = set(proposal.candidate_claim_ids)
-    if any(link.claim_id not in claim_ids for link in links):
-        raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
-    if tuple(sorted(link.link_hash for link in links)) != (
-        proposal.candidate_evidence_reference_hashes
-    ):
-        raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
     assessment_map = {item.claim_id: item for item in assessments}
     packet_claims = {item.claim_id: item for item in correction_packet.ordered_claims}
-    matching_claim_ids = {
-        claim_id
-        for claim_id in claim_ids
-        if claim_id in packet_claims
-        and normalize_proposal_statement(packet_claims[claim_id].exact_claim_text)
-        == proposal.normalized_statement
-    }
-    if not matching_claim_ids:
-        raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
     references: list[PersonalMemoryPatchEvidenceReference] = []
-    for link in links:
-        assessment = assessment_map.get(link.claim_id)
-        item = item_map.get(link.step20_item_hash)
-        if (
-            assessment is None
-            or assessment.candidate_status is not ClaimEvidenceCandidateStatus.SUPPORTED
-            or link.link_hash not in assessment.supporting_link_hashes
-            or link.claim_id not in matching_claim_ids
-            or item is None
-            or item.identity.identity_hash != link.candidate_identity_hash
-            or item.identity.content_sha256 != link.content_sha256
-            or item.identity.source_id != link.source_id
-            or item.identity.knowledge_version_id != link.knowledge_version_id
-            or item.identity.chunk_id != link.chunk_id
-            or link.step20_item_hash not in temporal_result.resolved_item_hashes
-            or link.relation is not ClaimEvidenceRelation.SUPPORTS
+    if step25_result is None:
+        if evidence_context is not None:
+            raise PersonalMemoryPatchValidationError(
+                Step29ReasonCode.EVIDENCE_INVALID
+            )
+        if any(link.claim_id not in claim_ids for link in links):
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+        if tuple(sorted(link.link_hash for link in links)) != (
+            proposal.candidate_evidence_reference_hashes
         ):
             raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
-        references.append(
-            PersonalMemoryPatchEvidenceReference(
-                claim_id=link.claim_id,
-                evidence_link_hash=link.link_hash,
-                step20_bundle_hash=link.step20_bundle_hash,
-                step20_item_hash=link.step20_item_hash,
-                candidate_identity_hash=link.candidate_identity_hash,
-                evidence_id=link.evidence_id,
-                source_id=link.source_id,
-                knowledge_version_id=link.knowledge_version_id,
-                chunk_id=link.chunk_id,
-                content_sha256=link.content_sha256,
-                authority_level=link.authority_level,
-                publication_state=link.publication_state,
-                temporal_assessment_hash=link.temporal_assessment_hash,
-                temporal_applicability=link.temporal_applicability,
-                freshness_status=link.freshness_status,
-                conflict_group_id=link.conflict_group_id,
-                relation=link.relation,
+        matching_claim_ids = {
+            claim_id
+            for claim_id in claim_ids
+            if claim_id in packet_claims
+            and normalize_proposal_statement(packet_claims[claim_id].exact_claim_text)
+            == proposal.normalized_statement
+        }
+        if not matching_claim_ids:
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+        for link in links:
+            assessment = assessment_map.get(link.claim_id)
+            item = item_map.get(link.step20_item_hash)
+            if (
+                assessment is None
+                or assessment.candidate_status
+                is not ClaimEvidenceCandidateStatus.SUPPORTED
+                or link.link_hash not in assessment.supporting_link_hashes
+                or link.claim_id not in matching_claim_ids
+                or item is None
+                or item.identity.identity_hash != link.candidate_identity_hash
+                or item.identity.content_sha256 != link.content_sha256
+                or item.identity.source_id != link.source_id
+                or item.identity.knowledge_version_id != link.knowledge_version_id
+                or item.identity.chunk_id != link.chunk_id
+                or link.step20_item_hash not in temporal_result.resolved_item_hashes
+                or link.relation is not ClaimEvidenceRelation.SUPPORTS
+            ):
+                raise PersonalMemoryPatchValidationError(
+                    Step29ReasonCode.EVIDENCE_INVALID
+                )
+            references.append(
+                _personal_memory_patch_evidence_reference(
+                    link,
+                    claim_id=link.claim_id,
+                )
+            )
+    else:
+        try:
+            from aioa_memory_kernel.german_law.e2e import (
+                EvidenceBoundCorrectionContext,
+                verify_corrected_evidence_context_against_inputs,
+                verify_corrected_evidence_proofs_against_context,
+            )
+
+            if not isinstance(evidence_context, EvidenceBoundCorrectionContext):
+                raise ContractValidationError(
+                    "corrected-claim binding requires typed evidence context"
+                )
+            verify_draft_v2_pipeline_result_hash(step25_result)
+            verify_corrected_evidence_context_against_inputs(
+                evidence_context,
+                bundle_values,
+                correction_packet,
+                links,
+            )
+            verify_corrected_evidence_proofs_against_context(
+                step25_result,
+                correction_packet,
+                evidence_context,
+            )
+        except (ContractValidationError, IntegrityError, RuntimeError) as exc:
+            raise PersonalMemoryPatchValidationError(
+                Step29ReasonCode.EVIDENCE_INVALID
+            ) from exc
+        draft_v2 = step25_result.draft_v2
+        summary = step25_result.verification_summary
+        verdicts = tuple(
+            item.final_step25_verdict
+            for item in step25_result.ordered_claim_verifications
+        )
+        expected_answer_references = tuple(
+            sorted(
+                (
+                    item.claim_id,
+                    item.claim_hash,
+                    item.verification_hash,
+                    item.final_step25_verdict,
+                )
+                for item in step25_result.ordered_claim_verifications
             )
         )
+        actual_answer_references = tuple(
+            (
+                item.claim_id,
+                item.claim_hash,
+                item.verification_hash,
+                item.final_verdict,
+            )
+            for item in verified_answer.claim_verification_references
+        )
+        if (
+            summary.summary_status is not VerificationSummaryStatus.VERIFIED
+            or summary.claim_count != len(verdicts)
+            or summary.verified_supported_count
+            != verdicts.count(FinalStep25ClaimVerdict.VERIFIED_SUPPORTED)
+            or summary.verified_refuted_count
+            != verdicts.count(FinalStep25ClaimVerdict.VERIFIED_REFUTED)
+            or summary.unverified_count
+            != verdicts.count(FinalStep25ClaimVerdict.UNVERIFIED)
+            or summary.conflicting_count
+            != verdicts.count(FinalStep25ClaimVerdict.CONFLICTING)
+            or summary.invalid_count
+            != verdicts.count(FinalStep25ClaimVerdict.INVALID)
+            or actual_answer_references != expected_answer_references
+            or draft_v2.tenant_id != proposal.tenant_id
+            or draft_v2.user_id != proposal.owner_user_id
+            or draft_v2.route_hash != proposal.route_hash
+            or draft_v2.original_query_digest != proposal.original_query_digest
+            or draft_v2.draft_v1_hash != proposal.draft_v1_hash
+            or draft_v2.correction_packet_hash != correction_packet.packet_hash
+            or draft_v2.draft_v2_hash != proposal.draft_v2_hash
+            or summary.request_id != draft_v2.request_id
+            or summary.tenant_id != proposal.tenant_id
+            or summary.user_id != proposal.owner_user_id
+            or summary.route_hash != proposal.route_hash
+            or summary.draft_v2_hash != draft_v2.draft_v2_hash
+            or summary.correction_packet_hash != correction_packet.packet_hash
+            or summary.summary_hash != proposal.verification_summary_hash
+            or verified_answer.request_id != draft_v2.request_id
+            or verified_answer.draft_v2_hash != draft_v2.draft_v2_hash
+            or verified_answer.verification_summary_hash != summary.summary_hash
+            or verified_answer.answer_text != draft_v2.draft_text
+            or verified_answer.answer_text_sha256 != draft_v2.draft_text_sha256
+        ):
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+
+        normalized_claims = tuple(
+            claim
+            for claim in step25_result.ordered_claims
+            if normalize_proposal_statement(claim.exact_claim_text)
+            == proposal.normalized_statement
+        )
+        if len(normalized_claims) != 1:
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+        matched_claim = normalized_claims[0]
+        verification_map = {
+            item.claim_id: item
+            for item in step25_result.ordered_claim_verifications
+        }
+        answer_reference_map = {
+            item.claim_id: item
+            for item in verified_answer.claim_verification_references
+        }
+        verification = verification_map.get(matched_claim.claim_id)
+        answer_reference = answer_reference_map.get(matched_claim.claim_id)
+        if (
+            verification is None
+            or answer_reference is None
+            or verification.claim_hash != matched_claim.claim_hash
+            or verification.draft_v2_hash != draft_v2.draft_v2_hash
+            or verification.evidence_binding_result
+            is not EvidenceBindingResult.SUPPORTED
+            or verification.corrected_evidence_signal_hash is None
+            or verification.corrected_evidence_proof is None
+            or verification.corrected_evidence_proof_hash is None
+            or Step25ReasonCode.CORRECTED_EVIDENCE_SUPPORTS
+            not in verification.reason_codes
+            or verification.final_step25_verdict
+            is not FinalStep25ClaimVerdict.VERIFIED_SUPPORTED
+            or answer_reference.claim_hash != matched_claim.claim_hash
+            or answer_reference.verification_hash != verification.verification_hash
+            or answer_reference.final_verdict
+            is not FinalStep25ClaimVerdict.VERIFIED_SUPPORTED
+            or not matched_claim.cited_citation_ids
+        ):
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+        corrected_proof = verification.corrected_evidence_proof
+        assert corrected_proof is not None
+        try:
+            verify_corrected_evidence_proof_hash(corrected_proof)
+        except (ContractValidationError, IntegrityError) as exc:
+            raise PersonalMemoryPatchValidationError(
+                Step29ReasonCode.EVIDENCE_INVALID
+            ) from exc
+        target_text_sha256 = hashlib.sha256(
+            _exact_text_without_citations(matched_claim.exact_claim_text).encode(
+                "utf-8"
+            )
+        ).hexdigest()
+        if (
+            corrected_proof.proof_hash
+            != verification.corrected_evidence_proof_hash
+            or corrected_proof.correction_packet_hash != correction_packet.packet_hash
+            or corrected_proof.target_claim_id != matched_claim.claim_id
+            or corrected_proof.target_claim_hash != matched_claim.claim_hash
+            or corrected_proof.target_claim_text_sha256 != target_text_sha256
+            or corrected_proof.evidence_span_text_sha256 != target_text_sha256
+        ):
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+
+        packet_citations = {
+            item.citation_id: item for item in correction_packet.ordered_citations
+        }
+        answer_citations = {
+            item.citation_id: item for item in verified_answer.ordered_citations
+        }
+        correction_compliances = tuple(
+            item
+            for item in summary.required_correction_results
+            if item.status is CorrectionComplianceStatus.SATISFIED
+            and matched_claim.claim_id in item.matched_draft_v2_claim_ids
+        )
+        if len(correction_compliances) != 1:
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+        correction_compliance = correction_compliances[0]
+        if corrected_proof.satisfied_correction_ids != (
+            correction_compliance.correction_id,
+        ):
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+        correction_map = {
+            item.correction_id: item
+            for item in correction_packet.ordered_required_corrections
+        }
+        required_correction = correction_map.get(correction_compliance.correction_id)
+        source_assessment = assessment_map.get(correction_compliance.source_claim_id)
+        if (
+            required_correction is None
+            or source_assessment is None
+            or correction_compliance.source_claim_id not in claim_ids
+            or required_correction.claim_id != correction_compliance.source_claim_id
+            or source_assessment.candidate_status
+            is not ClaimEvidenceCandidateStatus.REFUTED
+        ):
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+        source_facts = tuple(
+            item
+            for item in required_correction.required_replacement_facts
+            if item.relation is ClaimEvidenceRelation.REFUTES
+            and item.evidence_link_hash in source_assessment.refuting_link_hashes
+        )
+        if len(source_facts) != 1:
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+        source_fact = source_facts[0]
+        source_citation = packet_citations.get(source_fact.citation_id)
+        if (
+            source_citation is None
+            or source_citation.claim_id != correction_compliance.source_claim_id
+            or source_citation.relation is not ClaimEvidenceRelation.REFUTES
+            or source_citation.evidence_link_hash != source_fact.evidence_link_hash
+            or source_citation.candidate_hash != source_fact.candidate_hash
+            or source_citation.content_sha256 != source_fact.content_sha256
+            or source_citation.temporal_assessment_hash
+            != source_fact.temporal_assessment_hash
+        ):
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+        if (
+            corrected_proof.packet_citation_id != source_citation.citation_id
+            or corrected_proof.packet_citation_hash != source_citation.citation_hash
+            or corrected_proof.original_evidence_link.link_hash
+            != source_fact.evidence_link_hash
+        ):
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+        cited = []
+        for citation_id in matched_claim.cited_citation_ids:
+            citation = packet_citations.get(citation_id)
+            answer_citation = answer_citations.get(citation_id)
+            if (
+                citation is None
+                or answer_citation is None
+                or answer_citation.citation_hash != citation.citation_hash
+            ):
+                raise PersonalMemoryPatchValidationError(
+                    Step29ReasonCode.EVIDENCE_INVALID
+                )
+            cited.append(citation)
+        if len(cited) != 1:
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+        expected_link_hashes = tuple(
+            sorted(item.evidence_link_hash for item in cited)
+        )
+        if (
+            len(expected_link_hashes) != len(set(expected_link_hashes))
+            or expected_link_hashes
+            != proposal.candidate_evidence_reference_hashes
+            or tuple(link.link_hash for link in links) != expected_link_hashes
+        ):
+            raise PersonalMemoryPatchValidationError(Step29ReasonCode.EVIDENCE_INVALID)
+
+        link_map = {item.link_hash: item for item in links}
+        for citation in sorted(cited, key=lambda item: item.evidence_link_hash):
+            link = link_map[citation.evidence_link_hash]
+            assessment = assessment_map.get(link.claim_id)
+            item = item_map.get(link.step20_item_hash)
+            if (
+                assessment is None
+                or assessment.candidate_status
+                is not ClaimEvidenceCandidateStatus.REFUTED
+                or link.link_hash not in assessment.refuting_link_hashes
+                or link.relation is not ClaimEvidenceRelation.REFUTES
+                or citation.claim_id != link.claim_id
+                or citation.candidate_hash != link.candidate_identity_hash
+                or citation.source_id != link.source_id
+                or citation.knowledge_version_id != link.knowledge_version_id
+                or citation.chunk_id != link.chunk_id
+                or citation.content_sha256 != link.content_sha256
+                or citation.authority_level is not link.authority_level
+                or citation.publication_state is not link.publication_state
+                or citation.temporal_assessment_hash
+                != link.temporal_assessment_hash
+                or citation.relation is not ClaimEvidenceRelation.REFUTES
+                or citation.citation_id != source_citation.citation_id
+                or citation.citation_hash != source_citation.citation_hash
+                or item is None
+                or item.identity.identity_hash != link.candidate_identity_hash
+                or item.identity.content_sha256 != link.content_sha256
+                or item.identity.source_id != link.source_id
+                or item.identity.knowledge_version_id != link.knowledge_version_id
+                or item.identity.chunk_id != link.chunk_id
+                or link.step20_bundle_hash not in bundle_hashes
+                or link.step20_item_hash not in temporal_result.resolved_item_hashes
+                or corrected_proof.original_evidence_link != link
+                or corrected_proof.evidence_span_text_sha256
+                != link.evidence_span_text_sha256
+            ):
+                raise PersonalMemoryPatchValidationError(
+                    Step29ReasonCode.EVIDENCE_INVALID
+                )
+            references.append(
+                _corrected_claim_evidence_reference(
+                    link,
+                    source_claim_id=correction_compliance.source_claim_id,
+                    source_claim_assessment_hash=source_assessment.assessment_hash,
+                    source_evidence_link_hash=source_fact.evidence_link_hash,
+                    source_citation_id=source_citation.citation_id,
+                    source_citation_hash=source_citation.citation_hash,
+                    required_correction_id=required_correction.correction_id,
+                    required_correction_hash=required_correction.correction_hash,
+                    required_correction_compliance_hash=(
+                        correction_compliance.compliance_hash
+                    ),
+                    target_claim_id=matched_claim.claim_id,
+                    target_claim_hash=matched_claim.claim_hash,
+                    target_draft_v2_hash=draft_v2.draft_v2_hash,
+                    target_verification_hash=verification.verification_hash,
+                    corrected_evidence_signal_hash=(
+                        verification.corrected_evidence_signal_hash
+                    ),
+                    corrected_evidence_proof_hash=(
+                        verification.corrected_evidence_proof_hash
+                    ),
+                    evidence_context_hash=corrected_proof.evidence_context_hash,
+                    evidence_span_text_sha256=(
+                        corrected_proof.evidence_span_text_sha256
+                    ),
+                    step25_result_hash=step25_result.result_hash,
+                    verification_summary_hash=summary.summary_hash,
+                    verified_answer_hash=verified_answer.answer_hash,
+                    verified_answer_claim_reference_hash=(
+                        answer_reference.reference_hash
+                    ),
+                    target_citation_id=citation.citation_id,
+                    target_citation_hash=citation.citation_hash,
+                )
+            )
     normalized = proposal.normalized_statement
     prohibited = tuple(
         sorted(
@@ -1568,10 +2178,24 @@ def verify_personal_memory_patch_proposal(value: PersonalMemoryPatchProposal) ->
 
 
 def verify_personal_memory_patch_evidence_reference(
-    value: PersonalMemoryPatchEvidenceReference,
+    value: PersonalMemoryPatchEvidenceReference
+    | PersonalMemoryCorrectedClaimEvidenceReference,
 ) -> None:
+    if not isinstance(
+        value,
+        (
+            PersonalMemoryPatchEvidenceReference,
+            PersonalMemoryCorrectedClaimEvidenceReference,
+        ),
+    ):
+        raise ContractValidationError("evidence reference type is invalid")
     verify_canonical_hash(value, value.reference_hash, exclude_fields=("reference_hash",))
-    _reconstruct(value, "Personal Memory Patch evidence reference")
+    context = (
+        "Personal Memory corrected-claim evidence reference"
+        if isinstance(value, PersonalMemoryCorrectedClaimEvidenceReference)
+        else "Personal Memory Patch evidence reference"
+    )
+    _reconstruct(value, context)
 
 
 def verify_personal_memory_patch_evidence_binding(
@@ -1643,11 +2267,21 @@ def _scope_from_json(value: object) -> tuple[ScopeDimension, ...]:
             frozenset(ScopeDimension.__dataclass_fields__),
             "scope dimension",
         )
+        value_type = ScopeValueType(data["value_type"])
+        raw_value = data["value"]
+        if value_type is ScopeValueType.STRING_SET:
+            if not isinstance(raw_value, list):
+                raise ContractValidationError(
+                    "STRING_SET scope value must be an array"
+                )
+            raw_value = tuple(raw_value)
+        elif value_type is ScopeValueType.TIMESTAMP:
+            raw_value = _datetime(raw_value, "scope dimension value")
         result.append(
             ScopeDimension(
                 name=data["name"],
-                value=data["value"],
-                value_type=ScopeValueType(data["value_type"]),
+                value=raw_value,
+                value_type=value_type,
                 comparison_mode=ScopeComparisonMode(data["comparison_mode"]),
                 source=data["source"],
                 required=data["required"],
@@ -1710,7 +2344,79 @@ def _proposal_from_json(value: object) -> PersonalMemoryPatchProposal:
     return result
 
 
-def _reference_from_json(value: object) -> PersonalMemoryPatchEvidenceReference:
+def _corrected_reference_from_json(
+    value: object,
+) -> PersonalMemoryCorrectedClaimEvidenceReference:
+    data = _mapping(
+        value,
+        frozenset(PersonalMemoryCorrectedClaimEvidenceReference.__dataclass_fields__),
+        "corrected-claim evidence reference",
+    )
+    result = PersonalMemoryCorrectedClaimEvidenceReference(
+        schema_version=data["schema_version"],
+        contract_type=data["contract_type"],
+        bridge_kind=data["bridge_kind"],
+        source_claim_id=data["source_claim_id"],
+        source_claim_assessment_hash=data["source_claim_assessment_hash"],
+        source_relation=ClaimEvidenceRelation(data["source_relation"]),
+        source_evidence_link_hash=data["source_evidence_link_hash"],
+        source_citation_id=data["source_citation_id"],
+        source_citation_hash=data["source_citation_hash"],
+        required_correction_id=data["required_correction_id"],
+        required_correction_hash=data["required_correction_hash"],
+        required_correction_compliance_hash=(
+            data["required_correction_compliance_hash"]
+        ),
+        target_draft_v2_claim_id=data["target_draft_v2_claim_id"],
+        target_draft_v2_claim_hash=data["target_draft_v2_claim_hash"],
+        target_draft_v2_hash=data["target_draft_v2_hash"],
+        target_verification_hash=data["target_verification_hash"],
+        target_verdict=FinalStep25ClaimVerdict(data["target_verdict"]),
+        corrected_evidence_signal_hash=data["corrected_evidence_signal_hash"],
+        corrected_evidence_proof_hash=data["corrected_evidence_proof_hash"],
+        evidence_context_hash=data["evidence_context_hash"],
+        evidence_span_text_sha256=data["evidence_span_text_sha256"],
+        step25_result_hash=data["step25_result_hash"],
+        verification_summary_hash=data["verification_summary_hash"],
+        verified_answer_hash=data["verified_answer_hash"],
+        verified_answer_claim_reference_hash=(
+            data["verified_answer_claim_reference_hash"]
+        ),
+        target_citation_id=data["target_citation_id"],
+        target_citation_hash=data["target_citation_hash"],
+        evidence_link_hash=data["evidence_link_hash"],
+        step20_bundle_hash=data["step20_bundle_hash"],
+        step20_item_hash=data["step20_item_hash"],
+        candidate_identity_hash=data["candidate_identity_hash"],
+        evidence_id=data["evidence_id"],
+        source_id=data["source_id"],
+        knowledge_version_id=data["knowledge_version_id"],
+        chunk_id=data["chunk_id"],
+        content_sha256=data["content_sha256"],
+        authority_level=SourceAuthorityLevel(data["authority_level"]),
+        publication_state=SourcePublicationState(data["publication_state"]),
+        temporal_assessment_hash=data["temporal_assessment_hash"],
+        temporal_applicability=TemporalApplicability(data["temporal_applicability"]),
+        freshness_status=FreshnessStatus(data["freshness_status"]),
+        conflict_group_id=data["conflict_group_id"],
+    )
+    if result.reference_hash != data["reference_hash"]:
+        raise IntegrityError("stored corrected-claim evidence reference hash mismatch")
+    return result
+
+
+def _reference_from_json(
+    value: object,
+) -> PersonalMemoryPatchEvidenceReference | PersonalMemoryCorrectedClaimEvidenceReference:
+    if isinstance(value, Mapping) and "contract_type" in value:
+        if (
+            value.get("contract_type")
+            != CORRECTED_CLAIM_EVIDENCE_REFERENCE_CONTRACT_TYPE
+        ):
+            raise ContractValidationError(
+                "corrected-claim evidence reference discriminator is invalid"
+            )
+        return _corrected_reference_from_json(value)
     data = _mapping(
         value,
         frozenset(PersonalMemoryPatchEvidenceReference.__dataclass_fields__),
@@ -1870,6 +2576,9 @@ def proposal_conflict_between(
 
 
 __all__ = [
+    "CORRECTED_CLAIM_EVIDENCE_BRIDGE_KIND",
+    "CORRECTED_CLAIM_EVIDENCE_REFERENCE_CONTRACT_TYPE",
+    "CORRECTED_CLAIM_EVIDENCE_REFERENCE_SCHEMA_VERSION",
     "MAXIMUM_PROPOSALS_PER_SLOT",
     "MAXIMUM_PROPOSAL_BYTES_PER_SLOT",
     "PERSONAL_MEMORY_PATCH_PROPOSAL_CONTRACT_TYPE",
@@ -1885,6 +2594,7 @@ __all__ = [
     "AdvancePersonalMemoryPatchToAwaitingApproval",
     "PersonalMemoryPatchEvidenceBinding",
     "PersonalMemoryPatchEvidenceReference",
+    "PersonalMemoryCorrectedClaimEvidenceReference",
     "PersonalMemoryPatchProposal",
     "PersonalMemoryPatchProposalKind",
     "PersonalMemoryPatchProposalState",

@@ -257,6 +257,9 @@ from .proposal_repository import (
 )
 from .proposal_service import PersonalMemoryPatchProposalService
 from .proposals import (
+    CORRECTED_CLAIM_EVIDENCE_BRIDGE_KIND,
+    CORRECTED_CLAIM_EVIDENCE_REFERENCE_CONTRACT_TYPE,
+    CORRECTED_CLAIM_EVIDENCE_REFERENCE_SCHEMA_VERSION,
     MAXIMUM_PROPOSAL_BYTES_PER_SLOT,
     MAXIMUM_PROPOSALS_PER_SLOT,
     PERSONAL_MEMORY_PATCH_PROPOSAL_CONTRACT_TYPE,
@@ -269,6 +272,7 @@ from .proposals import (
     AdvancePersonalMemoryPatchToAwaitingApproval,
     BindPersonalMemoryPatchEvidence,
     CreatePersonalMemoryPatchProposal,
+    PersonalMemoryCorrectedClaimEvidenceReference,
     PersonalMemoryPatchEvidenceBinding,
     PersonalMemoryPatchEvidenceReference,
     PersonalMemoryPatchProposal,
@@ -412,6 +416,9 @@ __all__ = [
     "Step30TrustedClock",
     "MAXIMUM_PROPOSALS_PER_SLOT",
     "MAXIMUM_PROPOSAL_BYTES_PER_SLOT",
+    "CORRECTED_CLAIM_EVIDENCE_BRIDGE_KIND",
+    "CORRECTED_CLAIM_EVIDENCE_REFERENCE_CONTRACT_TYPE",
+    "CORRECTED_CLAIM_EVIDENCE_REFERENCE_SCHEMA_VERSION",
     "PERSONAL_MEMORY_PATCH_PROPOSAL_CONTRACT_TYPE",
     "PERSONAL_MEMORY_PATCH_STATE_CONTRACT_TYPE",
     "PERSONAL_MEMORY_PATCH_VALIDATION_POLICY_ID",
@@ -419,6 +426,7 @@ __all__ = [
     "AdvancePersonalMemoryPatchToAwaitingApproval",
     "BindPersonalMemoryPatchEvidence",
     "CreatePersonalMemoryPatchProposal",
+    "PersonalMemoryCorrectedClaimEvidenceReference",
     "PersonalMemoryPatchEvidenceBinding",
     "PersonalMemoryPatchEvidenceReference",
     "PersonalMemoryPatchProposal",

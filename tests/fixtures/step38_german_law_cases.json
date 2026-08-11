@@ -1,0 +1,113 @@
+{
+  "schema_version": "1.0.0",
+  "suite_id": "step38-german-law-golden-cases-1a",
+  "real_corpus_fixture": {
+    "fixture_class": "REAL_GERMAN_LAW_CORPUS_FIXTURE",
+    "hat_id": "german-law",
+    "hat_version": "1.0.0",
+    "hat_scope_id": "german-law-global-1a",
+    "source_id": "de-federal-gii-bjnr1330a0023",
+    "official_identifier": "BJNR1330A0023",
+    "version_identity": "legal-version-001123facb9c2ff3c2b693b2f2b6b2946511457bbbf5f7d9ddd1047c5e181e95",
+    "provisions": [
+      {
+        "provision_identifier": "I.",
+        "content_sha256": "323c88960cc5eeca3e2d4b6c3c34630947f85ec82c75e1e398492a319bd13147"
+      },
+      {
+        "provision_identifier": "II.",
+        "content_sha256": "6a12a5f19d7a4b61d71be5c5583d0a3a41b3111fcf00803892200fc42260d99e"
+      },
+      {
+        "provision_identifier": "III.",
+        "content_sha256": "fb4de8c3c966f34ccf469bfb56ad31bf9e9681775586fa058465a216f14439a1"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "primary-entry-into-force",
+      "case_kind": "PRIMARY",
+      "fixture_class": "REAL_GERMAN_LAW_CORPUS_FIXTURE",
+      "question": "Vervollständige den Satz zur BMJErnAnO: „Diese Anordnung tritt am [Datum] in Kraft.“",
+      "knowledge_as_of": "2026-08-01T21:51:24Z",
+      "expected_route": "HAT_ASSIST",
+      "expected_source_id": "de-federal-gii-bjnr1330a0023",
+      "expected_provision_ids": ["III."],
+      "expected_evidence_status": "SUFFICIENT",
+      "expected_correction_condition": "WRONG_EFFECTIVE_DATE_MUST_BE_REPLACED_WITH_EXACT_SOURCE_DATE",
+      "expected_final_output": "VERIFIED_ANSWER",
+      "personal_memory_branch": true
+    },
+    {
+      "case_id": "backup-special-case-reservation",
+      "case_kind": "BACKUP",
+      "fixture_class": "REAL_GERMAN_LAW_CORPUS_FIXTURE",
+      "question": "Vervollständige nach Abschnitt II der BMJErnAnO den Satz, indem du „nicht“ einsetzt oder die Lücke leer lässt: „Für besondere Fälle behalte ich mir die Ernennung und Entlassung der unter I. genannten Beamtinnen und Beamten ___ vor.“",
+      "knowledge_as_of": "2026-08-01T21:51:24Z",
+      "expected_route": "HAT_ASSIST",
+      "expected_source_id": "de-federal-gii-bjnr1330a0023",
+      "expected_provision_ids": ["II."],
+      "expected_evidence_status": "SUFFICIENT",
+      "expected_correction_condition": "SPECIAL_CASE_RESERVATION_NEGATION_MUST_BE_REMOVED",
+      "expected_final_output": "VERIFIED_ANSWER",
+      "personal_memory_branch": true
+    },
+    {
+      "case_id": "supported-entry-into-force-clean",
+      "case_kind": "SUPPORTED",
+      "fixture_class": "REAL_GERMAN_LAW_CORPUS_FIXTURE",
+      "question": "Wann tritt diese Anordnung in Kraft?",
+      "knowledge_as_of": "2026-08-01T21:51:24Z",
+      "expected_route": "HAT_ASSIST",
+      "expected_source_id": "de-federal-gii-bjnr1330a0023",
+      "expected_provision_ids": ["III."],
+      "expected_evidence_status": "SUFFICIENT",
+      "expected_correction_condition": "NO_MATERIAL_CORRECTION_REQUIRED",
+      "expected_final_output": "VERIFIED_ANSWER",
+      "personal_memory_branch": false
+    },
+    {
+      "case_id": "temporal-unavailable-edge",
+      "case_kind": "TEMPORAL",
+      "fixture_class": "SYNTHETIC_EDGE_CASE",
+      "question": "Welche Fassung galt vor dem belegten Geltungszeitraum?",
+      "knowledge_as_of": "1900-01-01T00:00:00Z",
+      "expected_route": "HAT_ASSIST",
+      "expected_source_id": "de-federal-gii-bjnr1330a0023",
+      "expected_provision_ids": ["I."],
+      "expected_evidence_status": "INSUFFICIENT",
+      "expected_correction_condition": "CURRENT_VERSION_MUST_NOT_LEAK_INTO_HISTORICAL_ANSWER",
+      "expected_final_output": "HUMAN_REVIEW_REQUIRED",
+      "personal_memory_branch": false
+    },
+    {
+      "case_id": "conflicting-ceiling-edge",
+      "case_kind": "FAIL_CLOSED",
+      "fixture_class": "SYNTHETIC_EDGE_CASE",
+      "question": "Welche Obergrenze gilt, wenn gleichrangige Fassungen A 14 und A 15 nennen?",
+      "knowledge_as_of": "2026-08-01T21:51:24Z",
+      "expected_route": "HAT_ENFORCE",
+      "expected_source_id": "synthetic-step38-conflict",
+      "expected_provision_ids": ["synthetic-I"],
+      "expected_evidence_status": "CONFLICTING",
+      "expected_correction_condition": "CONFLICT_MUST_NOT_BE_RESOLVED_AS_CERTAIN",
+      "expected_final_output": "HUMAN_REVIEW_REQUIRED",
+      "personal_memory_branch": false
+    },
+    {
+      "case_id": "non-german-law-route",
+      "case_kind": "ROUTE_NEGATIVE",
+      "fixture_class": "SYNTHETIC_EDGE_CASE",
+      "question": "Wie wird das Wetter morgen?",
+      "knowledge_as_of": "2026-08-01T21:51:24Z",
+      "expected_route": "PASS_THROUGH",
+      "expected_source_id": null,
+      "expected_provision_ids": [],
+      "expected_evidence_status": "NOT_REQUIRED",
+      "expected_correction_condition": "GERMAN_LAW_HAT_MUST_NOT_BE_FORCED",
+      "expected_final_output": "PASS_THROUGH",
+      "personal_memory_branch": false
+    }
+  ]
+}

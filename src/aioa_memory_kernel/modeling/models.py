@@ -35,16 +35,30 @@ from aioa_memory_kernel.temporal import TemporalResolutionResult, verify_tempora
 
 
 STEP22_SCHEMA_VERSION = "1.0.0"
-APPROVED_PROVIDER_ID = "moonshot-ai"
-APPROVED_ADAPTER_VERSION = "moonshot-chat-completions-1a"
-APPROVED_MODEL_ID = "moonshot-v1-8k"
-APPROVED_MODEL_DECLARED_VERSION = "moonshot-v1-8k"
-APPROVED_ENDPOINT_CLASS = "moonshot-public-chat-completions-v1"
-APPROVED_API_ORIGIN = "https://api.moonshot.ai"
-APPROVED_CHAT_COMPLETIONS_PATH = "/v1/chat/completions"
-APPROVED_CREDENTIAL_ENVIRONMENT_VARIABLE = "MOONSHOT_API_KEY"
-APPROVED_CONTEXT_WINDOW_TOKENS = 8192
-APPROVED_MODEL_REGISTRY_OWNER = "moonshot"
+APPROVED_PROVIDER_ID = "openrouter"
+APPROVED_ADAPTER_VERSION = "openrouter-chat-completions-step38-1a"
+APPROVED_MODEL_ID = "moonshotai/kimi-k2"
+APPROVED_MODEL_DECLARED_VERSION = "moonshotai/kimi-k2"
+APPROVED_ENDPOINT_CLASS = "openrouter-public-chat-completions-v1"
+APPROVED_API_ORIGIN = "https://openrouter.ai"
+APPROVED_CHAT_COMPLETIONS_PATH = "/api/v1/chat/completions"
+APPROVED_CREDENTIAL_ENVIRONMENT_VARIABLE = "OPENROUTER_API_KEY"
+APPROVED_CONTEXT_WINDOW_TOKENS = 131072
+APPROVED_MODEL_REGISTRY_OWNER = "moonshotai"
+
+# Step 22's original Moonshot decision remains loadable only for historical
+# replay and compatibility tests.  It is deliberately not the current runtime
+# identity returned by ``load_approved_provider_spec``.
+STEP22_MOONSHOT_PROVIDER_ID = "moonshot-ai"
+STEP22_MOONSHOT_ADAPTER_VERSION = "moonshot-chat-completions-1a"
+STEP22_MOONSHOT_MODEL_ID = "moonshot-v1-8k"
+STEP22_MOONSHOT_MODEL_DECLARED_VERSION = "moonshot-v1-8k"
+STEP22_MOONSHOT_ENDPOINT_CLASS = "moonshot-public-chat-completions-v1"
+STEP22_MOONSHOT_API_ORIGIN = "https://api.moonshot.ai"
+STEP22_MOONSHOT_CHAT_COMPLETIONS_PATH = "/v1/chat/completions"
+STEP22_MOONSHOT_CREDENTIAL_ENVIRONMENT_VARIABLE = "MOONSHOT_API_KEY"
+STEP22_MOONSHOT_CONTEXT_WINDOW_TOKENS = 8192
+STEP22_MOONSHOT_MODEL_REGISTRY_OWNER = "moonshot"
 PROMPT_TEMPLATE_ID = "draft-v1-original-query-only-1a"
 PROMPT_TEMPLATE_VERSION = "1"
 GENERATION_POLICY_ID = "draft-v1-generation-parameters-1a"
@@ -67,6 +81,12 @@ MAXIMUM_USAGE_METADATA_BYTES = 4096
 MAXIMUM_PERSISTED_DRAFT_ENVELOPE_BYTES = 96 * 1024
 DRAFT_REFERENCE_PREFIX = "data:application/vnd.aioa.draft-v1+json;base64,"
 PROVIDER_CONFIG_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "config"
+    / "modeling"
+    / "openrouter-moonshotai-kimi-k2-step38-1a.json"
+)
+STEP22_MOONSHOT_PROVIDER_CONFIG_PATH = (
     Path(__file__).resolve().parents[3]
     / "config"
     / "modeling"
@@ -116,7 +136,7 @@ class ModelAdapterError(RuntimeError):
 
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 _LOGICAL_ID = re.compile(r"^[a-z0-9][a-z0-9._:-]{0,127}$")
-_VERSION = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:+-]{0,127}$")
+_VERSION = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/+-]{0,127}$")
 _DECIMAL = re.compile(r"^(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$")
 
 
@@ -286,11 +306,7 @@ class ProviderSpec:
             code_execution_disabled=self.code_execution_disabled,
             immutable_model_revision=self.immutable_model_revision,
         )
-        if self.api_origin != APPROVED_API_ORIGIN or self.chat_completions_path != APPROVED_CHAT_COMPLETIONS_PATH:
-            raise ModelAdapterError(ModelReasonCode.MODEL_IDENTITY_MISMATCH)
-        if self.credential_environment_variable != APPROVED_CREDENTIAL_ENVIRONMENT_VARIABLE:
-            raise ModelAdapterError(ModelReasonCode.MODEL_IDENTITY_MISMATCH)
-        if self.context_window_tokens != APPROVED_CONTEXT_WINDOW_TOKENS:
+        if self._profile() not in _SUPPORTED_PROVIDER_PROFILES:
             raise ModelAdapterError(ModelReasonCode.MODEL_IDENTITY_MISMATCH)
         _logical_id(self.model_registry_owner, "model_registry_owner")
         object.__setattr__(
@@ -299,6 +315,25 @@ class ProviderSpec:
             canonical_sha256(self, exclude_fields=("config_digest",)),
         )
         del identity
+
+    def _profile(self) -> tuple[object, ...]:
+        return (
+            self.provider_id,
+            self.adapter_version,
+            self.model_id,
+            self.model_declared_version,
+            self.endpoint_class,
+            self.api_origin,
+            self.chat_completions_path,
+            self.credential_environment_variable,
+            self.context_window_tokens,
+            self.model_registry_owner,
+            self.immutable_model_revision,
+            self.tooling_disabled,
+            self.function_calling_disabled,
+            self.web_browsing_disabled,
+            self.code_execution_disabled,
+        )
 
     def provider_identity(self) -> ProviderIdentity:
         return ProviderIdentity(
@@ -313,6 +348,45 @@ class ProviderSpec:
             code_execution_disabled=self.code_execution_disabled,
             immutable_model_revision=self.immutable_model_revision,
         )
+
+
+_APPROVED_PROVIDER_PROFILE = (
+    APPROVED_PROVIDER_ID,
+    APPROVED_ADAPTER_VERSION,
+    APPROVED_MODEL_ID,
+    APPROVED_MODEL_DECLARED_VERSION,
+    APPROVED_ENDPOINT_CLASS,
+    APPROVED_API_ORIGIN,
+    APPROVED_CHAT_COMPLETIONS_PATH,
+    APPROVED_CREDENTIAL_ENVIRONMENT_VARIABLE,
+    APPROVED_CONTEXT_WINDOW_TOKENS,
+    APPROVED_MODEL_REGISTRY_OWNER,
+    False,
+    True,
+    True,
+    True,
+    True,
+)
+_STEP22_MOONSHOT_PROVIDER_PROFILE = (
+    STEP22_MOONSHOT_PROVIDER_ID,
+    STEP22_MOONSHOT_ADAPTER_VERSION,
+    STEP22_MOONSHOT_MODEL_ID,
+    STEP22_MOONSHOT_MODEL_DECLARED_VERSION,
+    STEP22_MOONSHOT_ENDPOINT_CLASS,
+    STEP22_MOONSHOT_API_ORIGIN,
+    STEP22_MOONSHOT_CHAT_COMPLETIONS_PATH,
+    STEP22_MOONSHOT_CREDENTIAL_ENVIRONMENT_VARIABLE,
+    STEP22_MOONSHOT_CONTEXT_WINDOW_TOKENS,
+    STEP22_MOONSHOT_MODEL_REGISTRY_OWNER,
+    False,
+    True,
+    True,
+    True,
+    True,
+)
+_SUPPORTED_PROVIDER_PROFILES = frozenset(
+    {_APPROVED_PROVIDER_PROFILE, _STEP22_MOONSHOT_PROVIDER_PROFILE}
+)
 
 
 _PROVIDER_CONFIG_FIELDS = {
@@ -345,11 +419,13 @@ def _strict_pairs(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return value
 
 
-def load_approved_provider_spec() -> ProviderSpec:
-    """Load the one checked-in Step 22 provider/model decision."""
-
+def _load_provider_spec(
+    path: Path,
+    *,
+    expected_profile: tuple[object, ...],
+) -> ProviderSpec:
     try:
-        payload = PROVIDER_CONFIG_PATH.read_bytes()
+        payload = path.read_bytes()
         if len(payload) > 32 * 1024:
             raise ValueError("provider config exceeds bound")
         decoded = json.loads(payload.decode("utf-8"), object_pairs_hook=_strict_pairs)
@@ -365,26 +441,27 @@ def load_approved_provider_spec() -> ProviderSpec:
         raise ModelAdapterError(ModelReasonCode.MODEL_IDENTITY_MISMATCH) from exc
     if claimed != spec.config_digest:
         raise ModelAdapterError(ModelReasonCode.MODEL_IDENTITY_MISMATCH)
-    exact = (
-        spec.provider_id == APPROVED_PROVIDER_ID
-        and spec.adapter_version == APPROVED_ADAPTER_VERSION
-        and spec.model_id == APPROVED_MODEL_ID
-        and spec.model_declared_version == APPROVED_MODEL_DECLARED_VERSION
-        and spec.endpoint_class == APPROVED_ENDPOINT_CLASS
-        and spec.api_origin == APPROVED_API_ORIGIN
-        and spec.chat_completions_path == APPROVED_CHAT_COMPLETIONS_PATH
-        and spec.credential_environment_variable == APPROVED_CREDENTIAL_ENVIRONMENT_VARIABLE
-        and spec.context_window_tokens == APPROVED_CONTEXT_WINDOW_TOKENS
-        and spec.model_registry_owner == APPROVED_MODEL_REGISTRY_OWNER
-        and spec.immutable_model_revision is False
-        and spec.tooling_disabled is True
-        and spec.function_calling_disabled is True
-        and spec.web_browsing_disabled is True
-        and spec.code_execution_disabled is True
-    )
-    if not exact:
+    if spec._profile() != expected_profile:
         raise ModelAdapterError(ModelReasonCode.MODEL_IDENTITY_MISMATCH)
     return spec
+
+
+def load_approved_provider_spec() -> ProviderSpec:
+    """Load the current exact provider/model decision for Step 38 runtime."""
+
+    return _load_provider_spec(
+        PROVIDER_CONFIG_PATH,
+        expected_profile=_APPROVED_PROVIDER_PROFILE,
+    )
+
+
+def load_step22_moonshot_provider_spec() -> ProviderSpec:
+    """Load the frozen historical Step 22 Moonshot decision."""
+
+    return _load_provider_spec(
+        STEP22_MOONSHOT_PROVIDER_CONFIG_PATH,
+        expected_profile=_STEP22_MOONSHOT_PROVIDER_PROFILE,
+    )
 
 
 @dataclass(frozen=True, slots=True)
@@ -1139,6 +1216,7 @@ __all__ = [
     "ProviderResponse",
     "ProviderSpec",
     "ProviderTextRequest",
+    "STEP22_MOONSHOT_CREDENTIAL_ENVIRONMENT_VARIABLE",
     "STEP22_SCHEMA_VERSION",
     "TimeoutPolicy",
     "decode_draft_reference",
@@ -1146,6 +1224,7 @@ __all__ = [
     "encode_draft_reference",
     "load_approved_provider_spec",
     "load_draft_v1_prompt_template",
+    "load_step22_moonshot_provider_spec",
     "prepare_model_generation_request",
     "verify_draft_v1_hash",
     "verify_generation_request_hash",

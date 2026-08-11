@@ -40,6 +40,8 @@ PRIVILEGED_BROWSER_NAMES = (
     "DATABASE_URL_REVIEW_SERVICE",
     "DATABASE_URL_SOURCE_PUBLICATION",
     "DATABASE_URL_INGESTION",
+    "OPENROUTER_API_KEY",
+    # The retired Step 22 provider name remains privileged legacy material.
     "MOONSHOT_API_KEY",
     "AWS_ACCESS_KEY_ID",
     "AWS_SECRET_ACCESS_KEY",
@@ -103,7 +105,7 @@ class CredentialInventoryTests(unittest.TestCase):
             CredentialPurpose.REVIEW_SERVICE_DATABASE: "DATABASE_URL_REVIEW_SERVICE",
             CredentialPurpose.SOURCE_PUBLICATION_DATABASE: "DATABASE_URL_SOURCE_PUBLICATION",
             CredentialPurpose.INGESTION_DATABASE: "DATABASE_URL_INGESTION",
-            CredentialPurpose.MODEL_PROVIDER: "MOONSHOT_API_KEY",
+            CredentialPurpose.MODEL_PROVIDER: "OPENROUTER_API_KEY",
         }
         self.assertEqual(
             {purpose: CREDENTIAL_SPECS[purpose].environment_variable for purpose in expected},
@@ -186,7 +188,7 @@ class CredentialInventoryTests(unittest.TestCase):
             CredentialSpec(
                 purpose=CredentialPurpose.MODEL_PROVIDER,
                 logical_name="provider",
-                environment_variable="MOONSHOT_API_KEY",
+                environment_variable="OPENROUTER_API_KEY",
                 consumer="adapter",
                 required_for_operation=True,
                 browser_visible=False,
@@ -222,7 +224,7 @@ class SecretValueAndProcessBoundaryTests(unittest.TestCase):
                     SecretValue(
                         invalid,
                         purpose=CredentialPurpose.MODEL_PROVIDER,
-                        source_name="MOONSHOT_API_KEY",
+                        source_name="OPENROUTER_API_KEY",
                     )
         with self.assertRaises(TypeError):
             SecretValue("value", purpose="MODEL_PROVIDER", source_name="KEY")  # type: ignore[arg-type]
@@ -269,14 +271,14 @@ class SecretValueAndProcessBoundaryTests(unittest.TestCase):
             "TZ": "UTC",
             "DATABASE_URL_APP": "app-secret-sentinel",
             "DATABASE_URL_MIGRATOR": "migration-secret-sentinel",
-            "MOONSHOT_API_KEY": "provider-secret-sentinel",
+            "OPENROUTER_API_KEY": "provider-secret-sentinel",
             "UNRELATED_SECRET_SENTINEL": "must-not-cross-boundary",
         }
         child = build_minimal_subprocess_environment(
             environment,
-            allowed_names=("MOONSHOT_API_KEY",),
+            allowed_names=("OPENROUTER_API_KEY",),
         )
-        self.assertEqual(child["MOONSHOT_API_KEY"], "provider-secret-sentinel")
+        self.assertEqual(child["OPENROUTER_API_KEY"], "provider-secret-sentinel")
         self.assertEqual(child.get("PATH"), "/usr/bin")
         self.assertNotIn("DATABASE_URL_APP", child)
         self.assertNotIn("DATABASE_URL_MIGRATOR", child)
@@ -293,7 +295,7 @@ class SecretValueAndProcessBoundaryTests(unittest.TestCase):
             "AWS_SECRET_ACCESS_KEY": "step36-fake-aws-secret",
             "AWS_SESSION_TOKEN": "step36-fake-session-token",
             "DATABASE_URL_COMMIT_HELPER": "step36-fake-db-secret",
-            "MOONSHOT_API_KEY": "step36-fake-provider-secret",
+            "OPENROUTER_API_KEY": "step36-fake-provider-secret",
         }
         child = build_minimal_subprocess_environment(
             environment,
@@ -313,7 +315,7 @@ class SecretValueAndProcessBoundaryTests(unittest.TestCase):
             "AWS_SECRET_ACCESS_KEY",
             "AWS_SESSION_TOKEN",
             "DATABASE_URL_COMMIT_HELPER",
-            "MOONSHOT_API_KEY",
+            "OPENROUTER_API_KEY",
         ):
             self.assertNotIn(forbidden, child)
 

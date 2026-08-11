@@ -151,7 +151,7 @@ class RedactedRenderingTests(unittest.TestCase):
         value = SecretValue(
             RAW_SENTINEL,
             purpose=CredentialPurpose.MODEL_PROVIDER,
-            source_name="MOONSHOT_API_KEY",
+            source_name="OPENROUTER_API_KEY",
         )
         stream = io.StringIO()
         handler = logging.StreamHandler(stream)

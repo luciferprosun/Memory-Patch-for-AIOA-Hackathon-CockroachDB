@@ -164,7 +164,7 @@ def _offline_boundary_checks() -> Mapping[str, Any]:
     provider = SecretValue(
         sentinel,
         purpose=CredentialPurpose.MODEL_PROVIDER,
-        source_name="MOONSHOT_API_KEY",
+        source_name="OPENROUTER_API_KEY",
     )
     if sentinel in str(provider) or sentinel in repr(provider):
         raise ValidationFailure("STEP36_SECRET_VALUE_RENDERED")
@@ -173,13 +173,13 @@ def _offline_boundary_checks() -> Mapping[str, Any]:
             "PATH": os.environ.get("PATH", "/usr/bin"),
             "DATABASE_URL_MIGRATOR": sentinel,
             "DATABASE_URL_COMMIT_HELPER": sentinel,
-            "MOONSHOT_API_KEY": sentinel,
+            "OPENROUTER_API_KEY": sentinel,
             "UNRELATED_SECRET": sentinel,
         },
-        allowed_names=("MOONSHOT_API_KEY",),
+        allowed_names=("OPENROUTER_API_KEY",),
     )
     if (
-        child.get("MOONSHOT_API_KEY") != sentinel
+        child.get("OPENROUTER_API_KEY") != sentinel
         or "DATABASE_URL_MIGRATOR" in child
         or "DATABASE_URL_COMMIT_HELPER" in child
         or "UNRELATED_SECRET" in child

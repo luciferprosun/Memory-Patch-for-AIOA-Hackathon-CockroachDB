@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import hashlib
 from datetime import datetime
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
+
+if TYPE_CHECKING:
+    from aioa_memory_kernel.german_law.e2e import EvidenceBoundCorrectionContext
 
 from aioa_memory_kernel.claims.models import (
     ClaimEvidenceAssessment,
@@ -27,6 +30,7 @@ from aioa_memory_kernel.temporal.models import (
     verify_temporal_result_hash,
 )
 from aioa_memory_kernel.answers.models import VerifiedAnswer
+from aioa_memory_kernel.verification.models import DraftV2PipelineResult
 
 from .candidate_repository import CorrectionCandidateCockroachRepository
 from .candidate_service import verify_correction_candidate_target_against_slot
@@ -482,6 +486,8 @@ class PersonalMemoryPatchProposalService:
         claim_assessments: Sequence[ClaimEvidenceAssessment],
         correction_packet: CorrectionPacketV1A,
         verified_answer: VerifiedAnswer,
+        step25_result: DraftV2PipelineResult | None = None,
+        evidence_context: EvidenceBoundCorrectionContext | None = None,
     ) -> tuple[PersonalMemoryPatchProposalState, PersonalMemoryPatchTransitionReceipt]:
         operation_id = _operation_id(
             _BIND_OPERATION,
@@ -559,6 +565,8 @@ class PersonalMemoryPatchProposalService:
                 claim_assessments=claim_assessments,
                 correction_packet=correction_packet,
                 verified_answer=verified_answer,
+                step25_result=step25_result,
+                evidence_context=evidence_context,
                 bound_at=command.requested_at,
             )
             updated = bind_personal_memory_patch_evidence(
@@ -609,6 +617,8 @@ class PersonalMemoryPatchProposalService:
         claim_assessments: Sequence[ClaimEvidenceAssessment],
         correction_packet: CorrectionPacketV1A,
         verified_answer: VerifiedAnswer,
+        step25_result: DraftV2PipelineResult | None = None,
+        evidence_context: EvidenceBoundCorrectionContext | None = None,
     ) -> tuple[
         PersonalMemoryPatchProposalState,
         PersonalMemoryPatchValidationReceipt,
@@ -668,6 +678,8 @@ class PersonalMemoryPatchProposalService:
                 claim_assessments=claim_assessments,
                 correction_packet=correction_packet,
                 verified_answer=verified_answer,
+                step25_result=step25_result,
+                evidence_context=evidence_context,
                 bound_at=base.evidence_binding.bound_at,
             )
             if rebuilt.binding_hash != base.evidence_binding.binding_hash:

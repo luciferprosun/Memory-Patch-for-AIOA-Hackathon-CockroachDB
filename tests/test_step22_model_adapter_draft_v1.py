@@ -29,10 +29,14 @@ from aioa_memory_kernel.modeling import (
     encode_draft_reference,
     load_approved_provider_spec,
     load_draft_v1_prompt_template,
+    load_step22_moonshot_provider_spec,
     prepare_model_generation_request,
     verify_draft_v1_hash,
 )
-from aioa_memory_kernel.modeling.providers import MoonshotDraftV1Adapter
+from aioa_memory_kernel.modeling.providers import (
+    MoonshotDraftV1Adapter,
+    OpenRouterDraftV1Adapter,
+)
 from aioa_memory_kernel.persistence import (
     AccessMode,
     CockroachPersistenceRepository,
@@ -75,6 +79,13 @@ def generation_request(**overrides):
         temporal_result(),
         ORIGINAL_QUERY,
         **values,
+    )
+
+
+def legacy_moonshot_generation_request():
+    return replace(
+        generation_request(),
+        provider_identity=load_step22_moonshot_provider_spec().provider_identity(),
     )
 
 
@@ -142,10 +153,19 @@ def generate(*, outcomes=None, store=None, request=None):
 class ProviderDecisionTests(unittest.TestCase):
     def test_checked_in_provider_model_is_exact_and_hash_bound(self) -> None:
         spec = load_approved_provider_spec()
+        self.assertEqual(spec.provider_id, "openrouter")
+        self.assertEqual(spec.model_id, "moonshotai/kimi-k2")
+        self.assertEqual(spec.model_declared_version, "moonshotai/kimi-k2")
+        self.assertEqual(spec.context_window_tokens, 131072)
+        self.assertEqual(
+            spec.config_digest,
+            "52e163ebef09076c135bc7c0783917bc1515666456253a2a62b4a8822630e15e",
+        )
+
+    def test_historical_step22_moonshot_decision_remains_hash_bound(self) -> None:
+        spec = load_step22_moonshot_provider_spec()
         self.assertEqual(spec.provider_id, "moonshot-ai")
         self.assertEqual(spec.model_id, "moonshot-v1-8k")
-        self.assertEqual(spec.model_declared_version, "moonshot-v1-8k")
-        self.assertEqual(spec.context_window_tokens, 8192)
         self.assertEqual(
             spec.config_digest,
             "ca5c504cc4f174b7e73089adf3de43badaabe07cb10121e988699d14caf4ada5",
@@ -173,7 +193,7 @@ class ProviderDecisionTests(unittest.TestCase):
         )
 
     def test_api_key_is_not_identity_or_repr(self) -> None:
-        adapter = MoonshotDraftV1Adapter("super-secret-test-key")
+        adapter = OpenRouterDraftV1Adapter("super-secret-test-key")
         self.assertNotIn("super-secret", repr(adapter))
         self.assertNotIn("api_key", adapter.provider_identity().__dataclass_fields__)
 
@@ -295,7 +315,7 @@ class EvidenceBlindBoundaryTests(unittest.TestCase):
 class MoonshotAdapterTests(unittest.TestCase):
     def test_request_payload_is_pinned_text_only_and_parameterized(self) -> None:
         captured = {}
-        request = generation_request()
+        request = legacy_moonshot_generation_request()
 
         def transport(endpoint, headers, body, timeout):
             captured.update(endpoint=endpoint, headers=headers, body=body, timeout=timeout)
@@ -319,7 +339,7 @@ class MoonshotAdapterTests(unittest.TestCase):
         self.assertEqual(result.response_content, "Antwort")
 
     def test_tool_call_response_fails_closed(self) -> None:
-        request = generation_request()
+        request = legacy_moonshot_generation_request()
 
         def transport(*_):
             return {
@@ -333,7 +353,7 @@ class MoonshotAdapterTests(unittest.TestCase):
             adapter.generate(build_provider_call_request(request), request.timeout_policy)
 
     def test_model_identity_mismatch_fails_closed(self) -> None:
-        request = generation_request()
+        request = legacy_moonshot_generation_request()
 
         def transport(*_):
             return {"model": "latest", "choices": [{"message": {"content": "x"}, "finish_reason": "stop"}]}
@@ -344,7 +364,7 @@ class MoonshotAdapterTests(unittest.TestCase):
             )
 
     def test_empty_oversized_and_nul_responses_are_rejected(self) -> None:
-        request = generation_request()
+        request = legacy_moonshot_generation_request()
         base = {"model": "moonshot-v1-8k"}
         for content, reason in (
             ("", "MODEL_RESPONSE_EMPTY"),
@@ -547,20 +567,30 @@ class RetryAndPersistenceTests(unittest.TestCase):
 
 class StaticBoundaryTests(unittest.TestCase):
     def test_provider_module_has_no_database_aws_shell_git_or_action_import(self) -> None:
-        path = MODELING_ROOT / "providers/moonshot.py"
-        tree = ast.parse(path.read_text(encoding="utf-8"))
-        imports = {
-            alias.name
-            for node in ast.walk(tree)
-            if isinstance(node, ast.Import)
-            for alias in node.names
-        } | {
-            node.module or ""
-            for node in ast.walk(tree)
-            if isinstance(node, ast.ImportFrom)
-        }
-        forbidden = ("psycopg", "cockroach", "persistence", "boto", "subprocess")
-        self.assertFalse(any(any(word in name for word in forbidden) for name in imports))
+        for name in ("moonshot.py", "openrouter.py"):
+            with self.subTest(provider=name):
+                path = MODELING_ROOT / "providers" / name
+                tree = ast.parse(path.read_text(encoding="utf-8"))
+                imports = {
+                    alias.name
+                    for node in ast.walk(tree)
+                    if isinstance(node, ast.Import)
+                    for alias in node.names
+                } | {
+                    node.module or ""
+                    for node in ast.walk(tree)
+                    if isinstance(node, ast.ImportFrom)
+                }
+                forbidden = (
+                    "psycopg",
+                    "cockroach",
+                    "persistence",
+                    "boto",
+                    "subprocess",
+                )
+                self.assertFalse(
+                    any(any(word in imported for word in forbidden) for imported in imports)
+                )
 
     def test_modeling_package_exposes_no_execution_approval_or_memory_write_api(self) -> None:
         source = "\n".join(

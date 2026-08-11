@@ -5,10 +5,16 @@ from .layers import (
     evaluate_prohibited_claims,
     evaluate_required_corrections,
     extract_draft_v2_claims,
+    verify_corrected_evidence_proofs_against_packet,
 )
 from .models import (
     CheckResult,
+    CORRECTED_EVIDENCE_PROOF_VERSION,
     CorrectionComplianceStatus,
+    CorrectedEvidenceProof,
+    CorrectedEvidenceVerdict,
+    CorrectedEvidenceVerifierRequest,
+    CorrectedEvidenceVerifierSignal,
     DRAFT_V2_CLAIM_SPAN_CONVENTION,
     DraftV2,
     DraftV2ClaimRecord,
@@ -34,7 +40,10 @@ from .models import (
     derive_draft_v2_id,
     encode_draft_v2_reference,
     reason_codes,
+    verify_corrected_evidence_proof_hash,
     verify_draft_v2_claim_hash,
+    verify_corrected_evidence_request_hash,
+    verify_corrected_evidence_signal_hash,
     verify_draft_v2_generation_request_hash,
     verify_draft_v2_generation_result_hash,
     verify_draft_v2_hash,
@@ -52,7 +61,7 @@ from .prompt import (
     load_draft_v2_timeout_policy,
     prepare_draft_v2_generation_request,
 )
-from .protocols import DraftV2Store
+from .protocols import CorrectedEvidenceVerifier, DraftV2Store
 from .semantic import (
     DeterministicFakeSemanticVerifier,
     ProviderSemanticClaimVerifier,
@@ -70,7 +79,13 @@ from .service import DraftV2Service
 __all__ = [
     "CheckResult",
     "CockroachDraftV2Store",
+    "CORRECTED_EVIDENCE_PROOF_VERSION",
     "CorrectionComplianceStatus",
+    "CorrectedEvidenceProof",
+    "CorrectedEvidenceVerdict",
+    "CorrectedEvidenceVerifier",
+    "CorrectedEvidenceVerifierRequest",
+    "CorrectedEvidenceVerifierSignal",
     "DRAFT_V2_CLAIM_SPAN_CONVENTION",
     "DeterministicFakeSemanticVerifier",
     "DraftV2",
@@ -117,7 +132,11 @@ __all__ = [
     "not_required_signal",
     "prepare_draft_v2_generation_request",
     "reason_codes",
+    "verify_corrected_evidence_proof_hash",
+    "verify_corrected_evidence_proofs_against_packet",
     "verify_draft_v2_claim_hash",
+    "verify_corrected_evidence_request_hash",
+    "verify_corrected_evidence_signal_hash",
     "verify_draft_v2_generation_request_hash",
     "verify_draft_v2_generation_result_hash",
     "verify_draft_v2_hash",

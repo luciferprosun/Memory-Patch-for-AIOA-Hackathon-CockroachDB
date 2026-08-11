@@ -253,8 +253,8 @@ CREDENTIAL_SPECS: Mapping[CredentialPurpose, CredentialSpec] = {
     ),
     CredentialPurpose.MODEL_PROVIDER: _spec(
         CredentialPurpose.MODEL_PROVIDER,
-        "moonshot-provider-api",
-        "MOONSHOT_API_KEY",
+        "openrouter-provider-api",
+        "OPENROUTER_API_KEY",
         "provider-neutral-model-adapter",
         "CALL_APPROVED_MODEL_PROVIDER",
     ),

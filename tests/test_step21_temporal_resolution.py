@@ -146,6 +146,7 @@ def bundle_outcome(
     source_ids: tuple[str, ...] | None = None,
     route_value=None,
     truncated: bool = False,
+    effective_scope=None,
 ):
     selected_route = route_value or route()
     bodies = contents or tuple(f"Tekst dowodowy {index}." for index in range(len(metadatas)))
@@ -159,6 +160,7 @@ def bundle_outcome(
             chunk_ordinal=index,
             content=bodies[index],
             structured_metadata=value,
+            effective_scope=effective_scope,
         )
         for index, value in enumerate(metadatas)
     )

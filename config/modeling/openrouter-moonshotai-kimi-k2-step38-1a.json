@@ -1,0 +1,19 @@
+{
+  "adapter_version": "openrouter-chat-completions-step38-1a",
+  "api_origin": "https://openrouter.ai",
+  "chat_completions_path": "/api/v1/chat/completions",
+  "code_execution_disabled": true,
+  "config_digest": "52e163ebef09076c135bc7c0783917bc1515666456253a2a62b4a8822630e15e",
+  "context_window_tokens": 131072,
+  "credential_environment_variable": "OPENROUTER_API_KEY",
+  "endpoint_class": "openrouter-public-chat-completions-v1",
+  "function_calling_disabled": true,
+  "immutable_model_revision": false,
+  "model_declared_version": "moonshotai/kimi-k2",
+  "model_id": "moonshotai/kimi-k2",
+  "model_registry_owner": "moonshotai",
+  "provider_id": "openrouter",
+  "schema_version": "1.0.0",
+  "tooling_disabled": true,
+  "web_browsing_disabled": true
+}

@@ -1309,11 +1309,21 @@ def _scope_from_json(value: object) -> tuple[ScopeDimension, ...]:
             frozenset(ScopeDimension.__dataclass_fields__),
             "scope dimension",
         )
+        value_type = ScopeValueType(data["value_type"])
+        raw_value = data["value"]
+        if value_type is ScopeValueType.STRING_SET:
+            if not isinstance(raw_value, list):
+                raise ContractValidationError(
+                    "STRING_SET scope value must be an array"
+                )
+            raw_value = tuple(raw_value)
+        elif value_type is ScopeValueType.TIMESTAMP:
+            raw_value = _datetime(raw_value, "scope dimension value")
         result.append(
             ScopeDimension(
                 name=data["name"],
-                value=data["value"],
-                value_type=ScopeValueType(data["value_type"]),
+                value=raw_value,
+                value_type=value_type,
                 comparison_mode=ScopeComparisonMode(data["comparison_mode"]),
                 source=data["source"],
                 required=data["required"],

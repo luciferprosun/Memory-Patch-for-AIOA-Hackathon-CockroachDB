@@ -27,6 +27,12 @@ _COMPOUND = re.compile(
     r"\b(?:und|oder|aber|sowie|während|hingegen|and|or|but|whereas)\b",
     re.IGNORECASE,
 )
+_NOMINAL_COORDINATION = re.compile(
+    r"\b(?P<left>[A-ZÄÖÜ][^\W_]*)\s+"
+    r"(?:und|oder|sowie|and|or)\s+"
+    r"(?P<right>[A-ZÄÖÜ][^\W_]*)\b"
+)
+_LEGAL_ROMAN_REFERENCES = frozenset({"I", "II", "III"})
 _DATE_OR_NUMBER = re.compile(r"(?:\b\d{1,4}(?:[./-]\d{1,2}){0,2}\b|%)")
 _NON_FACTUAL_PREFIXES = (
     "hallo",
@@ -99,6 +105,22 @@ _ABBREVIATIONS = frozenset(
         "z.b.",
     }
 )
+_GERMAN_MONTH_NAMES = frozenset(
+    {
+        "januar",
+        "februar",
+        "märz",
+        "april",
+        "mai",
+        "juni",
+        "juli",
+        "august",
+        "september",
+        "oktober",
+        "november",
+        "dezember",
+    }
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -132,9 +154,42 @@ def _period_is_boundary(text: str, index: int) -> bool:
     token_start = index
     while token_start > 0 and not text[token_start - 1].isspace():
         token_start -= 1
+    ordinal = text[token_start:index]
+    if ordinal.isdigit():
+        next_start = index + 1
+        while next_start < len(text) and text[next_start].isspace():
+            next_start += 1
+        next_end = next_start
+        while next_end < len(text) and text[next_end].isalpha():
+            next_end += 1
+        if text[next_start:next_end].casefold() in _GERMAN_MONTH_NAMES:
+            return False
+    if (
+        ordinal in _LEGAL_ROMAN_REFERENCES
+        and index + 1 < len(text)
+        and text[index + 1] in " \t"
+    ):
+        next_start = index + 1
+        while next_start < len(text) and text[next_start] in " \t":
+            next_start += 1
+        if next_start < len(text) and text[next_start].islower():
+            return False
     if text[token_start : index + 1].casefold() in _ABBREVIATIONS:
         return False
     return index + 1 == len(text) or text[index + 1].isspace()
+
+
+def _without_nominal_coordination(text: str) -> str:
+    """Remove only connectors joining adjacent capitalized nominal tokens."""
+
+    value = text
+    while True:
+        value, replacements = _NOMINAL_COORDINATION.subn(
+            r"\g<left> \g<right>",
+            value,
+        )
+        if replacements == 0:
+            return value
 
 
 def exact_text_spans(text: str) -> tuple[TextSpan, ...]:
@@ -177,7 +232,11 @@ def classify_claim(text: str) -> tuple[ClaimType, ClaimAtomicity]:
         claim_type = ClaimType.RELATIONAL
     else:
         claim_type = ClaimType.FACTUAL
-    atomicity = ClaimAtomicity.COMPOUND if _COMPOUND.search(normalized) else ClaimAtomicity.ATOMIC
+    atomicity = (
+        ClaimAtomicity.COMPOUND
+        if _COMPOUND.search(_without_nominal_coordination(text))
+        else ClaimAtomicity.ATOMIC
+    )
     return claim_type, atomicity
 
 
