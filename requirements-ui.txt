@@ -1,0 +1,9 @@
+# Step 35 owner UI runtime. Versions are exact and validation-pinned.
+fastapi==0.141.1
+starlette==1.6.0
+httpx==0.28.1
+Jinja2==3.1.6
+PyJWT[crypto]==2.13.0
+cryptography==50.0.0
+python-multipart==0.0.32
+uvicorn==0.52.1

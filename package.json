@@ -1,0 +1,12 @@
+{
+  "name": "aioa-personal-memory-ui-assets",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Pinned browser asset metadata for the Step 35 owner workspace",
+  "dependencies": {
+    "htmx.org": "2.0.8"
+  },
+  "scripts": {
+    "check:assets": "node scripts/check_step35_ui_assets.mjs"
+  }
+}

@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Request not completed{% endblock %}
+{% block content %}
+<section class="empty-state error-state" role="alert"><span aria-hidden="true">!</span><h1>Request not completed</h1><p>{{ message }}</p><a class="button primary" href="/memory">Return to Personal Memory</a></section>
+{% endblock %}

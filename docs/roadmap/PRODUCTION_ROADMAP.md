@@ -164,7 +164,19 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   verification, bounded proof-carrying redacted owner export, RLS/FORCE RLS
   isolation and controlled CockroachDB validation are closed by the intended
   Step 33 commit once it is reachable on `origin/main`.
-- `Step 34: NOT STARTED`.
+- `Step 34: COMPLETE AND PUSHED at actual closure commit`.
+  Typed Step 26/32 review-case intake, bounded minimum-disclosure queue,
+  concurrency-safe human claim and case-specific decisions, Step 33 verified
+  audit context, typed non-publishing handoff, migration 0017,
+  least-privileged reviewer/review-service roles, RLS/FORCE RLS isolation and
+  controlled CockroachDB validation are closed by the intended Step 34 commit
+  once it is reachable on `origin/main`.
+- `Step 35: COMPLETE AND PUSHED at actual closure commit`.
+  The approved server-rendered owner UI stack, verified OIDC Authorization
+  Code + PKCE identity, opaque server sessions, owner-scoped dashboard, exact
+  Step 27/30/32 mutations, Step 33 history, receipt-driven concurrency,
+  XSS/CSRF/IDOR protections and controlled CockroachDB validation are closed
+  by the intended Step 35 commit once it is reachable on `origin/main`.
 
 ## Zasada prowadzenia prac
 
@@ -753,11 +765,25 @@ Pokazać cały Kernel człowiekowi, zapewnić trwały audyt, izolację credentia
   [validation evidence](../evidence/review/step34-human-review-workspace-validation.json),
   [rekord zamknięcia](../audits/STEP_34_HUMAN_REVIEW_WORKSPACE_CLOSURE_1A.md).
 
-- [ ] **Step 35 — Personal Memory HAT Management UI 1A**
-  Sloty, quota, model bindings, active patches, conflicts, archive, revoke, export, delete request i private/shared distinction.
+- [x] **Step 35 — Personal Memory HAT Management UI 1A**
+  Sloty, quota, model bindings, active patches, conflicts, archive, revoke,
+  export, delete request i private/shared distinction.
+  `Step 35: COMPLETE AND PUSHED at actual closure commit`.
+  Zamknięcie obejmuje zatwierdzony FastAPI/Jinja2/HTMX stack, OIDC
+  Authorization Code + PKCE, opaque server-side sessions, serwerowo wywiedziony
+  owner/tenant scope, dashboard i empty state, slot/quota/model bindings,
+  dokładny lifecycle, Step 30 approval, Step 32 revoke/export/logical delete,
+  Step 33 owner history, receipt-driven mutations oraz XSS/CSRF/IDOR i
+  RLS/FORCE RLS isolation bez frontend authority.
+  [Architektura](../architecture/PERSONAL_MEMORY_UI_1A.md),
+  [ADR-042](../adr/ADR-042-personal-memory-owner-ui.md),
+  [runbook](../operations/STEP_35_PERSONAL_MEMORY_UI_VALIDATION_1A.md),
+  [validation evidence](../evidence/ui/step35-personal-memory-ui-validation.json),
+  [rekord zamknięcia](../audits/STEP_35_PERSONAL_MEMORY_UI_CLOSURE_1A.md).
 
 - [ ] **Step 36 — Credential Separation and Commit Authority Hardening 1A**
   Kernel bez commit credentials, Model Adapter bez DB credentials, Approval/Commit Helper z ograniczoną rolą, negative capability tests.
+  `Step 36: NOT STARTED`. Step 35 completion does not authorize Step 36.
 
 - [ ] **Step 37 — Failure Injection and Recovery Matrix 1A**
   CockroachDB down, S3 down, USB missing/read-only, model failure, vector index stale, conflicting evidence, failed approval, interrupted transaction i recovery/resume.

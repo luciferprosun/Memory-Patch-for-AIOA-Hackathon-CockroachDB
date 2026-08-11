@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Personal Memory{% endblock %} · AIOA</title>
+    <link rel="stylesheet" href="{{ url_for('memory-static', path='/app.css') }}">
+    <script defer src="{{ url_for('memory-static', path='/htmx.min.js') }}"></script>
+  </head>
+  <body hx-boost="true">
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="app-header">
+      <a class="brand" href="/memory" aria-label="AIOA Personal Memory home">
+        <span class="brand-mark" aria-hidden="true">A</span>
+        <span><strong>AIOA</strong><small>Personal Memory</small></span>
+      </a>
+      <div class="account">
+        <span class="account-name">{{ principal.display_name }}</span>
+        <form method="post" action="/memory/logout">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="button ghost" type="submit">Sign out</button>
+        </form>
+      </div>
+    </header>
+    <main id="main" class="shell" tabindex="-1">
+      <div class="privacy-banner" role="note">
+        <span aria-hidden="true">◉</span>
+        <p>{{ private_memory_notice }}</p>
+      </div>
+      {% if message %}<p class="status-message" role="status">{{ message }}</p>{% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

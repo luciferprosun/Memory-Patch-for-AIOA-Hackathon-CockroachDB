@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Your Personal Memory{% endblock %}
+{% block content %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Private by design</p>
+    <h1>Your Personal Memory</h1>
+    <p class="lede">Review what AIOA remembers for you, approve exact proposals, and manage lifecycle controls without granting source or execution authority.</p>
+  </div>
+  <div class="integrity-chip"><span aria-hidden="true">◆</span> Backend verified</div>
+</section>
+
+<section class="metrics" aria-label="Personal Memory summary">
+  <article><span>Spaces</span><strong>{{ dashboard.slot_count }}</strong><small>{{ dashboard.active_slot_count }} active</small></article>
+  <article><span>Awaiting approval</span><strong>{{ dashboard.pending_approval_count }}</strong><small>owner action required</small></article>
+  <article><span>Active patches</span><strong>{{ dashboard.active_patch_count }}</strong><small>private context</small></article>
+  <article><span>Inactive history</span><strong>{{ dashboard.superseded_patch_count + dashboard.revoked_patch_count }}</strong><small>preserved, not retrieved</small></article>
+</section>
+
+{% if dashboard.pending_approvals %}
+<section aria-labelledby="pending-title">
+  <div class="section-heading"><div><p class="eyebrow">Exact owner action</p><h2 id="pending-title">Awaiting your approval</h2></div><span class="count">{{ dashboard.pending_approvals|length }}</span></div>
+  <div class="card-grid">
+  {% for patch in dashboard.pending_approvals %}
+    <article class="card approval-card">
+      <div class="card-top"><span class="state awaiting">AWAITING APPROVAL</span><span class="hash" title="Proposal hash">{{ patch.proposal_hash[:10] }}…</span></div>
+      <h3>{{ patch.statement }}</h3>
+      <p>{{ patch.validation_summary }}. Target: {{ patch.personal_memory_space_id }}.</p>
+      {% if patch.limitations %}<ul class="limitations">{% for item in patch.limitations %}<li>{{ item }}</li>{% endfor %}</ul>{% endif %}
+      <form method="post" action="/memory/proposals/{{ patch.proposal_id }}/approve" class="approval-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="proposal_hash" value="{{ patch.proposal_hash }}">
+        <input type="hidden" name="expected_state_version" value="{{ patch.state_version }}">
+        <input type="hidden" name="expected_state_hash" value="{{ patch.state_hash }}">
+        <input type="hidden" name="idempotency_key" value="{{ action_token('approval') }}">
+        <label class="confirmation"><input type="checkbox" required> I approve this exact private-memory statement.</label>
+        <button class="button primary" type="submit">Approve exact proposal</button>
+      </form>
+      <p class="microcopy">Approval does not itself commit or activate the patch.</p>
+    </article>
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section aria-labelledby="spaces-title">
+  <div class="section-heading"><div><p class="eyebrow">Owner-scoped</p><h2 id="spaces-title">Memory spaces</h2></div></div>
+  {% if dashboard.slots %}
+  <div class="card-grid">
+    {% for slot in dashboard.slots %}
+    <a class="card slot-card" href="/memory/slots/{{ slot.personal_memory_space_id }}">
+      <div class="card-top"><span class="state {{ slot.state|lower }}">{{ slot.state }}</span><span>{{ slot.patch_count }} patches</span></div>
+      <h3>{{ slot.display_name }}</h3>
+      <p class="id-label">{{ slot.personal_memory_space_id }}</p>
+      <div class="usage"><span>Storage</span><strong>{{ slot.quota.stored_bytes }} bytes{% if slot.quota.maximum_bytes is not none %} / {{ slot.quota.maximum_bytes }}{% endif %}</strong></div>
+      <div class="usage"><span>Model bindings</span><strong>{{ slot.quota.model_bindings }} / {{ slot.quota.maximum_model_bindings }}</strong></div>
+      {% for binding in slot.model_bindings %}<p class="microcopy">{{ binding.provider_id }} / {{ binding.model_id }}</p>{% endfor %}
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <span aria-hidden="true">◇</span>
+    <h3>No Personal Memory yet</h3>
+    <p>No memory, usage, or activity has been fabricated. Slot allocation becomes available only through your host application's configured quota policy.</p>
+  </div>
+  {% endif %}
+</section>
+
+{% if dashboard.recent_patches %}
+<section aria-labelledby="lifecycle-title">
+  <div class="section-heading"><div><p class="eyebrow">Receipt-driven state</p><h2 id="lifecycle-title">Recent patch lifecycle</h2></div></div>
+  <div class="patch-list">
+  {% for patch in dashboard.recent_patches %}
+    <a class="card slot-card" href="/memory/slots/{{ patch.personal_memory_space_id }}">
+      <div class="card-top"><span class="state {{ patch.state|lower }}">{{ patch.state }}</span><span class="hash">{{ patch.statement_hash[:10] }}…</span></div>
+      <h3>{{ patch.statement }}</h3>
+      <p>Private context · {{ patch.personal_memory_space_id }}</p>
+    </a>
+  {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if dashboard.recent_audit_events %}
+<section aria-labelledby="history-title">
+  <div class="section-heading"><div><p class="eyebrow">Integrity references</p><h2 id="history-title">Recent owner history</h2></div></div>
+  <ol class="timeline">
+  {% for event in dashboard.recent_audit_events %}
+    <li><span class="timeline-dot" aria-hidden="true"></span><div><strong>{{ event.event_type|replace('_', ' ')|title }}</strong><p>{{ event.subject_type }} · {{ event.occurred_at.isoformat() }}</p><small>chain #{{ event.sequence_number }} · {{ event.event_hash[:12] }}…</small></div></li>
+  {% endfor %}
+  </ol>
+</section>
+{% endif %}
+{% endblock %}

@@ -422,12 +422,14 @@ class Step34SqlSecurityTests(unittest.TestCase):
             "Step 34: COMPLETE AND PUSHED at actual closure commit",
             roadmap,
         )
-        self.assertIn("- [ ] **Step 35", roadmap)
+        self.assertIn("- [x] **Step 35", roadmap)
+        self.assertIn("- [ ] **Step 36", roadmap)
         self.assertIn(
             "Step 34: COMPLETE AND PUSHED at actual closure commit",
             agents,
         )
-        self.assertIn("Step 35: NOT STARTED", agents)
+        self.assertIn("Step 35: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 36: NOT STARTED", agents)
 
 
 if __name__ == "__main__":  # pragma: no cover

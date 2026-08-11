@@ -215,7 +215,15 @@ At roadmap adoption and in subsequent audited closure records:
   commit. It is completion evidence only after that commit is reachable on
   `origin/main`.
 - `Step 34: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 35: NOT STARTED`. Step 34 completion does not authorize Step 35.
+- Step 35 uses the user-approved FastAPI/Jinja2/HTMX owner stack with verified
+  OIDC Authorization Code + PKCE, opaque server sessions, server-derived
+  tenant/owner identity, bounded slot/quota/model-binding/lifecycle views,
+  exact Step 27/30/32 owner mutations, Step 33 history, receipt-driven
+  concurrency, XSS/CSRF/IDOR controls, RLS/FORCE RLS isolation and controlled
+  disposable CockroachDB validation. It is completion evidence only after
+  that commit is reachable on `origin/main`.
+- `Step 35: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 36: NOT STARTED`. Step 35 completion does not authorize Step 36.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

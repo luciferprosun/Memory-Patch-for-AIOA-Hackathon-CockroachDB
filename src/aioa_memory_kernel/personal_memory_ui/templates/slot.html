@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}{{ slot.display_name }}{% endblock %}
+{% block content %}
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="/memory">Personal Memory</a><span aria-hidden="true">/</span><span>{{ slot.display_name }}</span></nav>
+<section class="hero compact">
+  <div><p class="eyebrow">Memory space</p><h1>{{ slot.display_name }}</h1><p class="lede">{{ slot.personal_memory_space_id }}</p></div>
+  <span class="state large {{ slot.state|lower }}">{{ slot.state }}</span>
+</section>
+
+<div class="detail-grid">
+  <section class="panel" aria-labelledby="configuration-title">
+    <h2 id="configuration-title">Configuration</h2>
+    <form method="post" action="/memory/slots/{{ slot.personal_memory_space_id }}/configure">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="slot_hash" value="{{ slot.slot_hash }}">
+      <input type="hidden" name="expected_state_version" value="{{ slot.state_version }}">
+      <input type="hidden" name="expected_configuration_version" value="{{ slot.configuration_version }}">
+      <input type="hidden" name="idempotency_key" value="{{ action_token('configure') }}">
+      <label for="display-name">Display name</label>
+      <div class="field-row"><input id="display-name" name="display_name" value="{{ slot.display_name }}" maxlength="256" required><button class="button secondary" type="submit">Save name</button></div>
+    </form>
+    <dl class="facts"><div><dt>State version</dt><dd>{{ slot.state_version }}</dd></div><div><dt>Configuration version</dt><dd>{{ slot.configuration_version }}</dd></div><div><dt>Integrity</dt><dd>{{ slot.slot_hash[:12] }}…</dd></div></dl>
+  </section>
+  <section class="panel" aria-labelledby="quota-title">
+    <h2 id="quota-title">Quota</h2>
+    <dl class="facts"><div><dt>Stored</dt><dd>{{ slot.quota.stored_bytes }} bytes{% if slot.quota.maximum_bytes is not none %} / {{ slot.quota.maximum_bytes }}{% endif %}</dd></div><div><dt>Active patches</dt><dd>{{ slot.quota.active_patches }}{% if slot.quota.maximum_active_patches is not none %} / {{ slot.quota.maximum_active_patches }}{% endif %}</dd></div><div><dt>Model bindings</dt><dd>{{ slot.quota.model_bindings }} / {{ slot.quota.maximum_model_bindings }}</dd></div></dl>
+  </section>
+</div>
+
+<section class="panel" aria-labelledby="bindings-title">
+  <div class="section-heading"><div><h2 id="bindings-title">Model bindings</h2><p>Provider-neutral applicability, enforced and quota-checked by the backend.</p></div><span class="count">{{ slot.model_bindings|length }} / {{ slot.quota.maximum_model_bindings }}</span></div>
+  {% if slot.model_bindings %}<div class="binding-list">{% for binding in slot.model_bindings %}<div><span><strong>{{ binding.provider_id }} / {{ binding.model_id }}</strong><span>{{ binding.model_revision }} · {{ binding.binding_mode }} · {% if binding.enabled %}enabled{% else %}disabled{% endif %}</span></span>{% if slot.state in ['CONFIGURED', 'ACTIVE', 'SUSPENDED'] %}<form method="post" action="/memory/slots/{{ slot.personal_memory_space_id }}/model-bindings"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="REMOVE"><input type="hidden" name="binding_id" value="{{ binding.binding_id }}"><input type="hidden" name="binding_hash" value="{{ binding.binding_hash }}"><input type="hidden" name="slot_hash" value="{{ slot.slot_hash }}"><input type="hidden" name="expected_state_version" value="{{ slot.state_version }}"><input type="hidden" name="expected_configuration_version" value="{{ slot.configuration_version }}"><input type="hidden" name="idempotency_key" value="{{ action_token('remove-binding') }}"><label class="confirmation"><input type="checkbox" required> Remove this exact binding.</label><button class="button ghost" type="submit">Remove</button></form>{% endif %}</div>{% endfor %}</div>{% else %}<p>No model binding is configured.</p>{% endif %}
+  {% if slot.state in ['CONFIGURED', 'ACTIVE', 'SUSPENDED'] and slot.model_bindings|length < slot.quota.maximum_model_bindings %}
+  <form method="post" action="/memory/slots/{{ slot.personal_memory_space_id }}/model-bindings" class="binding-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="action" value="ADD"><input type="hidden" name="slot_hash" value="{{ slot.slot_hash }}"><input type="hidden" name="expected_state_version" value="{{ slot.state_version }}"><input type="hidden" name="expected_configuration_version" value="{{ slot.configuration_version }}"><input type="hidden" name="idempotency_key" value="{{ action_token('add-binding') }}">
+    <label for="provider-id">Provider ID</label><input id="provider-id" name="provider_id" maxlength="128" required>
+    <label for="model-id">Model ID</label><input id="model-id" name="model_id" maxlength="128" required>
+    <label for="model-revision">Model revision or declared version</label><input id="model-revision" name="model_revision" maxlength="128" required>
+    <button class="button secondary" type="submit">Add exact model binding</button>
+  </form>
+  {% endif %}
+</section>
+
+<section aria-labelledby="patches-title">
+  <div class="section-heading"><div><p class="eyebrow">Exact lifecycle</p><h2 id="patches-title">Patches</h2></div><span class="count">{{ patches|length }}</span></div>
+  {% if patches %}<div class="patch-list">
+  {% for patch in patches %}
+    <article class="card patch-card">
+      <div class="card-top"><span class="state {{ patch.state|lower }}">{{ patch.state }}</span><span class="hash">{{ patch.statement_hash[:10] }}…</span></div>
+      <h3>{{ patch.statement }}</h3>
+      <p>{{ patch.validation_summary }}</p>
+      <dl class="patch-facts"><div><dt>Scope</dt><dd>{% if patch.scope_summary %}{{ patch.scope_summary|join(', ') }}{% else %}No broader scope{% endif %}</dd></div><div><dt>Model binding</dt><dd>{{ patch.model_binding_id }}</dd></div><div><dt>Authority</dt><dd>Private context, not canonical evidence</dd></div>{% if patch.superseded_by_patch_id %}<div><dt>Superseded by</dt><dd>{{ patch.superseded_by_patch_id }}</dd></div>{% endif %}</dl>
+      {% if patch.state == 'AWAITING_APPROVAL' %}
+      <form method="post" action="/memory/proposals/{{ patch.proposal_id }}/approve">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="proposal_hash" value="{{ patch.proposal_hash }}"><input type="hidden" name="expected_state_version" value="{{ patch.state_version }}"><input type="hidden" name="expected_state_hash" value="{{ patch.state_hash }}"><input type="hidden" name="idempotency_key" value="{{ action_token('approval') }}">
+        <label class="confirmation"><input type="checkbox" required> Approve this exact statement.</label><button class="button primary" type="submit">Approve</button>
+      </form>
+      {% elif patch.state == 'ACTIVE' %}
+      <form method="post" action="/memory/patches/{{ patch.proposal_id }}/revoke" class="danger-zone">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="space_id" value="{{ slot.personal_memory_space_id }}"><input type="hidden" name="state_hash" value="{{ patch.state_hash }}"><input type="hidden" name="patch_hash" value="{{ patch.patch_hash }}"><input type="hidden" name="expected_state_version" value="{{ patch.state_version }}"><input type="hidden" name="idempotency_key" value="{{ action_token('revoke') }}">
+        <label class="confirmation"><input type="checkbox" required> Disable this patch for future use. Revocation is not deletion.</label><button class="button danger" type="submit">Revoke patch</button>
+      </form>
+      {% endif %}
+      {% if slot.state == 'DELETED_PENDING' and patch.state == 'ACTIVE' %}
+      <form method="post" action="/memory/patches/{{ patch.proposal_id }}/delete" class="danger-zone">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="space_id" value="{{ slot.personal_memory_space_id }}"><input type="hidden" name="state_hash" value="{{ patch.state_hash }}"><input type="hidden" name="patch_hash" value="{{ patch.patch_hash }}"><input type="hidden" name="slot_hash" value="{{ slot.slot_hash }}"><input type="hidden" name="idempotency_key" value="{{ action_token('delete') }}">
+        <label class="confirmation"><input type="checkbox" required> Logically delete this exact patch.</label><button class="button danger" type="submit">Complete logical deletion</button>
+      </form>
+      {% endif %}
+    </article>
+  {% endfor %}
+  </div>{% else %}<div class="empty-state compact"><h3>No patches in this space</h3><p>The backend returned no proposal or patch records.</p></div>{% endif %}
+</section>
+
+<section class="panel actions-panel" aria-labelledby="actions-title">
+  <h2 id="actions-title">Space actions</h2>
+  {% if allowed_transitions %}<div class="action-row">{% for target in allowed_transitions %}
+  <form method="post" action="/memory/slots/{{ slot.personal_memory_space_id }}/transition">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="slot_hash" value="{{ slot.slot_hash }}"><input type="hidden" name="expected_state_version" value="{{ slot.state_version }}"><input type="hidden" name="expected_configuration_version" value="{{ slot.configuration_version }}"><input type="hidden" name="target_state" value="{{ target }}"><input type="hidden" name="idempotency_key" value="{{ action_token('transition') }}">
+    {% if target in ['ARCHIVED', 'DELETED_PENDING', 'DELETED'] %}<label class="confirmation"><input type="checkbox" required> Confirm {{ target|replace('_', ' ')|lower }} for {{ slot.display_name }}.</label>{% endif %}
+    <button class="button {% if target in ['DELETED_PENDING', 'DELETED'] %}danger{% else %}secondary{% endif %}" type="submit">{{ target|replace('_', ' ')|title }}</button>
+  </form>{% endfor %}</div>{% endif %}
+  {% if slot.state != 'DELETED' %}
+  <form method="post" action="/memory/slots/{{ slot.personal_memory_space_id }}/export" class="export-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="slot_hash" value="{{ slot.slot_hash }}"><input type="hidden" name="expected_state_version" value="{{ slot.state_version }}"><input type="hidden" name="expected_configuration_version" value="{{ slot.configuration_version }}"><input type="hidden" name="idempotency_key" value="{{ action_token('export') }}"><button class="button ghost" type="submit">Prepare private JSON export</button>
+  </form>
+  {% endif %}
+  <p class="microcopy">Archive retains data. Delete follows the separate logical-deletion lifecycle and never claims physical erasure.</p>
+</section>
+{% endblock %}
