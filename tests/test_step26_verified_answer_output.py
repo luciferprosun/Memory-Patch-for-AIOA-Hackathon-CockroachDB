@@ -735,9 +735,11 @@ class DocumentationClosureTests(unittest.TestCase):
         self.assertIn("[x] **Step 36", roadmap)
         self.assertIn("[x] **Step 37", roadmap)
         self.assertIn("[x] **Step 38", roadmap)
-        self.assertIn("[ ] **Step 39", roadmap)
-        self.assertIn("Step 39: NOT STARTED", roadmap)
-        self.assertIn("Step 38 completion does not authorize Step 39.", roadmap)
+        self.assertIn("[x] **Step 39", roadmap)
+        self.assertIn("[ ] **Step 40", roadmap)
+        self.assertIn("Step 39: COMPLETE AND PUSHED", roadmap)
+        self.assertIn("Step 40: NOT STARTED", roadmap)
+        self.assertIn("Step 39 completion does not authorize Step 40.", roadmap)
         self.assertIn("Step 26 complete upstream integrity binding", agents)
         self.assertIn("Step 27 owner-private empty Personal Memory HAT slots", agents)
         self.assertIn("Step 28 owner- and slot-bound Correction Candidate", agents)
@@ -751,8 +753,9 @@ class DocumentationClosureTests(unittest.TestCase):
         self.assertIn("`Step 36: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 37: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 38: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 39: NOT STARTED", agents)
-        self.assertIn("Step 38 completion does not authorize Step 39.", agents)
+        self.assertIn("Step 39: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 40: NOT STARTED", agents)
+        self.assertIn("Step 39 completion does not authorize Step 40.", agents)
 
 
 if __name__ == "__main__":

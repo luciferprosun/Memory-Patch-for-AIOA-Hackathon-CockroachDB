@@ -1,8 +1,11 @@
 # AIOA Memory Patch / Knowledge Chat provenance import
 
 This repository isolates the Memory Patch and Knowledge Chat layer of AIOA for
-the CockroachDB hackathon. The Critical Loop is a separate AIOA layer and is
-intentionally outside this submission.
+the CockroachDB hackathon. The AOIA Critic Prompt Loop remains a separate AIOA
+layer. This repository contains only its optional Step 39 production bridge:
+validated output may enter Step 28 as an untrusted correction candidate and
+receives no route, source, evidence, review, approval, commit, activation, or
+execution authority.
 
 This import contains reports, plans, inventories and validation evidence
 created or substantively updated from June 30, 2026 through July 24, 2026.
@@ -41,6 +44,10 @@ SHA-256 provenance.
 ## Start here
 
 - [Canonical production roadmap](roadmap/PRODUCTION_ROADMAP.md)
+- [Step 39 optional Critic bridge architecture](architecture/AOIA_CRITIC_PROMPT_LOOP_PRODUCTION_BRIDGE_1A.md)
+- [ADR-046: optional candidate-only Critic bridge](adr/ADR-046-aoia-critic-prompt-loop-production-bridge-1a.md)
+- [Step 39 controlled validation evidence](evidence/critic/step39-critic-prompt-loop-bridge-validation.json)
+- [Step 39 closure record](audits/STEP_39_AOIA_CRITIC_PROMPT_LOOP_BRIDGE_CLOSURE_1A.md)
 - [Canonical Step 2 closure record](audits/STEP_2_KERNEL_CONTRACT_REAUDIT_CLOSURE_1A.md)
 - [CockroachDB v26.2 capability baseline 1A](architecture/COCKROACHDB_V26_2_CAPABILITY_BASELINE_1A.md)
 - [ADR-010: CockroachDB v26.2 version pin](adr/ADR-010-cockroachdb-v26-2-version-pin.md)

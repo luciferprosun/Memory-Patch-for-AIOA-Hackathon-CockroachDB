@@ -242,7 +242,15 @@ class InputBoundaryTests(unittest.TestCase):
         )
 
     def test_offline_base_security_is_unknown_not_runtime_pass(self) -> None:
-        boundary = controlled._step39_boundary_scan()
+        # This test exercises only the Step 38 offline-security projection.
+        # Scan an isolated empty production root so a later, legitimate Step
+        # 39 implementation does not rewrite or weaken the historical Step 38
+        # boundary scanner and its committed closure evidence.
+        with tempfile.TemporaryDirectory(prefix="step38-empty-boundary-") as root:
+            boundary = controlled._step39_boundary_scan(
+                root_specs=(("synthetic-empty-root", Path(root)),),
+                allowlisted_hit_counts={},
+            )
         self.assertTrue(boundary.passed)
         self.assertEqual(boundary.unexpected_production_bridge_hits, 0)
         payload = controlled._base_payload(
@@ -262,7 +270,7 @@ class InputBoundaryTests(unittest.TestCase):
             "STATIC_CONTRACT_ATTESTATION",
         )
         self.assertEqual(payload["step39_boundary"]["status"], "PASS")
-        self.assertGreater(
+        self.assertEqual(
             payload["step39_boundary"]["reviewed_allowlisted_hits_count"],
             0,
         )

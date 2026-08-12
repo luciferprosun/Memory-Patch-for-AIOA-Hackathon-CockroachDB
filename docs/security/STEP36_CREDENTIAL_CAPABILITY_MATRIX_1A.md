@@ -14,6 +14,7 @@ values.
 | Authenticated owner API | `DATABASE_URL_APP` | YES | NO | NO | NO | YES | YES | YES | NO | NO | NO | YES | NO | NO | NO | NO | NO | replace login credential and restart owner API |
 | Normal Kernel runtime | `DATABASE_URL_APP` | YES | YES | NO | NO | YES | YES | NO | NO | NO | NO | YES | NO | NO | NO | NO | NO | replace login credential and restart Kernel runtime |
 | Model provider adapter | `OPENROUTER_API_KEY` | NO | NO | NO | YES | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NOT_APPLICABLE | NO | replace provider key and restart adapter |
+| Optional Critic provider adapter | `OPENROUTER_API_KEY` through the existing model-provider boundary | NO | NO | NO | YES | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NOT_APPLICABLE | NO | replace provider key and restart the optional Critic adapter |
 | Canonical ingestion worker | `DATABASE_URL_APP` currently; `DATABASE_URL_INGESTION` reserved | YES | YES | NO | NO | NO | NO | NO | NO | NO | NO | YES | NO | NO | NO | NO | NO | replace login credential and restart ingestion worker |
 | Source publication worker | `DATABASE_URL_SOURCE_PUBLICATION` | YES | NO | YES | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | NO | replace login credential and restart publication worker |
 | Personal Memory Commit Helper | `DATABASE_URL_COMMIT_HELPER` | NO | NO | NO | NO | YES | NO | NO | YES | YES | NO | NO | NO | NO | NO | NO | NO | replace login credential and restart Step 30 technical services |
@@ -50,6 +51,12 @@ values.
   It is deliberately broad, operations-only, never browser-visible, and never
   available as a runtime fallback.
 - Receipts and hashes are integrity references, never bearer credentials.
+- The optional Step 39 Critic adapter reuses only the approved text-generation
+  capability. It receives no database, audit, reviewer, Commit Helper, source
+  publication, AWS, S3, Git, browser, tool, or external-execution credential.
+  Its validated output can enter only the existing Step 28 candidate intake;
+  the `propose Personal Memory` column remains `NO` because Step 29 proposal
+  creation is a distinct Kernel-owned gate.
 
 ## Rotation readiness
 

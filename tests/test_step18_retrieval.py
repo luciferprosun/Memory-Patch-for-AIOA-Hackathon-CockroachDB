@@ -874,9 +874,11 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("- [x] **Step 36", roadmap)
         self.assertIn("- [x] **Step 37", roadmap)
         self.assertIn("- [x] **Step 38", roadmap)
-        self.assertIn("- [ ] **Step 39", roadmap)
-        self.assertIn("Step 39: NOT STARTED", roadmap)
-        self.assertIn("Step 38 completion does not authorize Step 39.", roadmap)
+        self.assertIn("- [x] **Step 39", roadmap)
+        self.assertIn("- [ ] **Step 40", roadmap)
+        self.assertIn("Step 39: COMPLETE AND PUSHED", roadmap)
+        self.assertIn("Step 40: NOT STARTED", roadmap)
+        self.assertIn("Step 39 completion does not authorize Step 40.", roadmap)
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertIn("Step 18 exact identifiers", agents)
         self.assertIn("Step 19 immutable local-model embeddings", agents)
@@ -899,8 +901,9 @@ class DocumentationAndEvidenceTests(unittest.TestCase):
         self.assertIn("Step 36: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 37: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 38: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 39: NOT STARTED", agents)
-        self.assertIn("Step 38 completion does not authorize Step 39.", agents)
+        self.assertIn("Step 39: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 40: NOT STARTED", agents)
+        self.assertIn("Step 39 completion does not authorize Step 40.", agents)
 
 
 if __name__ == "__main__":

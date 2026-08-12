@@ -251,7 +251,18 @@ At roadmap adoption and in subsequent audited closure records:
   cleaned disposable CockroachDB runtime. Canonical live evidence digest:
   `b3536f019354226c77f8672464d21986b4dc37e63f8e0d725352e57f5d7e0042`.
 - `Step 38: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 39: NOT STARTED`. Step 38 completion does not authorize Step 39.
+- Step 39 adds an optional, core-independent Critic bridge whose untrusted
+  output can produce only a Step 28 correction candidate. It grants zero
+  canonical-evidence, route, source-authority, review, approval, commit,
+  activation, or execution authority; Step 29 validation and Step 30 human
+  owner approval remain mandatory. See the
+  [architecture](docs/architecture/AOIA_CRITIC_PROMPT_LOOP_PRODUCTION_BRIDGE_1A.md),
+  [ADR-046](docs/adr/ADR-046-aoia-critic-prompt-loop-production-bridge-1a.md),
+  [runbook](docs/operations/STEP_39_CRITIC_BRIDGE_VALIDATION_1A.md),
+  [validation evidence](docs/evidence/critic/step39-critic-prompt-loop-bridge-validation.json),
+  and [closure record](docs/audits/STEP_39_AOIA_CRITIC_PROMPT_LOOP_BRIDGE_CLOSURE_1A.md).
+- `Step 39: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 40: NOT STARTED`. Step 39 completion does not authorize Step 40.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

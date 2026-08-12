@@ -199,7 +199,18 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   one owned CockroachDB runtime with complete cleanup. The canonical live
   evidence digest is
   `b3536f019354226c77f8672464d21986b4dc37e63f8e0d725352e57f5d7e0042`.
-- `Step 39: NOT STARTED`. Step 38 completion does not authorize Step 39.
+- `Step 39: COMPLETE AND PUSHED at actual closure commit`.
+  The optional, core-independent Critic bridge treats model output as
+  untrusted candidate data and can submit only a Step 28 correction candidate.
+  It has zero canonical-evidence, route, source-authority, review, approval,
+  commit, activation or execution authority; Step 29 validation and Step 30
+  human owner approval remain mandatory.
+  [Architecture](../architecture/AOIA_CRITIC_PROMPT_LOOP_PRODUCTION_BRIDGE_1A.md),
+  [ADR-046](../adr/ADR-046-aoia-critic-prompt-loop-production-bridge-1a.md),
+  [runbook](../operations/STEP_39_CRITIC_BRIDGE_VALIDATION_1A.md),
+  [validation evidence](../evidence/critic/step39-critic-prompt-loop-bridge-validation.json),
+  [closure record](../audits/STEP_39_AOIA_CRITIC_PROMPT_LOOP_BRIDGE_CLOSURE_1A.md).
+- `Step 40: NOT STARTED`. Step 39 completion does not authorize Step 40.
 
 ## Zasada prowadzenia prac
 
@@ -869,12 +880,22 @@ Zamknąć działający Knowledge Kernel jako pełny system AIOA, a nie pojedyncz
   [demo trace](../evidence/e2e/step38-german-law-demo-trace.json),
   [rekord zamknięcia](../audits/STEP_38_GERMAN_LAW_FULL_E2E_CLOSURE_1A.md).
 
-- [ ] **Step 39 — AOIA Critic Prompt Loop Production Bridge 1A**
-  Most z istniejącym Critic Loop; tylko proposal input, brak authority escalation, hash-bound correction events i wspólne run references.
-  `Step 39: NOT STARTED`. Step 38 completion does not authorize Step 39.
+- [x] **Step 39 — AOIA Critic Prompt Loop Production Bridge 1A**
+  Opcjonalny, core-independent most z istniejącym Critic Loop; jego
+  niezaufane wyjście może utworzyć wyłącznie Step 28 correction candidate.
+  Critic ma zero canonical-evidence, route, source-authority, review,
+  approval, commit, activation i execution authority; Step 29 validation oraz
+  Step 30 human owner approval pozostają obowiązkowe.
+  `Step 39: COMPLETE AND PUSHED at actual closure commit`.
+  [Architektura](../architecture/AOIA_CRITIC_PROMPT_LOOP_PRODUCTION_BRIDGE_1A.md),
+  [ADR-046](../adr/ADR-046-aoia-critic-prompt-loop-production-bridge-1a.md),
+  [runbook](../operations/STEP_39_CRITIC_BRIDGE_VALIDATION_1A.md),
+  [validation evidence](../evidence/critic/step39-critic-prompt-loop-bridge-validation.json),
+  [rekord zamknięcia](../audits/STEP_39_AOIA_CRITIC_PROMPT_LOOP_BRIDGE_CLOSURE_1A.md).
 
 - [ ] **Step 40 — Resource and Deployment Optimization for 4 GB Hardware 1A**
   Lekki local Kernel/UI, zdalny CockroachDB/model/embedding tam, gdzie trzeba, precomputed assets, limity pamięci, cache, startup preflight i honest offline/degraded mode.
+  `Step 40: NOT STARTED`. Step 39 completion does not authorize Step 40.
 
 - [ ] **Step 41 — Full Security and Regression Suite 1A**
   Tenant attacks, prompt injection, poisoned sources, SQL injection, path traversal, approval replay, stale evidence, malformed packets, cross-HAT leakage i rollback.

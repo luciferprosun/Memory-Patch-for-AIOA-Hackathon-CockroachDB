@@ -2,7 +2,7 @@
 
 This repository contains the standalone AIOA Knowledge Kernel and Memory Patch. It is not the complete AIOA product.
 
-The kernel defines reusable contracts for persistent memory, knowledge ingestion, retrieval, provenance, and Knowledge HAT integration. Critical Loop is a separate AIOA layer and is intentionally outside this repository.
+The kernel defines reusable contracts for persistent memory, knowledge ingestion, retrieval, provenance, and Knowledge HAT integration. The AOIA Critic Prompt Loop remains a separate AIOA layer. This repository contains only its optional Step 39 production bridge: validated Critic output may enter Step 28 as untrusted candidate data, with no route, source, canonical-evidence, reviewer, approval, commit, activation, or execution authority.
 
 German Federal Law will be the first Knowledge HAT. Future Linux, Python, and other domain HATs are expected to use the same kernel contracts without becoming part of the kernel itself.
 
