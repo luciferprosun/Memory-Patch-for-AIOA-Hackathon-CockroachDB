@@ -210,7 +210,21 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   [runbook](../operations/STEP_39_CRITIC_BRIDGE_VALIDATION_1A.md),
   [validation evidence](../evidence/critic/step39-critic-prompt-loop-bridge-validation.json),
   [closure record](../audits/STEP_39_AOIA_CRITIC_PROMPT_LOOP_BRIDGE_CLOSURE_1A.md).
-- `Step 40: NOT STARTED`. Step 39 completion does not authorize Step 40.
+- `Step 40: COMPLETE AND PUSHED at actual closure commit`.
+  The constrained 4 GB profile uses one Kernel/UI worker, a required remote
+  CockroachDB service, the approved hosted generation provider, one lazy local
+  E5 instance, external derived cache, explicit pool/queue/thread limits, and
+  Critic/ingestion disabled by default. Controlled evidence measured a
+  conservative 784 MiB core peak against a 3,000 MiB gate while preserving
+  audit, RLS, verification, Personal Memory, and credential authority.
+  [Inventory](../performance/STEP40_RUNTIME_COMPONENT_INVENTORY_1A.md),
+  [budget](../performance/STEP40_4GB_RESOURCE_BUDGET_1A.md),
+  [architecture](../architecture/RESOURCE_DEPLOYMENT_OPTIMIZATION_4GB_1A.md),
+  [ADR-047](../adr/ADR-047-resource-deployment-optimization-4gb-1a.md),
+  [runbook](../operations/STEP_40_4GB_RUNTIME_VALIDATION_1A.md),
+  [validation evidence](../evidence/performance/step40-4gb-resource-validation.json),
+  [closure record](../audits/STEP_40_RESOURCE_DEPLOYMENT_OPTIMIZATION_CLOSURE_1A.md).
+- `Step 41: NOT STARTED`. Step 40 completion does not authorize Step 41.
 
 ## Zasada prowadzenia prac
 
@@ -893,12 +907,25 @@ Zamknąć działający Knowledge Kernel jako pełny system AIOA, a nie pojedyncz
   [validation evidence](../evidence/critic/step39-critic-prompt-loop-bridge-validation.json),
   [rekord zamknięcia](../audits/STEP_39_AOIA_CRITIC_PROMPT_LOOP_BRIDGE_CLOSURE_1A.md).
 
-- [ ] **Step 40 — Resource and Deployment Optimization for 4 GB Hardware 1A**
-  Lekki local Kernel/UI, zdalny CockroachDB/model/embedding tam, gdzie trzeba, precomputed assets, limity pamięci, cache, startup preflight i honest offline/degraded mode.
-  `Step 40: NOT STARTED`. Step 39 completion does not authorize Step 40.
+- [x] **Step 40 — Resource and Deployment Optimization for 4 GB Hardware 1A**
+  Jeden local Kernel/UI worker, wymagany zdalny CockroachDB, zatwierdzony
+  hosted generation provider, jeden lazy local E5, external derived cache,
+  jawne limity pool/queue/thread oraz Critic i ingestion wyłączone domyślnie.
+  Controlled evidence zmierzył konserwatywny peak 784 MiB przy bramie 3,000
+  MiB bez osłabienia verifiera, auditu, RLS, Personal Memory ani credential
+  separation. Profil jest constrained demo, nie production HA.
+  `Step 40: COMPLETE AND PUSHED at actual closure commit`.
+  [Inventory](../performance/STEP40_RUNTIME_COMPONENT_INVENTORY_1A.md),
+  [budżet](../performance/STEP40_4GB_RESOURCE_BUDGET_1A.md),
+  [architektura](../architecture/RESOURCE_DEPLOYMENT_OPTIMIZATION_4GB_1A.md),
+  [ADR-047](../adr/ADR-047-resource-deployment-optimization-4gb-1a.md),
+  [runbook](../operations/STEP_40_4GB_RUNTIME_VALIDATION_1A.md),
+  [validation evidence](../evidence/performance/step40-4gb-resource-validation.json),
+  [rekord zamknięcia](../audits/STEP_40_RESOURCE_DEPLOYMENT_OPTIMIZATION_CLOSURE_1A.md).
 
 - [ ] **Step 41 — Full Security and Regression Suite 1A**
   Tenant attacks, prompt injection, poisoned sources, SQL injection, path traversal, approval replay, stale evidence, malformed packets, cross-HAT leakage i rollback.
+  `Step 41: NOT STARTED`. Step 40 completion does not authorize Step 41.
 
 - [ ] **Step 42 — Release Candidate Freeze, Backup and Restore 1A**
   Pin versions, schema freeze, backup/restore drill, deployment scripts, configuration examples, operator runbook, no-secret scan i RC tag/commit.

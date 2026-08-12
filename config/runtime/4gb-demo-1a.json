@@ -1,0 +1,101 @@
+{
+  "authority": {
+    "approval_bypass": false,
+    "audit_bypass": false,
+    "canonical_evidence_override": false,
+    "commit_boundary_merge": false,
+    "rls_bypass": false,
+    "route_override": false,
+    "source_authority_override": false,
+    "verifier_bypass": false
+  },
+  "cache": {
+    "authoritative": false,
+    "derived_external_cache_max_mib": 2048,
+    "in_memory_cache_max_mib": 64,
+    "location_class": "VERIFIED_EXTERNAL_VOLUME",
+    "rebuildable": true
+  },
+  "database": {
+    "application_pool_max": 4,
+    "audit_pool_max": 1,
+    "commit_helper_pool_max": 1,
+    "local_cockroach_processes": 0,
+    "production_ha_proven": false,
+    "review_pool_max": 1,
+    "single_node_demo_available": true,
+    "topology": "REMOTE_REQUIRED_SERVICE"
+  },
+  "embedding": {
+    "batch_size": 8,
+    "hard_batch_limit": 64,
+    "lazy_load": true,
+    "maximum_instances": 1,
+    "model_id": "intfloat/multilingual-e5-small",
+    "model_processes": 1
+  },
+  "host_budget": {
+    "hard_pressure_observed_usage_mib": 3400,
+    "minimum_available_mib": 384,
+    "minimum_detected_host_mib": 3700,
+    "nominal_host_mib": 4096,
+    "os_headroom_mib": 700,
+    "runtime_idle_budget_mib": 512,
+    "runtime_peak_budget_mib": 3000,
+    "runtime_steady_budget_mib": 2200
+  },
+  "logging": {
+    "level": "INFO",
+    "large_payload_logging": false,
+    "security_logging_enabled": true
+  },
+  "optional_services": {
+    "audit_enabled": true,
+    "critic_enabled_by_default": false,
+    "ingestion_enabled_by_default": false,
+    "ingestion_requires_prepared_corpus": true,
+    "review_request_driven": true
+  },
+  "process_layout": {
+    "additional_frontend_processes": 0,
+    "ingestion_workers": 0,
+    "local_generation_model_processes": 0,
+    "review_workers": 0,
+    "web_workers": 1
+  },
+  "profile_digest": "eb205843f34039418bd49663ab47390777cbdc861f671172c8f025d588a55ad8",
+  "profile_id": "memory-patch-4gb-demo-1a",
+  "profile_version": "1.0.0",
+  "queues": {
+    "audit": 16,
+    "critic": 1,
+    "embedding": 4,
+    "export": 1,
+    "ingestion": 1,
+    "provider": 2,
+    "review": 4
+  },
+  "schema_version": "1.0.0",
+  "startup": {
+    "order": [
+      "VALIDATE_PROFILE",
+      "VALIDATE_EXTERNAL_VOLUME",
+      "CONNECT_DATABASE",
+      "VERIFY_SCHEMA",
+      "VERIFY_PREPARED_CORPUS",
+      "START_KERNEL_UI",
+      "KEEP_EMBEDDING_UNLOADED",
+      "KEEP_CRITIC_DISABLED",
+      "KEEP_INGESTION_DISABLED"
+    ],
+    "readiness_timeout_seconds": 15,
+    "shutdown_timeout_seconds": 30
+  },
+  "threads": {
+    "blocking_executor_max": 4,
+    "embedding_intraop": 1,
+    "mkl": 1,
+    "omp": 1,
+    "tokenizer_parallelism": false
+  }
+}

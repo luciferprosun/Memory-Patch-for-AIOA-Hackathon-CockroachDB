@@ -5,7 +5,9 @@ the CockroachDB hackathon. The AOIA Critic Prompt Loop remains a separate AIOA
 layer. This repository contains only its optional Step 39 production bridge:
 validated output may enter Step 28 as an untrusted correction candidate and
 receives no route, source, evidence, review, approval, commit, activation, or
-execution authority.
+execution authority. Step 40 adds only the constrained 4 GB runtime profile,
+resource guard, lazy embedding boundary, measurement evidence, and deployment
+shape; it does not change those authority limits or implement Step 41.
 
 This import contains reports, plans, inventories and validation evidence
 created or substantively updated from June 30, 2026 through July 24, 2026.
@@ -44,6 +46,13 @@ SHA-256 provenance.
 ## Start here
 
 - [Canonical production roadmap](roadmap/PRODUCTION_ROADMAP.md)
+- [Step 40 constrained runtime inventory](performance/STEP40_RUNTIME_COMPONENT_INVENTORY_1A.md)
+- [Step 40 4 GB resource budget](performance/STEP40_4GB_RESOURCE_BUDGET_1A.md)
+- [Step 40 resource/deployment architecture](architecture/RESOURCE_DEPLOYMENT_OPTIMIZATION_4GB_1A.md)
+- [ADR-047: constrained 4 GB runtime profile](adr/ADR-047-resource-deployment-optimization-4gb-1a.md)
+- [Step 40 operations runbook](operations/STEP_40_4GB_RUNTIME_VALIDATION_1A.md)
+- [Step 40 controlled resource evidence](evidence/performance/step40-4gb-resource-validation.json)
+- [Step 40 closure record](audits/STEP_40_RESOURCE_DEPLOYMENT_OPTIMIZATION_CLOSURE_1A.md)
 - [Step 39 optional Critic bridge architecture](architecture/AOIA_CRITIC_PROMPT_LOOP_PRODUCTION_BRIDGE_1A.md)
 - [ADR-046: optional candidate-only Critic bridge](adr/ADR-046-aoia-critic-prompt-loop-production-bridge-1a.md)
 - [Step 39 controlled validation evidence](evidence/critic/step39-critic-prompt-loop-bridge-validation.json)

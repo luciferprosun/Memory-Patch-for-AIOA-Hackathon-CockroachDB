@@ -262,7 +262,22 @@ At roadmap adoption and in subsequent audited closure records:
   [validation evidence](docs/evidence/critic/step39-critic-prompt-loop-bridge-validation.json),
   and [closure record](docs/audits/STEP_39_AOIA_CRITIC_PROMPT_LOOP_BRIDGE_CLOSURE_1A.md).
 - `Step 39: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 40: NOT STARTED`. Step 39 completion does not authorize Step 40.
+- Step 40 defines a constrained 4 GB demo/runtime profile with one Kernel/UI
+  worker, required remote CockroachDB, hosted generation, one lazy local E5
+  singleton, verified external derived cache, bounded pools/queues/threads,
+  and Critic/ingestion disabled by default. Its controlled evidence measures a
+  conservative 784 MiB core peak against a 3,000 MiB gate while keeping
+  verifier, audit, RLS, Personal Memory, review, and credential boundaries
+  unchanged. See the
+  [inventory](docs/performance/STEP40_RUNTIME_COMPONENT_INVENTORY_1A.md),
+  [budget](docs/performance/STEP40_4GB_RESOURCE_BUDGET_1A.md),
+  [architecture](docs/architecture/RESOURCE_DEPLOYMENT_OPTIMIZATION_4GB_1A.md),
+  [ADR-047](docs/adr/ADR-047-resource-deployment-optimization-4gb-1a.md),
+  [runbook](docs/operations/STEP_40_4GB_RUNTIME_VALIDATION_1A.md),
+  [validation evidence](docs/evidence/performance/step40-4gb-resource-validation.json),
+  and [closure record](docs/audits/STEP_40_RESOURCE_DEPLOYMENT_OPTIMIZATION_CLOSURE_1A.md).
+- `Step 40: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 41: NOT STARTED`. Step 40 completion does not authorize Step 41.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

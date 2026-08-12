@@ -748,10 +748,12 @@ class Step30PersistenceAndBoundaryTests(unittest.TestCase):
         self.assertIn("- [x] **Step 37", roadmap)
         self.assertIn("- [x] **Step 38", roadmap)
         self.assertIn("- [x] **Step 39", roadmap)
-        self.assertIn("- [ ] **Step 40", roadmap)
+        self.assertIn("- [x] **Step 40", roadmap)
+        self.assertIn("- [ ] **Step 41", roadmap)
         self.assertIn("Step 39: COMPLETE AND PUSHED", roadmap)
-        self.assertIn("Step 40: NOT STARTED", roadmap)
-        self.assertIn("Step 39 completion does not authorize Step 40.", roadmap)
+        self.assertIn("Step 40: COMPLETE AND PUSHED", roadmap)
+        self.assertIn("Step 41: NOT STARTED", roadmap)
+        self.assertIn("Step 40 completion does not authorize Step 41.", roadmap)
         self.assertIn("Step 30: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 31: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 32: COMPLETE AND PUSHED", agents)
@@ -762,8 +764,9 @@ class Step30PersistenceAndBoundaryTests(unittest.TestCase):
         self.assertIn("Step 37: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 38: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 39: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 40: NOT STARTED", agents)
-        self.assertIn("Step 39 completion does not authorize Step 40.", agents)
+        self.assertIn("Step 40: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 41: NOT STARTED", agents)
+        self.assertIn("Step 40 completion does not authorize Step 41.", agents)
 
 
 if __name__ == "__main__":
