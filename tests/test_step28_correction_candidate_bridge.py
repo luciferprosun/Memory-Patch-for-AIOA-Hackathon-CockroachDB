@@ -1188,11 +1188,13 @@ class CorrectionCandidateAuthorityAndClosureTests(unittest.TestCase):
         self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 38 — ")
         self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 39 — ")
         self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 40 — ")
-        self.assertRegex(roadmap, r"(?m)^- \[ \] \*\*Step 41 — ")
+        self.assertRegex(roadmap, r"(?m)^- \[x\] \*\*Step 41 — ")
+        self.assertRegex(roadmap, r"(?m)^- \[ \] \*\*Step 42 — ")
         self.assertIn("Step 39: COMPLETE AND PUSHED", roadmap)
         self.assertIn("Step 40: COMPLETE AND PUSHED", roadmap)
-        self.assertIn("Step 41: NOT STARTED", roadmap)
-        self.assertIn("Step 40 completion does not authorize Step 41.", roadmap)
+        self.assertIn("Step 41: COMPLETE AND PUSHED", roadmap)
+        self.assertIn("Step 42: NOT STARTED", roadmap)
+        self.assertIn("Step 41 completion does not authorize Step 42.", roadmap)
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         self.assertNotIn("`Step 28: NOT STARTED`", agents)
         self.assertIn("Step 29: COMPLETE AND PUSHED", agents)
@@ -1207,8 +1209,9 @@ class CorrectionCandidateAuthorityAndClosureTests(unittest.TestCase):
         self.assertIn("Step 38: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 39: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 40: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 41: NOT STARTED", agents)
-        self.assertIn("Step 40 completion does not authorize Step 41.", agents)
+        self.assertIn("Step 41: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 42: NOT STARTED", agents)
+        self.assertIn("Step 41 completion does not authorize Step 42.", agents)
 
 
 if __name__ == "__main__":

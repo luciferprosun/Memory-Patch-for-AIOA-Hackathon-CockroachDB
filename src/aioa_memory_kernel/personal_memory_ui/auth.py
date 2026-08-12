@@ -9,12 +9,13 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import json
 import secrets
 import threading
 import time
 from dataclasses import dataclass
 from typing import Mapping, Protocol
-from urllib.parse import urlencode
+from urllib.parse import SplitResult, urlencode, urlsplit
 
 import httpx
 import jwt
@@ -28,6 +29,72 @@ OIDC_FLOW_COOKIE_NAME = "aioa_pm_oidc_flow"
 SESSION_TTL_SECONDS = 8 * 60 * 60
 OIDC_FLOW_TTL_SECONDS = 10 * 60
 MAXIMUM_SERVER_SESSIONS = 10_000
+MAXIMUM_OIDC_JSON_BYTES = 256 * 1024
+OIDC_CALLBACK_PATH = "/memory/oidc/callback"
+
+
+def _validated_https_url(
+    value: str,
+    name: str,
+    *,
+    origin_only: bool = False,
+) -> SplitResult:
+    if (
+        not isinstance(value, str)
+        or not value
+        or value != value.strip()
+        or any(ord(character) < 32 or ord(character) == 127 for character in value)
+    ):
+        raise ValueError(f"{name} is invalid")
+    parsed = urlsplit(value)
+    try:
+        parsed.port
+    except ValueError as error:
+        raise ValueError(f"{name} is invalid") from error
+    if (
+        parsed.scheme != "https"
+        or not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.fragment
+    ):
+        raise ValueError(f"{name} must be an HTTPS URL without credentials or fragments")
+    if origin_only and (parsed.path not in ("", "/") or parsed.query):
+        raise ValueError(f"{name} must be an HTTPS origin")
+    return parsed
+
+
+def _url_origin(parsed: SplitResult) -> tuple[str, str, int]:
+    hostname = parsed.hostname
+    if hostname is None:  # pragma: no cover - guarded by _validated_https_url
+        raise ValueError("URL hostname is required")
+    return parsed.scheme, hostname.lower(), parsed.port or 443
+
+
+def _safe_return_path(value: str) -> str:
+    if (
+        not isinstance(value, str)
+        or not value
+        or len(value.encode("utf-8")) > 1024
+        or "%" in value
+        or "\\" in value
+        or any(ord(character) < 32 or ord(character) == 127 for character in value)
+    ):
+        return "/memory"
+    parsed = urlsplit(value)
+    segments = tuple(segment for segment in parsed.path.split("/") if segment)
+    if (
+        parsed.scheme
+        or parsed.netloc
+        or parsed.fragment
+        or (
+            parsed.path not in ("/memory", "/memory/")
+            and not parsed.path.startswith("/memory/")
+        )
+        or any(segment in (".", "..") for segment in segments)
+    ):
+        return "/memory"
+    return value
 
 
 def _b64url(value: bytes) -> str:
@@ -50,12 +117,19 @@ class OidcSettings:
     scopes: tuple[str, ...] = ("openid", "profile")
 
     def __post_init__(self) -> None:
-        if not self.issuer.startswith("https://"):
-            raise ValueError("OIDC issuer must use HTTPS")
-        if not self.redirect_uri.startswith("https://"):
-            raise ValueError("OIDC redirect URI must use HTTPS")
-        if not self.public_origin.startswith("https://"):
-            raise ValueError("public origin must use HTTPS")
+        issuer = _validated_https_url(self.issuer, "OIDC issuer")
+        redirect = _validated_https_url(self.redirect_uri, "OIDC redirect URI")
+        public = _validated_https_url(
+            self.public_origin, "public origin", origin_only=True
+        )
+        if issuer.query:
+            raise ValueError("OIDC issuer must not contain a query")
+        if (
+            _url_origin(redirect) != _url_origin(public)
+            or redirect.path != OIDC_CALLBACK_PATH
+            or redirect.query
+        ):
+            raise ValueError("OIDC redirect URI must be the public-origin callback")
         if not self.client_id or any(not value for value in self.scopes):
             raise ValueError("OIDC client and scopes are required")
         if "openid" not in self.scopes:
@@ -132,8 +206,7 @@ class MemoryOwnerSessionStore:
     def create_pending(
         self, *, return_path: str, now: float
     ) -> tuple[str, PendingOidcAuthorization]:
-        if not return_path.startswith("/memory") or return_path.startswith("//"):
-            return_path = "/memory"
+        return_path = _safe_return_path(return_path)
         with self._lock:
             self._purge(now)
             if len(self._pending) >= self._maximum:
@@ -205,19 +278,61 @@ class HttpxOidcClient:
         self._client = client or httpx.Client(timeout=10.0, follow_redirects=False)
         self._metadata: Mapping[str, object] | None = None
 
+    def _bounded_json(
+        self,
+        method: str,
+        url: str,
+        **request_arguments: object,
+    ) -> object:
+        def unique_object(pairs: list[tuple[str, object]]) -> dict[str, object]:
+            result: dict[str, object] = {}
+            for key, value in pairs:
+                if key in result:
+                    raise ValueError("OIDC JSON contains a duplicate field")
+                result[key] = value
+            return result
+
+        def reject_constant(value: str) -> object:
+            raise ValueError("OIDC JSON contains a non-finite number")
+
+        with self._client.stream(method, url, **request_arguments) as response:
+            response.raise_for_status()
+            declared = response.headers.get("content-length")
+            if declared is not None:
+                try:
+                    declared_bytes = int(declared)
+                except ValueError as error:
+                    raise ValueError("OIDC response length is invalid") from error
+                if declared_bytes < 0 or declared_bytes > MAXIMUM_OIDC_JSON_BYTES:
+                    raise ValueError("OIDC response exceeds its bound")
+            body = bytearray()
+            for chunk in response.iter_bytes():
+                if len(chunk) > MAXIMUM_OIDC_JSON_BYTES - len(body):
+                    raise ValueError("OIDC response exceeds its bound")
+                body.extend(chunk)
+        try:
+            return json.loads(
+                bytes(body).decode("utf-8", errors="strict"),
+                object_pairs_hook=unique_object,
+                parse_constant=reject_constant,
+            )
+        except (UnicodeDecodeError, json.JSONDecodeError, RecursionError) as error:
+            raise ValueError("OIDC response JSON is invalid") from error
+
     def _provider_metadata(self) -> Mapping[str, object]:
         if self._metadata is None:
-            response = self._client.get(
-                self.settings.issuer.rstrip("/") + "/.well-known/openid-configuration"
+            value = self._bounded_json(
+                "GET",
+                self.settings.issuer.rstrip("/")
+                + "/.well-known/openid-configuration",
             )
-            response.raise_for_status()
-            value = response.json()
             if not isinstance(value, Mapping) or value.get("issuer") != self.settings.issuer:
                 raise ValueError("OIDC provider metadata issuer mismatch")
             for field in ("authorization_endpoint", "token_endpoint", "jwks_uri"):
                 endpoint = value.get(field)
-                if not isinstance(endpoint, str) or not endpoint.startswith("https://"):
+                if not isinstance(endpoint, str):
                     raise ValueError(f"OIDC metadata {field} is invalid")
+                _validated_https_url(endpoint, f"OIDC metadata {field}")
             self._metadata = value
         return self._metadata
 
@@ -245,7 +360,8 @@ class HttpxOidcClient:
         if not code or not code_verifier or not nonce:
             raise ValueError("OIDC callback values are incomplete")
         metadata = self._provider_metadata()
-        response = self._client.post(
+        token_response = self._bounded_json(
+            "POST",
             str(metadata["token_endpoint"]),
             data={
                 "grant_type": "authorization_code",
@@ -256,8 +372,6 @@ class HttpxOidcClient:
             },
             headers={"Accept": "application/json"},
         )
-        response.raise_for_status()
-        token_response = response.json()
         if not isinstance(token_response, Mapping) or not isinstance(
             token_response.get("id_token"), str
         ):
@@ -267,9 +381,7 @@ class HttpxOidcClient:
             header.get("kid"), str
         ):
             raise ValueError("OIDC ID token algorithm or key identity is invalid")
-        jwks_response = self._client.get(str(metadata["jwks_uri"]))
-        jwks_response.raise_for_status()
-        jwks = jwks_response.json()
+        jwks = self._bounded_json("GET", str(metadata["jwks_uri"]))
         keys = jwks.get("keys") if isinstance(jwks, Mapping) else None
         if not isinstance(keys, list):
             raise ValueError("OIDC key set is invalid")

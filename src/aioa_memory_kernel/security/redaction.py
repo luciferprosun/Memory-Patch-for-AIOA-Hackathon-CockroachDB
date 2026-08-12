@@ -31,7 +31,9 @@ SAFE_SECURITY_METADATA_KEYS = frozenset(
         "browser_privileged_secret_hits",
         "browser_rendered_secret_hits",
         "credential_count",
+        "credential_boundary_summary",
         "credential_inventory_digest",
+        "credential_matrix_digest",
         "master_credential_fallback",
         "missing_commit_helper_credential_failed_closed",
         "missing_secret_fail_closed",
@@ -40,6 +42,7 @@ SAFE_SECURITY_METADATA_KEYS = frozenset(
         "provider_secret_redaction",
         "rendered_secret_hits",
         "secret_leakage_count",
+        "secret_scan_summary",
     }
 )
 

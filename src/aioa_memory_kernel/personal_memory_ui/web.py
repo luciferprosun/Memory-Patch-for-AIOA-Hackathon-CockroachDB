@@ -3,15 +3,17 @@
 from __future__ import annotations
 
 import secrets
+import re
 from collections.abc import Callable
 from pathlib import Path
-from urllib.parse import quote
+from urllib.parse import parse_qsl, quote, urlsplit
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from aioa_memory_kernel.contracts.enums import PersonalMemorySpaceState
 from aioa_memory_kernel.state_machines.personal_memory import (
@@ -54,11 +56,26 @@ _SAFE_HEADERS = {
 }
 _MAXIMUM_FORM_BYTES = 32 * 1024
 _MAXIMUM_FORM_FIELDS = 32
+_MAXIMUM_STATE_VERSION = (1 << 63) - 1
 
 
 def _bounded_input(value: str, name: str, maximum_bytes: int) -> str:
-    if not isinstance(value, str) or len(value.encode("utf-8")) > maximum_bytes:
+    if (
+        not isinstance(value, str)
+        or len(value.encode("utf-8")) > maximum_bytes
+        or any(ord(character) < 32 or ord(character) == 127 for character in value)
+    ):
         raise PersonalMemoryUiError(f"{name} exceeds its bound")
+    return value
+
+
+def _bounded_integer(values: dict[str, str], name: str) -> int:
+    raw = values.get(name, "-1")
+    if not re.fullmatch(r"-?[0-9]{1,19}", raw):
+        raise PersonalMemoryUiError(f"{name} is invalid")
+    value = int(raw)
+    if value < -1 or value > _MAXIMUM_STATE_VERSION:
+        raise PersonalMemoryUiError(f"{name} is outside its bound")
     return value
 
 
@@ -82,6 +99,14 @@ def create_personal_memory_app(
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
+    )
+    public_host = urlsplit(oidc_settings.public_origin).hostname
+    if public_host is None:  # pragma: no cover - OidcSettings verifies this
+        raise ValueError("public origin hostname is required")
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=[public_host],
+        www_redirect=False,
     )
     templates = Jinja2Templates(
         env=Environment(
@@ -114,19 +139,45 @@ def create_personal_memory_app(
             origin.rstrip("/"), oidc_settings.public_origin.rstrip("/")
         ):
             raise PersonalMemoryUiError("cross-site mutation denied")
-        body = await request.body()
-        if len(body) > _MAXIMUM_FORM_BYTES:
-            raise PersonalMemoryUiError("mutation payload exceeds its bound")
-        form = await request.form()
-        if len(form) > _MAXIMUM_FORM_FIELDS:
-            raise PersonalMemoryUiError("mutation field count exceeds its bound")
-        submitted = str(form.get("csrf_token", ""))
-        if not submitted or not secrets.compare_digest(submitted, value.csrf_token):
-            raise PersonalMemoryUiError("CSRF validation failed")
-        values = {str(key): str(item) for key, item in form.multi_items()}
-        for key, item in values.items():
+        content_type = request.headers.get("content-type", "").split(";", 1)[0].lower()
+        if content_type not in ("", "application/x-www-form-urlencoded"):
+            raise PersonalMemoryUiError("mutation content type is unsupported")
+        content_length = request.headers.get("content-length")
+        if content_length is not None:
+            try:
+                declared_length = int(content_length)
+            except ValueError as error:
+                raise PersonalMemoryUiError("mutation length is invalid") from error
+            if declared_length < 0 or declared_length > _MAXIMUM_FORM_BYTES:
+                raise PersonalMemoryUiError("mutation payload exceeds its bound")
+        body = bytearray()
+        async for chunk in request.stream():
+            if len(chunk) > _MAXIMUM_FORM_BYTES - len(body):
+                raise PersonalMemoryUiError("mutation payload exceeds its bound")
+            body.extend(chunk)
+        try:
+            decoded = bytes(body).decode("utf-8", errors="strict")
+            if re.search(r"%(?![0-9A-Fa-f]{2})", decoded):
+                raise ValueError("malformed percent encoding")
+            pairs = parse_qsl(
+                decoded,
+                keep_blank_values=True,
+                encoding="utf-8",
+                errors="strict",
+                max_num_fields=_MAXIMUM_FORM_FIELDS,
+            )
+        except (UnicodeDecodeError, ValueError) as error:
+            raise PersonalMemoryUiError("mutation form is invalid") from error
+        values: dict[str, str] = {}
+        for key, item in pairs:
+            if key in values:
+                raise PersonalMemoryUiError("duplicate mutation field denied")
             _bounded_input(key, "form field name", 128)
             _bounded_input(item, key, 16 * 1024)
+            values[key] = item
+        submitted = values.get("csrf_token", "")
+        if not submitted or not secrets.compare_digest(submitted, value.csrf_token):
+            raise PersonalMemoryUiError("CSRF validation failed")
         return values
 
     def next_action_token(prefix: str) -> str:
@@ -206,7 +257,13 @@ def create_personal_memory_app(
         return response
 
     @app.get("/memory/oidc/callback", response_class=HTMLResponse)
-    def oidc_callback(request: Request, code: str = "", state: str = ""):
+    def oidc_callback(request: Request):
+        codes = request.query_params.getlist("code")
+        states = request.query_params.getlist("state")
+        if len(codes) != 1 or len(states) != 1:
+            return HTMLResponse("OIDC callback failed safely.", status_code=401)
+        code = codes[0]
+        state = states[0]
         code = _bounded_input(code, "OIDC code", 4096)
         state = _bounded_input(state, "OIDC state", 256)
         handle = request.cookies.get(OIDC_FLOW_COOKIE_NAME, "")
@@ -249,7 +306,7 @@ def create_personal_memory_app(
     def dashboard(request: Request, message: str = ""):
         value = require_session(request)
         view = backend.dashboard(value.principal)
-        safe_message = message[:256]
+        safe_message = _bounded_input(message, "message", 256)
         return templates.TemplateResponse(
             request,
             "dashboard.html",
@@ -259,6 +316,7 @@ def create_personal_memory_app(
     @app.get("/memory/slots/{space_id}", response_class=HTMLResponse)
     def slot_detail(request: Request, space_id: str, message: str = ""):
         space_id = _bounded_input(space_id, "space_id", 255)
+        message = _bounded_input(message, "message", 256)
         value = require_session(request)
         slot, patches = backend.slot_detail(value.principal, space_id)
         current = PersonalMemorySpaceState(slot.state)
@@ -276,7 +334,7 @@ def create_personal_memory_app(
                 slot=slot,
                 patches=patches,
                 allowed_transitions=transitions,
-                message=message[:256],
+                message=message,
             ),
         )
 
@@ -297,9 +355,9 @@ def create_personal_memory_app(
             space_id=space_id,
             display_name=form.get("display_name", ""),
             slot_hash=form.get("slot_hash", ""),
-            expected_state_version=int(form.get("expected_state_version", "-1")),
-            expected_configuration_version=int(
-                form.get("expected_configuration_version", "-1")
+            expected_state_version=_bounded_integer(form, "expected_state_version"),
+            expected_configuration_version=_bounded_integer(
+                form, "expected_configuration_version"
             ),
             idempotency_key=form.get("idempotency_key", ""),
         )
@@ -315,9 +373,9 @@ def create_personal_memory_app(
             space_id=space_id,
             target_state=form.get("target_state", ""),
             slot_hash=form.get("slot_hash", ""),
-            expected_state_version=int(form.get("expected_state_version", "-1")),
-            expected_configuration_version=int(
-                form.get("expected_configuration_version", "-1")
+            expected_state_version=_bounded_integer(form, "expected_state_version"),
+            expected_configuration_version=_bounded_integer(
+                form, "expected_configuration_version"
             ),
             idempotency_key=form.get("idempotency_key", ""),
         )
@@ -338,9 +396,9 @@ def create_personal_memory_app(
             binding_id=form.get("binding_id", ""),
             binding_hash=form.get("binding_hash", ""),
             slot_hash=form.get("slot_hash", ""),
-            expected_state_version=int(form.get("expected_state_version", "-1")),
-            expected_configuration_version=int(
-                form.get("expected_configuration_version", "-1")
+            expected_state_version=_bounded_integer(form, "expected_state_version"),
+            expected_configuration_version=_bounded_integer(
+                form, "expected_configuration_version"
             ),
             idempotency_key=form.get("idempotency_key", ""),
         )
@@ -355,7 +413,7 @@ def create_personal_memory_app(
             value.principal,
             proposal_id=proposal_id,
             proposal_hash=form.get("proposal_hash", ""),
-            expected_state_version=int(form.get("expected_state_version", "-1")),
+            expected_state_version=_bounded_integer(form, "expected_state_version"),
             expected_state_hash=form.get("expected_state_hash", ""),
             idempotency_key=form.get("idempotency_key", ""),
         )
@@ -373,7 +431,7 @@ def create_personal_memory_app(
             proposal_id=proposal_id,
             state_hash=form.get("state_hash", ""),
             patch_hash=form.get("patch_hash", ""),
-            expected_state_version=int(form.get("expected_state_version", "-1")),
+            expected_state_version=_bounded_integer(form, "expected_state_version"),
             idempotency_key=form.get("idempotency_key", ""),
         )
         return redirect_slot(form.get("space_id", ""), result)
@@ -387,9 +445,9 @@ def create_personal_memory_app(
             value.principal,
             space_id=space_id,
             slot_hash=form.get("slot_hash", ""),
-            expected_state_version=int(form.get("expected_state_version", "-1")),
-            expected_configuration_version=int(
-                form.get("expected_configuration_version", "-1")
+            expected_state_version=_bounded_integer(form, "expected_state_version"),
+            expected_configuration_version=_bounded_integer(
+                form, "expected_configuration_version"
             ),
             idempotency_key=form.get("idempotency_key", ""),
         )

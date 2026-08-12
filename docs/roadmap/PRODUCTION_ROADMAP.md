@@ -224,7 +224,18 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   [runbook](../operations/STEP_40_4GB_RUNTIME_VALIDATION_1A.md),
   [validation evidence](../evidence/performance/step40-4gb-resource-validation.json),
   [closure record](../audits/STEP_40_RESOURCE_DEPLOYMENT_OPTIMIZATION_CLOSURE_1A.md).
-- `Step 41: NOT STARTED`. Step 40 completion does not authorize Step 41.
+- `Step 41: COMPLETE AND PUSHED at actual closure commit`.
+  The full repository engineering security and regression campaign validates
+  OIDC/browser inputs, FORCE RLS and role grants, credentials, provider/source
+  authority, verification, Personal Memory, Commit Helper, audit/review,
+  optional Critic, failure recovery, the real German Law path, and the 4 GB
+  profile with every security acceptance counter at zero.
+  [Threat matrix](../security/STEP41_FULL_SECURITY_THREAT_MATRIX_1A.md),
+  [threat model](../security/Memory-Patch-for-AIOA-Hackathon-CockroachDB-threat-model.md),
+  [runbook](../operations/STEP_41_FULL_SECURITY_REGRESSION_VALIDATION_1A.md),
+  [validation evidence](../evidence/security/step41-full-security-regression-validation.json),
+  [closure record](../audits/STEP_41_FULL_SECURITY_REGRESSION_CLOSURE_1A.md).
+- `Step 42: NOT STARTED`. Step 41 completion does not authorize Step 42.
 
 ## Zasada prowadzenia prac
 
@@ -923,12 +934,22 @@ Zamknąć działający Knowledge Kernel jako pełny system AIOA, a nie pojedyncz
   [validation evidence](../evidence/performance/step40-4gb-resource-validation.json),
   [rekord zamknięcia](../audits/STEP_40_RESOURCE_DEPLOYMENT_OPTIMIZATION_CLOSURE_1A.md).
 
-- [ ] **Step 41 — Full Security and Regression Suite 1A**
-  Tenant attacks, prompt injection, poisoned sources, SQL injection, path traversal, approval replay, stale evidence, malformed packets, cross-HAT leakage i rollback.
-  `Step 41: NOT STARTED`. Step 40 completion does not authorize Step 41.
+- [x] **Step 41 — Full Security and Regression Suite 1A**
+  Pełna repository-engineering security campaign objęła OIDC/browser inputs,
+  FORCE RLS i role, credentials, provider/source authority, temporal/conflict,
+  correction/verifier, Personal Memory, Commit Helper, audit/review, opcjonalny
+  Critic, failure recovery, realny German Law E2E i profil 4 GB. Wszystkie
+  security acceptance counters wynoszą zero.
+  `Step 41: COMPLETE AND PUSHED at actual closure commit`.
+  [Threat matrix](../security/STEP41_FULL_SECURITY_THREAT_MATRIX_1A.md),
+  [threat model](../security/Memory-Patch-for-AIOA-Hackathon-CockroachDB-threat-model.md),
+  [runbook](../operations/STEP_41_FULL_SECURITY_REGRESSION_VALIDATION_1A.md),
+  [validation evidence](../evidence/security/step41-full-security-regression-validation.json),
+  [rekord zamknięcia](../audits/STEP_41_FULL_SECURITY_REGRESSION_CLOSURE_1A.md).
 
 - [ ] **Step 42 — Release Candidate Freeze, Backup and Restore 1A**
   Pin versions, schema freeze, backup/restore drill, deployment scripts, configuration examples, operator runbook, no-secret scan i RC tag/commit.
+  `Step 42: NOT STARTED`. Step 41 completion does not authorize Step 42.
 
 - [ ] **Step 43 — Documentation, Demo Automation and Submission Package 1A**
   Architecture, ADR-y, API/contracts, HAT SDK guide, Personal Memory HAT guide, test evidence, capability proof, repeatable demo script i końcowy materiał konkursowy.

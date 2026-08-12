@@ -12,6 +12,8 @@ import contextlib
 import hashlib
 import signal
 import shutil
+import socket
+import struct
 import sys
 import tempfile
 import unittest
@@ -626,6 +628,91 @@ def _offline_campaigns() -> tuple[FailureRecoveryCaseResult, ...]:
     return tuple(sorted(results, key=lambda item: item.case_id))
 
 
+def _expect_owned_pgwire_error(
+    client: "step18._Step18HttpSqlClient",
+    database: str,
+    sql: str,
+    *,
+    expected_sqlstate: str,
+    timeout: float,
+) -> str:
+    """Observe one exact error without starting another CockroachDB CLI process."""
+
+    migrations.validate_database_identifier(database)
+    migrations.validate_timeout(timeout)
+    if (
+        not isinstance(client, step18._Step18HttpSqlClient)
+        or not isinstance(sql, str)
+        or not sql
+        or len(sql.encode("utf-8")) > 4096
+        or "\x00" in sql
+        or not isinstance(expected_sqlstate, str)
+        or len(expected_sqlstate) != 5
+    ):
+        raise migrations.MigrationError("owned pgwire error probe is invalid")
+    connection = socket.create_connection(
+        ("127.0.0.1", client.sql_port), timeout=timeout
+    )
+    connection.settimeout(timeout)
+    observed: str | None = None
+    try:
+        parameters = (
+            b"user\x00root\x00database\x00"
+            + database.encode("ascii")
+            + b"\x00application_name\x00memory-patch-step37-validation\x00\x00"
+        )
+        connection.sendall(
+            struct.pack("!II", len(parameters) + 8, 196608) + parameters
+        )
+        while True:
+            message_type, payload = client._receive_pgwire(connection)
+            if message_type == b"E":
+                raise client._pgwire_error(payload)
+            if message_type == b"Z":
+                break
+        query = sql.encode("utf-8")
+        connection.sendall(
+            b"Q" + struct.pack("!I", len(query) + 5) + query + b"\x00"
+        )
+        while True:
+            message_type, payload = client._receive_pgwire(connection)
+            if message_type == b"E":
+                if observed is not None:
+                    raise migrations.MigrationError(
+                        "owned pgwire probe returned multiple errors"
+                    )
+                observed = client._pgwire_error(payload).sqlstate
+            if message_type == b"Z":
+                break
+        connection.sendall(b"X" + struct.pack("!I", 4))
+    finally:
+        connection.close()
+    if observed != expected_sqlstate:
+        raise migrations.MigrationError(
+            "owned pgwire probe returned an unexpected SQLSTATE"
+        )
+    return observed
+
+
+def _expect_owned_sql_error(
+    client: "step18._Step18HttpSqlClient",
+    database: str,
+    sql: str,
+    *,
+    expected_sqlstate: str,
+    timeout: float,
+) -> str:
+    try:
+        client.execute(database, sql, timeout=timeout)
+    except migrations.SqlError as error:
+        if error.sqlstate != expected_sqlstate:
+            raise migrations.MigrationError(
+                "owned SQL probe returned an unexpected SQLSTATE"
+            ) from error
+        return error.sqlstate
+    raise migrations.MigrationError("owned SQL negative probe unexpectedly succeeded")
+
+
 def _disposable_cockroachdb_validation(args: argparse.Namespace) -> Mapping[str, Any]:
     source_binary = step27._source_binary(args)
     source_identity = migrations.verify_binary_identity(source_binary)
@@ -634,7 +721,6 @@ def _disposable_cockroachdb_validation(args: argparse.Namespace) -> Mapping[str,
 
     runtime = None
     migration_client = None
-    cli_client = None
     database = None
     cleanup: Mapping[str, Any] = {}
     primary_error: BaseException | None = None
@@ -652,7 +738,6 @@ def _disposable_cockroachdb_validation(args: argparse.Namespace) -> Mapping[str,
                 started.port,
                 started.sql_port,
             )
-            cli_client = migrations.SqlClient(local_binary, started.sql_port)
             database = run_id + "_db"
             failure_stage = "CREATE_DATABASE"
             migrations.create_database(migration_client, database)
@@ -676,14 +761,15 @@ def _disposable_cockroachdb_validation(args: argparse.Namespace) -> Mapping[str,
                 migration_client, database
             )
             failure_stage = "INJECT_SERIALIZATION_RETRY"
-            synthetic_state = cli_client.expect_error(
+            synthetic_state = _expect_owned_pgwire_error(
+                started,
                 database,
                 "SET inject_retry_errors_enabled=true; BEGIN; SELECT 1; COMMIT",
                 expected_sqlstate="40001",
                 timeout=30,
             )
             failure_stage = "CREATE_RECOVERY_PROBE"
-            cli_client.execute(
+            migration_client.execute(
                 database,
                 "CREATE TABLE memory_patch.step37_recovery_probe ("
                 "id STRING PRIMARY KEY, request_hash STRING NOT NULL)",
@@ -691,27 +777,28 @@ def _disposable_cockroachdb_validation(args: argparse.Namespace) -> Mapping[str,
             )
             failure_stage = "VALIDATE_EXACT_REPLAY"
             request_hash = canonical_sha256({"case": "disposable-db-replay"})
-            cli_client.execute(
+            migration_client.execute(
                 database,
                 "INSERT INTO memory_patch.step37_recovery_probe "
                 f"VALUES ('stable-step37-operation','{request_hash}')",
                 timeout=60,
             )
-            cli_client.execute(
+            migration_client.execute(
                 database,
                 "INSERT INTO memory_patch.step37_recovery_probe "
                 f"VALUES ('stable-step37-operation','{request_hash}') "
                 "ON CONFLICT (id) DO NOTHING",
                 timeout=60,
             )
-            count_text = cli_client.execute(
+            count_text = migration_client.execute(
                 database,
                 "SELECT count(*) FROM memory_patch.step37_recovery_probe",
                 timeout=60,
             )
             row_count = int(count_text.strip().splitlines()[-1])
             failure_stage = "VALIDATE_CHANGED_REPLAY"
-            changed_state = cli_client.expect_error(
+            changed_state = _expect_owned_sql_error(
+                migration_client,
                 database,
                 "INSERT INTO memory_patch.step37_recovery_probe "
                 "VALUES ('stable-step37-operation','"

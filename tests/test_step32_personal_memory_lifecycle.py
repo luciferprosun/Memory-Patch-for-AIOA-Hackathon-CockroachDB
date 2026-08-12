@@ -861,11 +861,13 @@ class Step32DocumentationAndClosureTests(unittest.TestCase):
         self.assertIn("- [x] **Step 38", roadmap)
         self.assertIn("- [x] **Step 39", roadmap)
         self.assertIn("- [x] **Step 40", roadmap)
-        self.assertIn("- [ ] **Step 41", roadmap)
+        self.assertIn("- [x] **Step 41", roadmap)
+        self.assertIn("- [ ] **Step 42", roadmap)
         self.assertIn("Step 39: COMPLETE AND PUSHED", roadmap)
         self.assertIn("Step 40: COMPLETE AND PUSHED", roadmap)
-        self.assertIn("Step 41: NOT STARTED", roadmap)
-        self.assertIn("Step 40 completion does not authorize Step 41.", roadmap)
+        self.assertIn("Step 41: COMPLETE AND PUSHED", roadmap)
+        self.assertIn("Step 42: NOT STARTED", roadmap)
+        self.assertIn("Step 41 completion does not authorize Step 42.", roadmap)
         self.assertIn(
             "Step 32: COMPLETE AND PUSHED at actual closure commit",
             agents,
@@ -878,8 +880,9 @@ class Step32DocumentationAndClosureTests(unittest.TestCase):
         self.assertIn("Step 38: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 39: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 40: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 41: NOT STARTED", agents)
-        self.assertIn("Step 40 completion does not authorize Step 41.", agents)
+        self.assertIn("Step 41: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 42: NOT STARTED", agents)
+        self.assertIn("Step 41 completion does not authorize Step 42.", agents)
 
 
 if __name__ == "__main__":

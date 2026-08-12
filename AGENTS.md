@@ -277,7 +277,19 @@ At roadmap adoption and in subsequent audited closure records:
   [validation evidence](docs/evidence/performance/step40-4gb-resource-validation.json),
   and [closure record](docs/audits/STEP_40_RESOURCE_DEPLOYMENT_OPTIMIZATION_CLOSURE_1A.md).
 - `Step 40: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 41: NOT STARTED`. Step 40 completion does not authorize Step 41.
+- Step 41 closes the repository engineering security campaign across OIDC and
+  browser input, RLS/roles, credential separation, provider/source authority,
+  correction and verification, Personal Memory, Commit Helper, audit/review,
+  Critic optionality, failure recovery, the real German Law path, and the 4 GB
+  profile. Every unauthorized-success, leak, escalation, fail-open, tested
+  audit-tamper, and production-resource counter is zero. See the
+  [threat matrix](docs/security/STEP41_FULL_SECURITY_THREAT_MATRIX_1A.md),
+  [threat model](docs/security/Memory-Patch-for-AIOA-Hackathon-CockroachDB-threat-model.md),
+  [runbook](docs/operations/STEP_41_FULL_SECURITY_REGRESSION_VALIDATION_1A.md),
+  [validation evidence](docs/evidence/security/step41-full-security-regression-validation.json),
+  and [closure record](docs/audits/STEP_41_FULL_SECURITY_REGRESSION_CLOSURE_1A.md).
+- `Step 41: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 42: NOT STARTED`. Step 41 completion does not authorize Step 42.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this
