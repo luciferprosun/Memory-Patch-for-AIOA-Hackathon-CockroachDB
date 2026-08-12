@@ -1,0 +1,79 @@
+{
+  "post_roadmap_base_sha": "b9dda5eba15aea41edeb8498c4fe524037bd0a07",
+  "repositories": [
+    {
+      "branch": "main",
+      "classification": "CANONICAL_COCKROACHDB_HACKATHON_REPOSITORY",
+      "head": "b9dda5eba15aea41edeb8498c4fe524037bd0a07",
+      "head_timestamp": "2026-08-13T00:16:17+02:00",
+      "local_path": "/media/l/LSC_DATA/AIOA_WORKSPACE/hackathons/AIOIA_HACKATHONS/Memory-Patch-for-AIOA-Hackathon-CockroachDB",
+      "mutation_performed_by_housekeeping_before_guard": false,
+      "remote": "https://github.com/luciferprosun/Memory-Patch-for-AIOA-Hackathon-CockroachDB.git"
+    },
+    {
+      "classification": "SEPARATE_AOIA_CORE_PROVENANCE_SOURCE",
+      "current_default_branch": "main",
+      "current_remote_head": "d7e3448afa4e33d58be8babbfcc615b13dff533f",
+      "current_remote_head_subject": "docs: clarify scope boundaries before submission",
+      "current_remote_head_timestamp": "2026-05-31T13:37:44+02:00",
+      "historical_local_path_from_import_manifest": "/home/l/AOIA_PRODUCTION/repos/AOIA-Core",
+      "local_checkout_status": "NOT_PRESENT_AT_HOUSEKEEPING_TIME",
+      "mutation_performed": false,
+      "remote": "https://github.com/luciferprosun/AOIA-Core.git",
+      "relevant_source_commits": [
+        {
+          "commit": "b7a3a1481ce382e516ed0d39e5ac334f3240c727",
+          "commit_timestamp": "2026-07-15T03:59:22+02:00",
+          "fetch_by_exact_sha": "PASS",
+          "historical_ref": "feature/m2-b0-provider-critic-inert-core",
+          "subject": "chore(release): checkpoint complete architect handoff"
+        },
+        {
+          "commit": "24f3dc93b4528afe64e8edb6ecb3471899d59dbb",
+          "commit_timestamp": "2026-07-20T06:43:52+02:00",
+          "fetch_by_exact_sha": "PASS",
+          "historical_ref": "feature/knowledge-control-plane-1b",
+          "subject": "feat(knowledge): generalize modular knowledge hub control plane 1b"
+        },
+        {
+          "commit": "33dfeb52263a50e23aa7edabdaab1fc47e60c9b9",
+          "commit_timestamp": "2026-07-20T10:12:25+02:00",
+          "fetch_by_exact_sha": "PASS",
+          "historical_ref": "feature/knowledge-provider-bridge-1a",
+          "subject": "feat(knowledge): add provider-independent knowledge context bridge 1a"
+        },
+        {
+          "commit": "708fe063b3d81f1d61ca2cc7787f94550d52fbd0",
+          "commit_timestamp": "2026-07-23T18:26:27+02:00",
+          "fetch_by_exact_sha": "PASS",
+          "historical_ref": "origin/demo/knowledge-hat-bridge-german-law-v2-1a",
+          "subject": "feat(demo): add generic knowledge hat bridge and German law adapter"
+        }
+      ],
+      "source_blob_hashes_verified": 42,
+      "target_snapshot_hashes_verified": 42
+    }
+  ],
+  "schema_version": "post-roadmap-source-repositories-1a",
+  "searched_local_roots": [
+    "/media/l/LSC_DATA/AIOA_WORKSPACE",
+    "$HOME/Downloads"
+  ],
+  "unversioned_bounded_sources": [
+    {
+      "classification": "HACKATHON_USED_REFERENCE",
+      "path": "$HOME/Downloads/Memory_Patch_AIOA_Roadmapa_Produkcyjna_v1.md",
+      "sha256": "b7d7dc62361a32a449074fcc35a065b502087bbee0cd3461deb99a65d711db6a"
+    },
+    {
+      "classification": "HACKATHON_CREATED",
+      "path": "$HOME/Downloads/Memory_Patch_Step_10_Approve_Exact_Multi_System_Validation.md",
+      "sha256": "5baee825a15eefd66715685ac114081df6bdc25805c621357c1983a04b11a0cb"
+    },
+    {
+      "classification": "HACKATHON_CREATED",
+      "path": "$HOME/Downloads/Memory_Patch_Step_13_German_Law_HAT_Source_Authority_1A_SPARK.md",
+      "sha256": "015f5ab358c8bf537fcc5da15ce2716453ebf4896c7f0e61729b4a1ba527966b"
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "classification": "AMBIGUOUS_REVIEW_REQUIRED",
+      "item_id": "prompt-files-not-materialized-for-most-roadmap-steps",
+      "reason": "The bounded filesystem search found exact external prompt/reference files for the roadmap, Step10 approval, and Step13 only. Closure commits and evidence prove execution of the remaining roadmap steps, but exact chat-transcript prompt bytes were not present as files and were not reconstructed.",
+      "safe_disposition": "KEEP_GAP_EXPLICIT_DO_NOT_FABRICATE",
+      "source_scope_checked": [
+        "/media/l/LSC_DATA/AIOA_WORKSPACE",
+        "$HOME/Downloads"
+      ]
+    }
+  ],
+  "schema_version": "post-roadmap-unresolved-review-items-1a",
+  "unresolved_review_items_count": 1
+}

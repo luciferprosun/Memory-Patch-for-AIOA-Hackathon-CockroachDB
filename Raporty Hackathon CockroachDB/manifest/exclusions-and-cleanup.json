@@ -1,0 +1,44 @@
+{
+  "cleanup": {
+    "canonical_evidence_deleted": 0,
+    "files_removed": 362,
+    "gitignore_changed": false,
+    "ignored_python_bytecode_bytes_removed": 9799843,
+    "ignored_python_bytecode_directories_removed": 36,
+    "kept_intentionally": [
+      {
+        "path": ".venv/",
+        "reason": "Ignored local development environment; not part of Git and not a jury artifact."
+      },
+      {
+        "path": ".local/",
+        "reason": "Ignored machine-local configuration/state; required to remain outside Git."
+      }
+    ],
+    "nontracked_empty_directories_removed": [
+      "inflight_trace_dump/"
+    ],
+    "tracked_files_deleted": 0,
+    "transient_policy": "Only ignored derived bytecode and one empty untracked scratch directory were removed."
+  },
+  "excluded_candidates": [
+    {
+      "classification": "UNRELATED",
+      "path": "$HOME/Downloads/AOIA_Core_Step_17_Final_Report.md",
+      "reason": "AOIA-Core NVIDIA inert-foundation certification. It belongs to the explicitly excluded NVIDIA project family and has no deterministic CockroachDB Memory Patch reference.",
+      "sha256": "5bf90b629b95e4503dabb19a055ffea08409a0cc680543be5b8007a3f3212305",
+      "size_bytes": 6075
+    }
+  ],
+  "excluded_candidates_count": 1,
+  "large_or_binary_artifacts_added": 0,
+  "private_irrelevant_data_copied": 0,
+  "repository_metadata_changes": [
+    {
+      "path": ".gitattributes",
+      "reason": "One path-specific whitespace exception preserves intentional Markdown hard-break bytes in the exact roadmap snapshot while keeping git diff --check enforceable everywhere else."
+    }
+  ],
+  "schema_version": "post-roadmap-exclusions-cleanup-1a",
+  "secret_leakage_count": 0
+}
