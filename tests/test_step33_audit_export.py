@@ -383,13 +383,13 @@ class Step33ClosureTests(unittest.TestCase):
         self.assertIn("- [x] **Step 40", roadmap)
         self.assertIn("- [x] **Step 41", roadmap)
         self.assertIn("- [x] **Step 42", roadmap)
-        self.assertIn("- [ ] **Step 43", roadmap)
+        self.assertIn("- [x] **Step 43", roadmap)
         self.assertIn("Step 39: COMPLETE AND PUSHED", roadmap)
         self.assertIn("Step 40: COMPLETE AND PUSHED", roadmap)
         self.assertIn("Step 41: COMPLETE AND PUSHED", roadmap)
         self.assertIn("Step 42: COMPLETE AND PUSHED", roadmap)
-        self.assertIn("Step 43: NOT STARTED", roadmap)
-        self.assertIn("Step 42 completion does not authorize Step 43.", roadmap)
+        self.assertIn("Step 43: COMPLETE AND PUSHED", roadmap)
+        self.assertIn("Step 43 is the final numbered roadmap step.", roadmap)
         self.assertIn(
             "Step 33: COMPLETE AND PUSHED at actual closure commit",
             agents,
@@ -403,8 +403,8 @@ class Step33ClosureTests(unittest.TestCase):
         self.assertIn("Step 40: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 41: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 42: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 43: NOT STARTED", agents)
-        self.assertIn("Step 42 completion does not authorize Step 43.", agents)
+        self.assertIn("Step 43: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 43 is the final numbered roadmap step.", agents)
         validator = (
             ROOT / "scripts/run_step33_audit_ledger_validation.py"
         ).read_text(encoding="utf-8")

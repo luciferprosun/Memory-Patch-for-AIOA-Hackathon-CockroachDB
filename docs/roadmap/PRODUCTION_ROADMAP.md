@@ -250,7 +250,19 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   [recovery manifest](../evidence/release/step42-recovery-asset-manifest-1a.json),
   [validation evidence](../evidence/release/step42-rc-backup-restore-validation.json),
   [closure record](../audits/STEP_42_RC_BACKUP_RESTORE_CLOSURE_1A.md).
-- `Step 43: NOT STARTED`. Step 42 completion does not authorize Step 43.
+- `Step 43: COMPLETE AND PUSHED at actual closure commit`.
+  Final documentation, bounded LIVE/REPLAY demo automation, the exact German
+  Law Golden Path, Personal Memory/Critic authority story, video script,
+  operator runbook, submission index/package, deterministic validation
+  evidence, and final closure record present the frozen Step 42 RC without
+  changing runtime semantics.
+  [System overview](../architecture/MEMORY_PATCH_SYSTEM_OVERVIEW_1A.md),
+  [Golden Path](../demo/MEMORY_PATCH_DEMO_GOLDEN_PATH_1A.md),
+  [runbook](../operations/STEP_43_DEMO_AND_SUBMISSION_RUNBOOK_1A.md),
+  [submission package](../submission/HACKATHON_SUBMISSION_PACKAGE_1A.md),
+  [validation evidence](../evidence/demo/step43-documentation-demo-submission-validation.json),
+  [closure record](../audits/STEP_43_DOCUMENTATION_DEMO_SUBMISSION_CLOSURE_1A.md).
+  `Step 43 is the final numbered roadmap step.`
 
 ## Zasada prowadzenia prac
 
@@ -978,11 +990,26 @@ Zamknąć działający Knowledge Kernel jako pełny system AIOA, a nie pojedyncz
   [validation evidence](../evidence/release/step42-rc-backup-restore-validation.json),
   [rekord zamknięcia](../audits/STEP_42_RC_BACKUP_RESTORE_CLOSURE_1A.md).
 
-- [ ] **Step 43 — Documentation, Demo Automation and Submission Package 1A**
-  Architecture, ADR-y, API/contracts, HAT SDK guide, Personal Memory HAT guide, test evidence, capability proof, repeatable demo script i końcowy materiał konkursowy.
-  `Step 43: NOT STARTED`. Step 42 completion does not authorize Step 43.
+- [x] **Step 43 — Documentation, Demo Automation and Submission Package 1A**
+  Finalny pakiet opisuje zamrożony Step 42 RC, uruchamia kosztowo ograniczony
+  LIVE Draft V1 lub jawnie oznaczony deterministyczny REPLAY, prezentuje
+  zweryfikowany German Law Golden Path, Personal Memory i opcjonalny Critic bez
+  zmiany authority, oraz dostarcza README, video script, runbook, submission
+  index/package, machine-readable evidence i closure record.
+  `Step 43: COMPLETE AND PUSHED at actual closure commit`.
+  [System overview](../architecture/MEMORY_PATCH_SYSTEM_OVERVIEW_1A.md),
+  [Golden Path](../demo/MEMORY_PATCH_DEMO_GOLDEN_PATH_1A.md),
+  [video script](../demo/YOUTUBE_DEMO_SCRIPT_1A.md),
+  [runbook](../operations/STEP_43_DEMO_AND_SUBMISSION_RUNBOOK_1A.md),
+  [submission index](../SUBMISSION_INDEX_1A.md),
+  [submission package](../submission/HACKATHON_SUBMISSION_PACKAGE_1A.md),
+  [validation evidence](../evidence/demo/step43-documentation-demo-submission-validation.json),
+  [rekord zamknięcia](../audits/STEP_43_DOCUMENTATION_DEMO_SUBMISSION_CLOSURE_1A.md).
+  `Step 43 is the final numbered roadmap step.`
 
 ### Gate końcowy
+
+`MEMORY PATCH FOR AIOA — CANONICAL ROADMAP 0A–43 COMPLETE`.
 
 Projekt jest gotowy, gdy:
 

@@ -319,8 +319,8 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 40: COMPLETE AND PUSHED",
             "Step 41: COMPLETE AND PUSHED",
             "Step 42: COMPLETE AND PUSHED",
-            "Step 43: NOT STARTED",
-            "Step 42 completion does not authorize Step 43.",
+            "Step 43: COMPLETE AND PUSHED",
+            "Step 43 is the final numbered roadmap step.",
         ):
             self.assertIn(required, text)
 

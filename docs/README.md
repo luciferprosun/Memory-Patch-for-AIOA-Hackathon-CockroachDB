@@ -1,13 +1,17 @@
-# AIOA Memory Patch / Knowledge Chat provenance import
+# Memory Patch documentation catalog
 
-This repository isolates the Memory Patch and Knowledge Chat layer of AIOA for
-the CockroachDB hackathon. The AOIA Critic Prompt Loop remains a separate AIOA
-layer. This repository contains only its optional Step 39 production bridge:
-validated output may enter Step 28 as an untrusted correction candidate and
-receives no route, source, evidence, review, approval, commit, activation, or
-execution authority. Step 40 adds only the constrained 4 GB runtime profile,
-resource guard, lazy embedding boundary, measurement evidence, and deployment
-shape; it does not change those authority limits or implement Step 41.
+This repository contains the completed Memory Patch implementation and the
+historical Knowledge Chat provenance import from which it began. Judges and
+new developers should start with the [submission index](SUBMISSION_INDEX_1A.md),
+[top-level README](../README.md), and [Golden Path](demo/MEMORY_PATCH_DEMO_GOLDEN_PATH_1A.md).
+
+The AOIA Critic Prompt Loop remains a separate AIOA layer. This repository
+contains only its optional Step 39 production bridge: validated output may
+enter Step 28 as an untrusted correction candidate and receives no route,
+source, evidence, review, approval, commit, activation, or execution authority.
+Steps 40–42 validate the constrained runtime, full security/regression, and RC
+backup/restore. Step 43 adds documentation and demo automation without changing
+the frozen runtime or those authority limits.
 
 This import contains reports, plans, inventories and validation evidence
 created or substantively updated from June 30, 2026 through July 24, 2026.
@@ -45,6 +49,13 @@ SHA-256 provenance.
 
 ## Start here
 
+- [Final submission index](SUBMISSION_INDEX_1A.md)
+- [Judge-facing Golden Path](demo/MEMORY_PATCH_DEMO_GOLDEN_PATH_1A.md)
+- [Step 43 demo runbook](operations/STEP_43_DEMO_AND_SUBMISSION_RUNBOOK_1A.md)
+- [Hackathon submission package](submission/HACKATHON_SUBMISSION_PACKAGE_1A.md)
+- [Memory Patch system overview](architecture/MEMORY_PATCH_SYSTEM_OVERVIEW_1A.md)
+- [Step 43 validation evidence](evidence/demo/step43-documentation-demo-submission-validation.json)
+- [Step 43 closure record](audits/STEP_43_DOCUMENTATION_DEMO_SUBMISSION_CLOSURE_1A.md)
 - [Canonical production roadmap](roadmap/PRODUCTION_ROADMAP.md)
 - [Step 40 constrained runtime inventory](performance/STEP40_RUNTIME_COMPONENT_INVENTORY_1A.md)
 - [Step 40 4 GB resource budget](performance/STEP40_4GB_RESOURCE_BUDGET_1A.md)

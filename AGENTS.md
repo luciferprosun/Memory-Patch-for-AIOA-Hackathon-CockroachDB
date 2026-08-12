@@ -304,7 +304,15 @@ At roadmap adoption and in subsequent audited closure records:
   [validation evidence](docs/evidence/release/step42-rc-backup-restore-validation.json),
   and [closure record](docs/audits/STEP_42_RC_BACKUP_RESTORE_CLOSURE_1A.md).
 - `Step 42: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 43: NOT STARTED`. Step 42 completion does not authorize Step 43.
+- Step 43 finalizes the judge/developer README, post-RC architecture overview,
+  exact German Law Golden Path, cost-bounded LIVE and deterministic labeled
+  REPLAY runner, video script, operator runbook, submission index/package, and
+  sanitized validation evidence. It preserves the Step 42 freeze: no schema,
+  provider/model, prompt, dependency, evidence, Personal Memory, Critic, or
+  authority change.
+- `Step 43: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 43 is the final numbered roadmap step.`
+- `MEMORY PATCH FOR AIOA — CANONICAL ROADMAP 0A–43 COMPLETE`.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this
