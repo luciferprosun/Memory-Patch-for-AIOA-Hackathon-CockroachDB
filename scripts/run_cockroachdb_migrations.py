@@ -149,6 +149,7 @@ DISPOSABLE_DATABASE_PREFIXES = (
     "mp_step36_",
     "mp_step37_",
     "mp_step38_",
+    "mp_step42_",
 )
 MIGRATION_ID_PATTERN = re.compile(r"^\d{4}_[a-z0-9_]+$")
 SAFE_IDENTIFIER_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")
@@ -791,6 +792,7 @@ class LocalRuntime:
     http_port: int | None = None
     started_at: float | None = None
     force_kill_used: bool = False
+    external_io_dir: Path | None = None
 
     def start(self) -> SqlClient:
         if self.process is not None:
@@ -801,6 +803,12 @@ class LocalRuntime:
         # correctly refuses to remove.
         assert_disposable_database(self.run_id)
         verify_binary_identity(self.binary)
+        external_io_argument = "--external-io-disabled"
+        if self.external_io_dir is not None:
+            external_io_dir = validate_step42_external_io_directory(
+                self.external_io_dir
+            )
+            external_io_argument = f"--external-io-dir={external_io_dir}"
         runtime_parent = self.runtime_parent.expanduser().resolve()
         assert_safe_runtime_parent(runtime_parent)
         self.runtime_dir = Path(
@@ -823,7 +831,7 @@ class LocalRuntime:
             "--store=type=mem,size=640MiB",
             "--cache=64MiB",
             "--max-sql-memory=128MiB",
-            "--external-io-disabled",
+            external_io_argument,
             f"--temp-dir={temp_dir}",
             f"--pid-file={pid_file}",
             f"--listening-url-file={url_file}",
@@ -4651,6 +4659,34 @@ def assert_owned_runtime_path(
         DISPOSABLE_DATABASE_PREFIXES
     ):
         raise MigrationError("refusing cleanup of an unowned runtime path")
+
+
+def validate_step42_external_io_directory(path: Path) -> Path:
+    """Accept only the exact mode-private native-backup directory Step42 owns."""
+
+    if not isinstance(path, Path) or not path.is_absolute():
+        raise MigrationError("external I/O directory must be an absolute Path")
+    expanded = path.expanduser()
+    if expanded.is_symlink() or expanded.parent.is_symlink():
+        raise MigrationError("external I/O directory cannot use a symlink")
+    try:
+        resolved = expanded.resolve(strict=True)
+    except OSError as error:
+        raise MigrationError("external I/O directory is unavailable") from error
+    recovery_root = resolved.parent
+    if (
+        not resolved.is_dir()
+        or not recovery_root.is_dir()
+        or recovery_root.parent != Path("/tmp")
+        or not recovery_root.name.startswith("mp-step42-recovery-")
+        or resolved.name != "native-backup"
+        or os.stat(resolved).st_mode & 0o077
+        or os.stat(recovery_root).st_mode & 0o077
+    ):
+        raise MigrationError(
+            "external I/O directory is outside the Step42 disposable boundary"
+        )
+    return resolved
 
 
 def allocate_ports(count: int) -> list[int]:

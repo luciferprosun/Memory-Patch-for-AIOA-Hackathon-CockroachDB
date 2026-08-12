@@ -1451,6 +1451,7 @@ def _run_step38_retrieval_on_owned_database(
     embedding_backend: EmbeddingBackend,
     embedding_cache: PassageEmbeddingCache,
     seed_fixture: bool,
+    allow_restored_primary: bool = False,
 ) -> Step38RealRetrievalArtifacts:
     """Exercise Step 18-20 on one caller-owned, already-migrated database."""
 
@@ -1468,6 +1469,10 @@ def _run_step38_retrieval_on_owned_database(
         raise TypeError("corpus_roots must be Step38CorpusRoots")
     if not isinstance(embedding_cache, PassageEmbeddingCache):
         raise TypeError("embedding_cache must be PassageEmbeddingCache")
+    if not isinstance(seed_fixture, bool) or not isinstance(allow_restored_primary, bool):
+        raise TypeError("fixture mode flags must be bool")
+    if seed_fixture and allow_restored_primary:
+        raise Step38RealRetrievalError("RESTORED_PRIMARY_CANNOT_SEED")
     migrations.validate_database_identifier(database)
     require_sha256_hex(runtime_instance_digest, "runtime_instance_digest")
     require_sha256_hex(database_instance_digest, "database_instance_digest")
@@ -1510,7 +1515,14 @@ def _run_step38_retrieval_on_owned_database(
         isinstance(retrieval_input, Step38RelatedGermanLawRetrievalInput)
         or (
             isinstance(retrieval_input, Step38GermanLawRetrievalInput)
-            and retrieval_input.golden_case.case_kind is GoldenCaseKind.BACKUP
+            and (
+                retrieval_input.golden_case.case_kind is GoldenCaseKind.BACKUP
+                or (
+                    allow_restored_primary
+                    and retrieval_input.golden_case.case_kind
+                    is GoldenCaseKind.PRIMARY
+                )
+            )
         )
     ):
         raise Step38RealRetrievalError("REUSE_INPUT_REQUIRED")
@@ -1773,6 +1785,50 @@ def run_step38_real_retrieval_on_owned_database(
     )
 
 
+def run_step38_restored_primary_retrieval_on_owned_database(
+    retrieval_input: Step38GermanLawRetrievalInput,
+    *,
+    root: CallerOwnedSqlClient,
+    database: str,
+    database_runner: SerializableTransactionRunner,
+    data_plane_session_user: str,
+    runtime_instance_digest: str,
+    database_instance_digest: str,
+    corpus_roots: Step38CorpusRoots,
+    embedding_backend: EmbeddingBackend,
+    embedding_cache: PassageEmbeddingCache,
+) -> Step38RealRetrievalArtifacts:
+    """Replay the primary query against a Step42-restored seeded database.
+
+    This boundary performs no fixture seeding.  It exists only for an isolated
+    restore proof where the authoritative source rows and derived retrieval
+    records must already have arrived through the native database backup.
+    """
+
+    if (
+        not isinstance(retrieval_input, Step38GermanLawRetrievalInput)
+        or retrieval_input.golden_case.case_kind is not GoldenCaseKind.PRIMARY
+    ):
+        raise TypeError("retrieval_input must be the typed Step 38 primary input")
+    return _run_sanitized_real_phase(
+        "PRIMARY_REAL_RETRIEVAL_CONTRACT_OR_INTEGRITY_FAILURE",
+        lambda: _run_step38_retrieval_on_owned_database(
+            retrieval_input,
+            root=root,
+            database=database,
+            database_runner=database_runner,
+            data_plane_session_user=data_plane_session_user,
+            runtime_instance_digest=runtime_instance_digest,
+            database_instance_digest=database_instance_digest,
+            corpus_roots=corpus_roots,
+            embedding_backend=embedding_backend,
+            embedding_cache=embedding_cache,
+            seed_fixture=False,
+            allow_restored_primary=True,
+        ),
+    )
+
+
 def run_step38_related_retrieval_on_owned_database(
     retrieval_input: Step38RelatedGermanLawRetrievalInput,
     *,
@@ -1916,6 +1972,7 @@ __all__ = [
     "canonical_later_question",
     "build_database_retrieval_proof",
     "run_step38_real_retrieval_on_owned_database",
+    "run_step38_restored_primary_retrieval_on_owned_database",
     "run_step38_backup_retrieval_on_owned_database",
     "run_step38_related_retrieval_on_owned_database",
 ]

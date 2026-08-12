@@ -434,12 +434,14 @@ class Step34SqlSecurityTests(unittest.TestCase):
         self.assertIn("- [x] **Step 39", roadmap)
         self.assertIn("- [x] **Step 40", roadmap)
         self.assertIn("- [x] **Step 41", roadmap)
-        self.assertIn("- [ ] **Step 42", roadmap)
+        self.assertIn("- [x] **Step 42", roadmap)
+        self.assertIn("- [ ] **Step 43", roadmap)
         self.assertIn("Step 39: COMPLETE AND PUSHED", roadmap)
         self.assertIn("Step 40: COMPLETE AND PUSHED", roadmap)
         self.assertIn("Step 41: COMPLETE AND PUSHED", roadmap)
-        self.assertIn("Step 42: NOT STARTED", roadmap)
-        self.assertIn("Step 41 completion does not authorize Step 42.", roadmap)
+        self.assertIn("Step 42: COMPLETE AND PUSHED", roadmap)
+        self.assertIn("Step 43: NOT STARTED", roadmap)
+        self.assertIn("Step 42 completion does not authorize Step 43.", roadmap)
         self.assertIn(
             "Step 34: COMPLETE AND PUSHED at actual closure commit",
             agents,
@@ -451,8 +453,9 @@ class Step34SqlSecurityTests(unittest.TestCase):
         self.assertIn("Step 39: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 40: COMPLETE AND PUSHED", agents)
         self.assertIn("Step 41: COMPLETE AND PUSHED", agents)
-        self.assertIn("Step 42: NOT STARTED", agents)
-        self.assertIn("Step 41 completion does not authorize Step 42.", agents)
+        self.assertIn("Step 42: COMPLETE AND PUSHED", agents)
+        self.assertIn("Step 43: NOT STARTED", agents)
+        self.assertIn("Step 42 completion does not authorize Step 43.", agents)
 
 
 if __name__ == "__main__":  # pragma: no cover

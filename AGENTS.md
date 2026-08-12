@@ -289,7 +289,22 @@ At roadmap adoption and in subsequent audited closure records:
   [validation evidence](docs/evidence/security/step41-full-security-regression-validation.json),
   and [closure record](docs/audits/STEP_41_FULL_SECURITY_REGRESSION_CLOSURE_1A.md).
 - `Step 41: COMPLETE AND PUSHED at actual closure commit`.
-- `Step 42: NOT STARTED`. Step 41 completion does not authorize Step 42.
+- Step 42 freezes the exact post-Step41 release candidate through deterministic
+  runtime, migration, provider/model, embedding, source/corpus, Personal
+  Memory, audit, dependency, and recovery-asset identities. A native
+  CockroachDB backup is integrity-checked, restored into a distinct disposable
+  cluster, and accepted only after exact watermark, schema/RLS, provenance,
+  retrieval/model/verifier, Personal Memory, audit-tamper, optional Critic,
+  Step40 profile, and cleanup proofs. See the
+  [architecture](docs/architecture/RC_FREEZE_BACKUP_RESTORE_1A.md),
+  [ADR-048](docs/adr/ADR-048-rc-freeze-backup-restore-1a.md),
+  [runbook](docs/operations/STEP_42_RC_BACKUP_RESTORE_1A.md),
+  [RC manifest](docs/evidence/release/step42-rc-manifest-1a.json),
+  [recovery manifest](docs/evidence/release/step42-recovery-asset-manifest-1a.json),
+  [validation evidence](docs/evidence/release/step42-rc-backup-restore-validation.json),
+  and [closure record](docs/audits/STEP_42_RC_BACKUP_RESTORE_CLOSURE_1A.md).
+- `Step 42: COMPLETE AND PUSHED at actual closure commit`.
+- `Step 43: NOT STARTED`. Step 42 completion does not authorize Step 43.
 
 The repository HEAD may advance after this adoption record. Confirm completion
 through Git history and the canonical roadmap rather than assuming this

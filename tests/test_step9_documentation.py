@@ -318,8 +318,9 @@ class Step9DocumentationTests(unittest.TestCase):
             "Step 39: COMPLETE AND PUSHED",
             "Step 40: COMPLETE AND PUSHED",
             "Step 41: COMPLETE AND PUSHED",
-            "Step 42: NOT STARTED",
-            "Step 41 completion does not authorize Step 42.",
+            "Step 42: COMPLETE AND PUSHED",
+            "Step 43: NOT STARTED",
+            "Step 42 completion does not authorize Step 43.",
         ):
             self.assertIn(required, text)
 

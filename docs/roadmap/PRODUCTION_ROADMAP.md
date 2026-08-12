@@ -235,7 +235,22 @@ audytowanymi zamknięciami i decyzjami użytkownika:
   [runbook](../operations/STEP_41_FULL_SECURITY_REGRESSION_VALIDATION_1A.md),
   [validation evidence](../evidence/security/step41-full-security-regression-validation.json),
   [closure record](../audits/STEP_41_FULL_SECURITY_REGRESSION_CLOSURE_1A.md).
-- `Step 42: NOT STARTED`. Step 41 completion does not authorize Step 42.
+- `Step 42: COMPLETE AND PUSHED at actual closure commit`.
+  The post-Step41 RC is frozen by deterministic code/config/schema/model/source
+  identities and a complete recovery-asset inventory. Controlled validation
+  takes a native CockroachDB backup, validates its files and SHA-256 tree,
+  restores it into a distinct disposable cluster, and requires exact
+  migration/watermark, RLS/role, provenance, German Law retrieval/model,
+  Personal Memory, audit-tamper, optional Critic, 4 GB profile, regression, and
+  cleanup proofs before closure.
+  [Architecture](../architecture/RC_FREEZE_BACKUP_RESTORE_1A.md),
+  [ADR-048](../adr/ADR-048-rc-freeze-backup-restore-1a.md),
+  [runbook](../operations/STEP_42_RC_BACKUP_RESTORE_1A.md),
+  [RC manifest](../evidence/release/step42-rc-manifest-1a.json),
+  [recovery manifest](../evidence/release/step42-recovery-asset-manifest-1a.json),
+  [validation evidence](../evidence/release/step42-rc-backup-restore-validation.json),
+  [closure record](../audits/STEP_42_RC_BACKUP_RESTORE_CLOSURE_1A.md).
+- `Step 43: NOT STARTED`. Step 42 completion does not authorize Step 43.
 
 ## Zasada prowadzenia prac
 
@@ -947,12 +962,25 @@ Zamknąć działający Knowledge Kernel jako pełny system AIOA, a nie pojedyncz
   [validation evidence](../evidence/security/step41-full-security-regression-validation.json),
   [rekord zamknięcia](../audits/STEP_41_FULL_SECURITY_REGRESSION_CLOSURE_1A.md).
 
-- [ ] **Step 42 — Release Candidate Freeze, Backup and Restore 1A**
-  Pin versions, schema freeze, backup/restore drill, deployment scripts, configuration examples, operator runbook, no-secret scan i RC tag/commit.
-  `Step 42: NOT STARTED`. Step 41 completion does not authorize Step 42.
+- [x] **Step 42 — Release Candidate Freeze, Backup and Restore 1A**
+  Zamrożono deterministyczną tożsamość RC i pełny recovery-asset inventory.
+  Natywny backup CockroachDB przeszedł native `check_files`, niezależny
+  SHA-256 tree receipt i izolowany restore z dokładnym watermarkiem. Po
+  odtworzeniu przechodzą migracje/RLS/role, provenance, German Law retrieval i
+  model/verifier, Personal Memory, audit/tamper, opcjonalny Critic, profil 4 GB,
+  pełna regresja i cleanup; sekrety oraz AWS/production pozostają poza drillem.
+  `Step 42: COMPLETE AND PUSHED at actual closure commit`.
+  [Architektura](../architecture/RC_FREEZE_BACKUP_RESTORE_1A.md),
+  [ADR-048](../adr/ADR-048-rc-freeze-backup-restore-1a.md),
+  [runbook](../operations/STEP_42_RC_BACKUP_RESTORE_1A.md),
+  [RC manifest](../evidence/release/step42-rc-manifest-1a.json),
+  [recovery manifest](../evidence/release/step42-recovery-asset-manifest-1a.json),
+  [validation evidence](../evidence/release/step42-rc-backup-restore-validation.json),
+  [rekord zamknięcia](../audits/STEP_42_RC_BACKUP_RESTORE_CLOSURE_1A.md).
 
 - [ ] **Step 43 — Documentation, Demo Automation and Submission Package 1A**
   Architecture, ADR-y, API/contracts, HAT SDK guide, Personal Memory HAT guide, test evidence, capability proof, repeatable demo script i końcowy materiał konkursowy.
+  `Step 43: NOT STARTED`. Step 42 completion does not authorize Step 43.
 
 ### Gate końcowy
 
