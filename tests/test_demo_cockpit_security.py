@@ -7,7 +7,12 @@ from urllib.parse import parse_qs, urlparse
 
 from fastapi.testclient import TestClient
 
-from aioa_memory_kernel.demo_cockpit import CockpitRuntimeStatus, CockpitShell
+from aioa_memory_kernel.demo_cockpit import (
+    CockpitRuntimeStatus,
+    CockpitShell,
+    LegacyCompatibilityMode,
+    build_legacy_archive_manifest,
+)
 from aioa_memory_kernel.personal_memory_ui import (
     MemoryOwnerSessionStore,
     OidcSettings,
@@ -71,7 +76,13 @@ class UnifiedCockpitSecurityTests(unittest.TestCase):
             provider_guard="GuardedProviderAdapter",
             readiness_contract="health endpoints",
         )
-        _, client, _, oidc = self._app(CockpitShell(runtime, legacy_enabled=True))
+        _, client, _, oidc = self._app(
+            CockpitShell(
+                runtime,
+                legacy_mode=LegacyCompatibilityMode.ARCHIVAL_VIEW,
+                legacy_archive=build_legacy_archive_manifest(),
+            )
+        )
         self.assertEqual(self._login(client, oidc), 303)
         response = client.get("/memory/demo")
         self.assertNotIn(hostile, response.text)
@@ -106,7 +117,11 @@ class UnifiedCockpitSecurityTests(unittest.TestCase):
             readiness_contract="/health/live + /health/ready",
         )
         app, client, backend, oidc = self._app(
-            CockpitShell(runtime, legacy_enabled=True)
+            CockpitShell(
+                runtime,
+                legacy_mode=LegacyCompatibilityMode.ARCHIVAL_VIEW,
+                legacy_archive=build_legacy_archive_manifest(),
+            )
         )
         self.assertEqual(self._login(client, oidc), 303)
         response = client.get(

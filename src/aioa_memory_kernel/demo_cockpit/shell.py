@@ -4,6 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .legacy_archive import (
+    LegacyArchiveManifest,
+    LegacyCompatibilityMode,
+)
+
 from .models import (
     CockpitExecutionKind,
     CockpitMode,
@@ -83,14 +88,30 @@ class CockpitShell:
     """Select a bounded view; it owns no provider, DB or mutation capability."""
 
     runtime_status: CockpitRuntimeStatus
-    legacy_enabled: bool = False
+    legacy_mode: LegacyCompatibilityMode = LegacyCompatibilityMode.DISABLED
+    legacy_archive: LegacyArchiveManifest | None = None
 
     def __post_init__(self) -> None:
         if (
             not isinstance(self.runtime_status, CockpitRuntimeStatus)
-            or not isinstance(self.legacy_enabled, bool)
+            or not isinstance(self.legacy_mode, LegacyCompatibilityMode)
+            or (
+                self.legacy_archive is not None
+                and not isinstance(self.legacy_archive, LegacyArchiveManifest)
+            )
+            or (
+                self.legacy_mode is LegacyCompatibilityMode.DISABLED
+                and self.legacy_archive is not None
+            )
         ):
             raise ValueError("cockpit shell configuration is invalid")
+
+    @property
+    def legacy_enabled(self) -> bool:
+        return (
+            self.legacy_mode is LegacyCompatibilityMode.ARCHIVAL_VIEW
+            and self.legacy_archive is not None
+        )
 
     def project(self, requested_mode: str | None = None) -> CockpitView:
         selected = CockpitMode.MEMORY_PATCH_CURRENT
@@ -100,8 +121,9 @@ class CockpitShell:
                 selected = CockpitMode.CRITICAL_PROMPT_LEGACY
             else:
                 notice = (
-                    "Legacy / Origin view is disabled by server configuration. "
-                    "Memory Patch remains available."
+                    "Legacy / Origin execution is disabled. Its archival metadata "
+                    "view is unavailable unless enabled and integrity-valid; Memory "
+                    "Patch remains available."
                 )
         elif requested_mode not in (None, "", CockpitMode.MEMORY_PATCH_CURRENT.value):
             notice = "Unknown presentation mode was ignored safely."
@@ -119,18 +141,27 @@ class CockpitShell:
                 "Critical Prompt Loop — Legacy",
                 self.legacy_enabled,
                 selected is CockpitMode.CRITICAL_PROMPT_LEGACY,
-                "Legacy / Origin",
+                "Legacy / Origin · Archival metadata",
             ),
         )
         legacy = LegacyModeStatus(
             enabled=self.legacy_enabled,
-            classification="LEGACY_VIEW_ONLY",
-            availability="AVAILABLE" if self.legacy_enabled else "DISABLED_BY_CONFIG",
+            configured_mode=self.legacy_mode,
+            classification="DISABLED_WITH_ARCHIVAL_VIEW",
+            availability=(
+                "ARCHIVAL_VIEW_AVAILABLE"
+                if self.legacy_enabled
+                else (
+                    "ARCHIVE_INTEGRITY_OR_AVAILABILITY_FAILURE"
+                    if self.legacy_mode is LegacyCompatibilityMode.ARCHIVAL_VIEW
+                    else "DISABLED_BY_CONFIG"
+                )
+            ),
             execution_kind=CockpitExecutionKind.HISTORICAL_VIEW,
             explanation=(
-                "D0 found reusable visual and narrative patterns, but no verified "
-                "historical execution trace suitable for replay and no approved live "
-                "compatibility controller. D2 owns any provenance-bound extension."
+                "D0 and D2 found exact source provenance but not all exact prompt and "
+                "output bytes required for a truthful replay. Live compatibility was "
+                "not approved. Only immutable source metadata may be displayed."
             ),
         )
         if selected is CockpitMode.CRITICAL_PROMPT_LEGACY:
@@ -139,11 +170,11 @@ class CockpitShell:
                 execution_kind=CockpitExecutionKind.HISTORICAL_VIEW,
                 run_state=CockpitRunState.IDLE,
                 heading="Critical Prompt Loop",
-                mode_badge="LEGACY / ORIGIN — VIEW ONLY",
+                mode_badge="LEGACY / ORIGIN — ARCHIVAL VIEW",
                 introduction=(
-                    "The first bounded correction concept is shown as historical "
-                    "context. It is not live, not a verified replay and not a current "
-                    "Memory Patch authority path."
+                    "Verified source provenance explains the first bounded correction "
+                    "concept. This is not live, not a replay and not a current Memory "
+                    "Patch authority path; unavailable bytes are never reconstructed."
                 ),
                 notice=notice,
                 mode_options=mode_options,
@@ -152,29 +183,32 @@ class CockpitShell:
                     _stage(
                         "legacy-prompt",
                         "Prompt",
-                        "No provenance-bound execution fixture is attached in D1.",
-                        status="NOT RUN",
+                        "The exact versioned execution prompt was not found and is not shown.",
+                        status="BYTES UNAVAILABLE",
                         authority="Historical display only",
                     ),
                     _stage(
                         "legacy-main",
-                        "MAIN response",
-                        "No historical output is presented as live provider output.",
-                        status="NOT RUN",
+                        "MAIN draft",
+                        "The source contract is versioned; exact historical draft "
+                        "bytes are unavailable.",
+                        status="METADATA ONLY",
                         authority="Model output, never canonical evidence",
                     ),
                     _stage(
                         "legacy-review",
-                        "CRITIC / observer review",
-                        "D1 provides labels only; no old controller is executed.",
+                        "Three sequential observers",
+                        "Closed roles are provenance-verified; their historical "
+                        "outputs are not fabricated.",
                         status="ADVISORY ONLY",
                         authority="Cannot approve, commit or activate",
                     ),
                     _stage(
                         "legacy-revision",
-                        "Bounded revision",
-                        "Reserved for a D2 decision backed by exact provenance.",
-                        status="UNAVAILABLE",
+                        "Final model revision",
+                        "The five-call orchestration is documented, but no legacy "
+                        "controller or provider runs.",
+                        status="NOT EXECUTED",
                         authority="No current verifier or evidence authority",
                     ),
                 ),
@@ -189,6 +223,7 @@ class CockpitShell:
                     for stage_id, label, detail in _LEGACY_OBSERVERS
                 ),
                 legacy=legacy,
+                legacy_archive=self.legacy_archive,
             )
 
         return CockpitView(
@@ -226,6 +261,7 @@ class CockpitShell:
                 for stage_id, label, detail in _CURRENT_OBSERVERS
             ),
             legacy=legacy,
+            legacy_archive=self.legacy_archive,
         )
 
 
@@ -243,7 +279,7 @@ def build_default_cockpit_shell() -> CockpitShell:
             provider_guard="One guarded provider boundary",
             readiness_contract="/health/live + /health/ready",
         ),
-        legacy_enabled=False,
+        legacy_mode=LegacyCompatibilityMode.DISABLED,
     )
 
 

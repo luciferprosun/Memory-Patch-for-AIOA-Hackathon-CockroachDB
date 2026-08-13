@@ -260,7 +260,9 @@ class RuntimeConfigurationTests(unittest.TestCase):
     def test_legacy_cockpit_requires_explicit_binary_enable_flag(self) -> None:
         values = _environment()
         values[COCKPIT_LEGACY_MODE_ENABLED_ENV] = "1"
-        self.assertTrue(RuntimeSettings.from_mapping(values).legacy_cockpit_enabled)
+        enabled = RuntimeSettings.from_mapping(values)
+        self.assertTrue(enabled.legacy_cockpit_enabled)
+        self.assertEqual(enabled.legacy_cockpit_mode.value, "ARCHIVAL_VIEW")
         values[COCKPIT_LEGACY_MODE_ENABLED_ENV] = "true"
         with self.assertRaises(RuntimeAssemblyError) as raised:
             RuntimeSettings.from_mapping(values)

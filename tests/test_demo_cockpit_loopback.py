@@ -1,4 +1,4 @@
-"""Controlled loopback startup/render/shutdown proof for D1."""
+"""Controlled loopback startup/render/shutdown proof for the D1/D2 cockpit."""
 
 from __future__ import annotations
 
@@ -16,7 +16,11 @@ from aioa_memory_kernel.demo_runtime.composition import (
     SessionStorageClass,
     create_demo_runtime_app,
 )
-from aioa_memory_kernel.demo_runtime.config import RuntimeMode, RuntimeSettings
+from aioa_memory_kernel.demo_runtime.config import (
+    COCKPIT_LEGACY_MODE_ENABLED_ENV,
+    RuntimeMode,
+    RuntimeSettings,
+)
 from aioa_memory_kernel.modeling.models import load_approved_provider_spec
 from aioa_memory_kernel.personal_memory_ui import MemoryOwnerSessionStore
 from aioa_memory_kernel.personal_memory_ui.auth import SESSION_COOKIE_NAME
@@ -44,7 +48,7 @@ class _Provider:
 
     def generate(self, *_args, **_values):  # pragma: no cover - forbidden path
         self.generate_calls += 1
-        raise AssertionError("D1 loopback proof must make no provider call")
+        raise AssertionError("D1/D2 loopback proof must make no provider call")
 
     def close(self):
         return None
@@ -65,7 +69,9 @@ class _Factory:
 
 class UnifiedCockpitLoopbackTests(unittest.TestCase):
     def test_controlled_runtime_starts_renders_and_stops_on_loopback(self) -> None:
-        settings = RuntimeSettings.from_mapping(_environment(RuntimeMode.TEST))
+        environment = _environment(RuntimeMode.TEST)
+        environment[COCKPIT_LEGACY_MODE_ENABLED_ENV] = "1"
+        settings = RuntimeSettings.from_mapping(environment)
         store = MemoryOwnerSessionStore(maximum_sessions=10)
         handle, _ = store.create_session(OWNER_A, now=time.time())
         provider = _Provider()
@@ -133,6 +139,23 @@ class UnifiedCockpitLoopbackTests(unittest.TestCase):
             rendered = cockpit.read().decode("utf-8")
             self.assertEqual(cockpit.status, 200)
             self.assertIn("CURRENT / EVIDENCE-BOUND", rendered)
+            connection.close()
+
+            connection = http.client.HTTPConnection("127.0.0.1", port, timeout=3)
+            connection.request(
+                "GET",
+                "/memory/demo?mode=critical_prompt_loop",
+                headers={
+                    "Host": "testserver",
+                    "Cookie": f"{SESSION_COOKIE_NAME}={handle}",
+                },
+            )
+            archive = connection.getresponse()
+            archived = archive.read().decode("utf-8")
+            self.assertEqual(archive.status, 200)
+            self.assertIn("LEGACY / ORIGIN — ARCHIVAL VIEW", archived)
+            self.assertIn("NOT A REPLAY", archived)
+            self.assertIn("0 PROVIDER CALLS", archived)
             connection.close()
             self.assertEqual(provider.generate_calls, 0)
         finally:

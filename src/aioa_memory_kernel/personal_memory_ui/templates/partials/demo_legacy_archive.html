@@ -1,0 +1,52 @@
+<section class="legacy-archive" aria-labelledby="legacy-archive-heading">
+  <div class="section-heading cockpit-section-heading">
+    <div>
+      <p class="eyebrow">Historical provenance</p>
+      <h2 id="legacy-archive-heading">Verified source metadata, not reconstructed output</h2>
+    </div>
+    <div class="archive-truth-badges" aria-label="Legacy execution truth">
+      <span>ARCHIVAL VIEW</span>
+      <span>NOT LIVE</span>
+      <span>NOT A REPLAY</span>
+      <span>0 PROVIDER CALLS</span>
+    </div>
+  </div>
+
+  {% if cockpit.legacy_archive %}
+    <dl class="archive-summary">
+      <div><dt>System</dt><dd>{{ cockpit.legacy_archive.system_name }}</dd></div>
+      <div><dt>Source repository</dt><dd>luciferprosun/AOIA-Core</dd></div>
+      <div><dt>Historical flow</dt><dd>{{ cockpit.legacy_archive.historical_completed_call_plan }}</dd></div>
+      <div><dt>Exact prompt</dt><dd>{{ cockpit.legacy_archive.exact_prompt_status }}</dd></div>
+      <div><dt>Historical output</dt><dd>{{ cockpit.legacy_archive.historical_output_status }}</dd></div>
+      <div><dt>Replay bundle</dt><dd>{{ cockpit.legacy_archive.replay_bundle_status }}</dd></div>
+      <div><dt>Archive metadata SHA-256</dt><dd><code>{{ cockpit.legacy_archive.metadata_digest }}</code></dd></div>
+    </dl>
+
+    <div class="archive-sources" aria-label="AOIA-Core source identities">
+      {% for source in cockpit.legacy_archive.source_references %}
+        <article class="archive-source-card">
+          <span>{{ source.classification.value }}</span>
+          <h3>{{ source.target_component }}</h3>
+          <dl>
+            <div><dt>Commit</dt><dd><code>{{ source.source_commit }}</code></dd></div>
+            <div><dt>Path</dt><dd><code>{{ source.source_path }}</code></dd></div>
+            <div><dt>Git blob</dt><dd><code>{{ source.git_blob_sha1 }}</code></dd></div>
+            <div><dt>SHA-256</dt><dd><code>{{ source.content_sha256 }}</code></dd></div>
+          </dl>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="cockpit-notice" role="status">
+      Legacy archive metadata is unavailable or failed integrity validation.
+      Memory Patch remains operational.
+    </p>
+  {% endif %}
+
+  <p class="boundary-note">
+    Historical source code proves the shape of the earlier concept. It does
+    not prove unavailable execution bytes. No old server, provider client,
+    desktop controller, replay payload or Personal Memory write is active.
+  </p>
+</section>

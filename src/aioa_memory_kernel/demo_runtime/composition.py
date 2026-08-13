@@ -18,7 +18,12 @@ from typing import Protocol
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
-from aioa_memory_kernel.demo_cockpit import CockpitRuntimeStatus, CockpitShell
+from aioa_memory_kernel.demo_cockpit import (
+    CockpitRuntimeStatus,
+    CockpitShell,
+    LegacyCompatibilityMode,
+    build_legacy_archive_manifest,
+)
 from aioa_memory_kernel.modeling.models import load_approved_provider_spec
 from aioa_memory_kernel.modeling.providers import OpenRouterDraftV1Adapter
 from aioa_memory_kernel.modeling.service import SystemUTCClock
@@ -935,6 +940,13 @@ def create_demo_runtime_app(
         readiness=readiness,
     )
     approved_provider = load_approved_provider_spec()
+    legacy_archive = None
+    if settings.legacy_cockpit_mode is LegacyCompatibilityMode.ARCHIVAL_VIEW:
+        try:
+            legacy_archive = build_legacy_archive_manifest()
+        except (TypeError, ValueError):
+            # The optional archive must fail closed without taking current mode down.
+            legacy_archive = None
     cockpit_shell = CockpitShell(
         CockpitRuntimeStatus(
             profile_id=settings.profile.profile_id,
@@ -952,7 +964,8 @@ def create_demo_runtime_app(
             provider_guard="GuardedProviderAdapter / CALL-COUNT CEILING",
             readiness_contract="/health/live + /health/ready",
         ),
-        legacy_enabled=settings.legacy_cockpit_enabled,
+        legacy_mode=settings.legacy_cockpit_mode,
+        legacy_archive=legacy_archive,
     )
 
     @asynccontextmanager

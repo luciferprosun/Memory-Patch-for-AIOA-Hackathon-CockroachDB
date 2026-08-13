@@ -48,14 +48,15 @@
         </p>
       {% else %}
         <p>
-          This surface explains the origin concept only. It is not live and is
-          not a verified replay. Legacy observers are advisory and cannot write
-          evidence or mutate Personal Memory.
+          This surface explains the origin concept using verified source
+          metadata only. It is not live and it is not a replay. Missing prompt
+          and output bytes are not reconstructed. Legacy observers are advisory
+          and cannot write evidence or mutate Personal Memory.
         </p>
         <dl class="legacy-facts">
           <div><dt>Classification</dt><dd>{{ cockpit.legacy.classification }}</dd></div>
           <div><dt>Availability</dt><dd>{{ cockpit.legacy.availability }}</dd></div>
-          <div><dt>Execution</dt><dd>NOT LIVE</dd></div>
+          <div><dt>Execution</dt><dd>NOT LIVE / NOT A REPLAY</dd></div>
           <div><dt>Authority</dt><dd>ADVISORY / DEMO ONLY</dd></div>
         </dl>
       {% endif %}
@@ -81,6 +82,10 @@
       {% endfor %}
     </div>
   </section>
+
+  {% if cockpit.selected_mode.value == "critical_prompt_loop" %}
+    {% include "partials/demo_legacy_archive.html" %}
+  {% endif %}
 
   <section class="evolution-note" aria-labelledby="evolution-heading">
     <p class="eyebrow">Product evolution</p>

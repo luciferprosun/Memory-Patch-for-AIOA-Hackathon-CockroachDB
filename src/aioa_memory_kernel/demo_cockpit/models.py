@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
+from .legacy_archive import LegacyArchiveManifest, LegacyCompatibilityMode
+
 
 _MAXIMUM_VIEW_TEXT_BYTES = 1024
 
@@ -100,6 +102,7 @@ class CockpitStageSummary:
 @dataclass(frozen=True, slots=True)
 class LegacyModeStatus:
     enabled: bool
+    configured_mode: LegacyCompatibilityMode
     classification: str
     availability: str
     execution_kind: CockpitExecutionKind
@@ -108,6 +111,8 @@ class LegacyModeStatus:
     def __post_init__(self) -> None:
         if not isinstance(self.enabled, bool):
             raise ValueError("legacy availability flag is invalid")
+        if not isinstance(self.configured_mode, LegacyCompatibilityMode):
+            raise ValueError("legacy configured mode is invalid")
         _bounded_text(self.classification, "legacy classification")
         _bounded_text(self.availability, "legacy availability")
         if not isinstance(self.execution_kind, CockpitExecutionKind):
@@ -133,6 +138,7 @@ class CockpitView:
     stages: tuple[CockpitStageSummary, ...]
     observer_cards: tuple[CockpitStageSummary, ...]
     legacy: LegacyModeStatus
+    legacy_archive: LegacyArchiveManifest | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.selected_mode, CockpitMode):
@@ -169,5 +175,13 @@ class CockpitView:
                 for observer in self.observer_cards
             )
             or not isinstance(self.legacy, LegacyModeStatus)
+            or (
+                self.legacy_archive is not None
+                and not isinstance(self.legacy_archive, LegacyArchiveManifest)
+            )
+            or (
+                self.selected_mode is CockpitMode.CRITICAL_PROMPT_LEGACY
+                and self.legacy_archive is None
+            )
         ):
             raise ValueError("cockpit view collection is outside its bound")

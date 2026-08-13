@@ -11,7 +11,9 @@ from aioa_memory_kernel.demo_cockpit import (
     CockpitMode,
     CockpitRuntimeStatus,
     CockpitShell,
+    LegacyCompatibilityMode,
     build_default_cockpit_shell,
+    build_legacy_archive_manifest,
 )
 from aioa_memory_kernel.personal_memory_ui import (
     MemoryOwnerSessionStore,
@@ -31,18 +33,25 @@ class UnifiedCockpitShellTests(unittest.TestCase):
         self.assertIs(view.selected_mode, CockpitMode.MEMORY_PATCH_CURRENT)
         self.assertEqual(view.mode_badge, "CURRENT / EVIDENCE-BOUND")
         self.assertFalse(view.legacy.enabled)
-        self.assertEqual(view.legacy.classification, "LEGACY_VIEW_ONLY")
+        self.assertEqual(
+            view.legacy.classification,
+            "DISABLED_WITH_ARCHIVAL_VIEW",
+        )
         self.assertEqual(len(view.stages), 11)
         self.assertEqual(len(view.observer_cards), 3)
 
     def test_enabled_legacy_is_truthful_view_only(self) -> None:
         default = build_default_cockpit_shell()
-        shell = CockpitShell(default.runtime_status, legacy_enabled=True)
+        shell = CockpitShell(
+            default.runtime_status,
+            legacy_mode=LegacyCompatibilityMode.ARCHIVAL_VIEW,
+            legacy_archive=build_legacy_archive_manifest(),
+        )
         view = shell.project(CockpitMode.CRITICAL_PROMPT_LEGACY.value)
         self.assertIs(view.selected_mode, CockpitMode.CRITICAL_PROMPT_LEGACY)
-        self.assertEqual(view.mode_badge, "LEGACY / ORIGIN — VIEW ONLY")
+        self.assertEqual(view.mode_badge, "LEGACY / ORIGIN — ARCHIVAL VIEW")
         self.assertIn("not live", view.introduction)
-        self.assertIn("not a verified replay", view.introduction)
+        self.assertIn("not a replay", view.introduction)
         self.assertTrue(all("Advisory" in item.authority for item in view.observer_cards))
 
     def test_disabled_or_unknown_mode_falls_back_without_reflection(self) -> None:
@@ -67,7 +76,11 @@ class UnifiedCockpitRouteTests(unittest.TestCase):
             public_origin="https://testserver",
         )
         default = build_default_cockpit_shell()
-        self.shell = CockpitShell(default.runtime_status, legacy_enabled=True)
+        self.shell = CockpitShell(
+            default.runtime_status,
+            legacy_mode=LegacyCompatibilityMode.ARCHIVAL_VIEW,
+            legacy_archive=build_legacy_archive_manifest(),
+        )
         self.app = create_personal_memory_app(
             backend=self.backend,
             oidc_client=self.oidc,
@@ -116,8 +129,10 @@ class UnifiedCockpitRouteTests(unittest.TestCase):
             "/memory/demo", params={"mode": "critical_prompt_loop"}
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn("LEGACY / ORIGIN — VIEW ONLY", response.text)
+        self.assertIn("LEGACY / ORIGIN — ARCHIVAL VIEW", response.text)
         self.assertIn("NOT LIVE", response.text)
+        self.assertIn("NOT A REPLAY", response.text)
+        self.assertIn("0 PROVIDER CALLS", response.text)
         self.assertIn("ADVISORY / DEMO ONLY", response.text)
         self.assertNotIn('action="/memory/proposals/', response.text)
         self.assertNotIn('action="/memory/patches/', response.text)

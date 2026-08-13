@@ -140,7 +140,7 @@ h3 { margin: .6rem 0 .4rem; font-size: 1.08rem; }
 .runtime-grid dt { color: #adc1b9; font-size: .7rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .runtime-grid dd { margin: .15rem 0 0; overflow-wrap: anywhere; font-size: .82rem; }
 .cockpit-layout { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(260px, .7fr); gap: 1rem; align-items: start; }
-.workflow-panel, .jury-panel, .evolution-note { padding: 1.25rem; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+.workflow-panel, .jury-panel, .legacy-archive, .evolution-note { padding: 1.25rem; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
 .cockpit-section-heading { margin: 0 0 1rem; }
 .cockpit-section-heading h2, .jury-panel h2, .evolution-note h2 { font-size: 1.55rem; }
 .jury-panel { position: sticky; top: 1rem; }
@@ -165,6 +165,18 @@ h3 { margin: .6rem 0 .4rem; font-size: 1.08rem; }
 .observer-card p, .observer-card small { color: var(--muted); }
 .observer-card small { display: block; padding-top: .7rem; border-top: 1px solid var(--line); }
 .observer-status { padding: .3rem .5rem; background: #e6eef2; color: var(--blue); }
+.legacy-archive { margin-top: 1rem; }
+.archive-truth-badges { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .35rem; }
+.archive-truth-badges span, .archive-source-card > span { display: inline-flex; border: 1px solid #d8b977; border-radius: 999px; padding: .3rem .5rem; background: var(--amber-soft); color: #70480f; font-size: .68rem; font-weight: 850; letter-spacing: .04em; }
+.archive-summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; margin: 1rem 0; }
+.archive-summary > div, .archive-source-card { min-width: 0; padding: .8rem; border: 1px solid var(--line); border-radius: 12px; background: var(--canvas); }
+.archive-summary dt, .archive-source-card dt { color: var(--muted); font-size: .72rem; font-weight: 750; }
+.archive-summary dd, .archive-source-card dd { margin: .25rem 0 0; overflow-wrap: anywhere; font-size: .78rem; font-weight: 750; }
+.archive-sources { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .65rem; }
+.archive-source-card h3 { margin: .7rem 0; font-size: 1rem; }
+.archive-source-card dl { margin: 0; }
+.archive-source-card dl div { padding: .45rem 0; border-top: 1px solid var(--line); }
+.archive-source-card code, .archive-summary code { color: inherit; font-size: .72rem; word-break: break-all; }
 .evolution-note { margin-top: 1rem; }
 .evolution-flow { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 1rem; align-items: center; margin-top: 1rem; }
 .evolution-flow > span { padding: 1rem; border-radius: 12px; background: var(--green-soft); text-align: center; font-weight: 800; }
@@ -183,7 +195,8 @@ h3 { margin: .6rem 0 .4rem; font-size: 1.08rem; }
   .app-header { flex-wrap: wrap; padding-top: .7rem; }
   .cockpit-hero { align-items: flex-start; flex-direction: column; }
   .cockpit-badges { align-items: flex-start; }
-  .runtime-strip, .cockpit-layout { grid-template-columns: 1fr; }
+  .runtime-strip, .cockpit-layout, .archive-summary, .archive-sources { grid-template-columns: 1fr; }
+  .archive-truth-badges { justify-content: flex-start; }
   .runtime-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .jury-panel { position: static; }
   .observer-grid { grid-template-columns: 1fr; }

@@ -11,6 +11,7 @@ from enum import Enum
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
 
+from aioa_memory_kernel.demo_cockpit import LegacyCompatibilityMode
 from aioa_memory_kernel.modeling.models import (
     APPROVED_CREDENTIAL_ENVIRONMENT_VARIABLE,
     MAXIMUM_MAX_OUTPUT_TOKENS,
@@ -782,7 +783,13 @@ class RuntimeSettings:
     database: RuntimeDatabaseSettings | None = None
     provider: RuntimeProviderSettings | None = None
     provider_guard: RuntimeProviderGuardSettings | None = None
-    legacy_cockpit_enabled: bool = False
+    legacy_cockpit_mode: LegacyCompatibilityMode = LegacyCompatibilityMode.DISABLED
+
+    @property
+    def legacy_cockpit_enabled(self) -> bool:
+        """Backward-compatible display availability signal; never an authority."""
+
+        return self.legacy_cockpit_mode is LegacyCompatibilityMode.ARCHIVAL_VIEW
 
     @classmethod
     def from_mapping(
@@ -877,7 +884,11 @@ class RuntimeSettings:
                 mode=mode,
                 profile=profile,
             ),
-            legacy_cockpit_enabled=legacy_mode_flag == "1",
+            legacy_cockpit_mode=(
+                LegacyCompatibilityMode.ARCHIVAL_VIEW
+                if legacy_mode_flag == "1"
+                else LegacyCompatibilityMode.DISABLED
+            ),
         )
 
     def require_database(self) -> RuntimeDatabaseSettings:
@@ -928,7 +939,7 @@ class RuntimeSettings:
             database=None,
             provider=None,
             provider_guard=None,
-            legacy_cockpit_enabled=False,
+            legacy_cockpit_mode=LegacyCompatibilityMode.DISABLED,
         )
 
 
