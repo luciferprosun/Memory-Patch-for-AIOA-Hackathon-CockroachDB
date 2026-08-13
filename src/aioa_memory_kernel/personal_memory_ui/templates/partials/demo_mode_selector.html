@@ -1,0 +1,23 @@
+<nav class="mode-selector" aria-label="Demo presentation mode">
+  <p id="mode-selector-label">Choose the clearly labelled demonstration surface:</p>
+  <div class="mode-tabs" role="list" aria-labelledby="mode-selector-label">
+    {% for option in cockpit.mode_options %}
+      {% if option.enabled %}
+        <a
+          class="mode-tab{% if option.selected %} selected{% endif %}"
+          href="/memory/demo?mode={{ option.mode.value }}"
+          {% if option.selected %}aria-current="page"{% endif %}
+          role="listitem"
+        >
+          <strong>{{ option.label }}</strong>
+          <small>{{ option.status_label }}</small>
+        </a>
+      {% else %}
+        <span class="mode-tab disabled" aria-disabled="true" role="listitem">
+          <strong>{{ option.label }}</strong>
+          <small>{{ option.status_label }} · Disabled by configuration</small>
+        </span>
+      {% endif %}
+    {% endfor %}
+  </div>
+</nav>

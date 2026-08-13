@@ -11,10 +11,14 @@
   <body hx-boost="true">
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="app-header">
-      <a class="brand" href="/memory" aria-label="AIOA Personal Memory home">
+      <a class="brand" href="/memory/demo" aria-label="AIOA demo cockpit home">
         <span class="brand-mark" aria-hidden="true">A</span>
-        <span><strong>AIOA</strong><small>Personal Memory</small></span>
+        <span><strong>AIOA</strong><small>Memory Patch</small></span>
       </a>
+      <nav class="primary-nav" aria-label="Owner workspace navigation">
+        <a href="/memory/demo">Demo cockpit</a>
+        <a href="/memory">Personal Memory</a>
+      </nav>
       <div class="account">
         <span class="account-name">{{ principal.display_name }}</span>
         <form method="post" action="/memory/logout">

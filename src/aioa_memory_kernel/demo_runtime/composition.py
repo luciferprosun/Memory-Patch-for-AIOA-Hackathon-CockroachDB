@@ -18,6 +18,7 @@ from typing import Protocol
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
+from aioa_memory_kernel.demo_cockpit import CockpitRuntimeStatus, CockpitShell
 from aioa_memory_kernel.modeling.models import load_approved_provider_spec
 from aioa_memory_kernel.modeling.providers import OpenRouterDraftV1Adapter
 from aioa_memory_kernel.modeling.service import SystemUTCClock
@@ -933,6 +934,26 @@ def create_demo_runtime_app(
         authorizer_proxy=authorizer_proxy,
         readiness=readiness,
     )
+    approved_provider = load_approved_provider_spec()
+    cockpit_shell = CockpitShell(
+        CockpitRuntimeStatus(
+            profile_id=settings.profile.profile_id,
+            asgi_application="aioa_memory_kernel.demo_runtime.asgi:app",
+            authentication="OIDC + PKCE / deny-by-default judge access",
+            session_backend=(
+                "CockroachOwnerSessionStore"
+                if settings.mode is not RuntimeMode.TEST
+                else "Explicit test OwnerSessionStore"
+            ),
+            database="CockroachDB / TLS and migration gated",
+            provider=(
+                f"{approved_provider.provider_id} / {approved_provider.model_id}"
+            ),
+            provider_guard="GuardedProviderAdapter / CALL-COUNT CEILING",
+            readiness_contract="/health/live + /health/ready",
+        ),
+        legacy_enabled=settings.legacy_cockpit_enabled,
+    )
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI):
@@ -963,6 +984,7 @@ def create_demo_runtime_app(
         session_cookie_max_age=settings.sessions.limits.absolute_ttl_seconds,
         oidc_flow_cookie_max_age=settings.sessions.limits.pending_ttl_seconds,
         lifespan=lifespan,
+        cockpit_shell=cockpit_shell,
     )
     app.state.runtime_controller = controller
     app.state.runtime_mode = settings.mode.value

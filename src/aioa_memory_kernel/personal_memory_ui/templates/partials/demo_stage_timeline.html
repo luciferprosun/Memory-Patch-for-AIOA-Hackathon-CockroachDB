@@ -1,0 +1,15 @@
+<ol class="cockpit-timeline">
+  {% for stage in cockpit.stages %}
+    <li>
+      <span class="stage-number" aria-hidden="true">{{ loop.index }}</span>
+      <div class="stage-copy">
+        <div class="stage-heading">
+          <h3>{{ stage.label }}</h3>
+          <span>{{ stage.status }}</span>
+        </div>
+        <p>{{ stage.detail }}</p>
+        <small>{{ stage.authority }}</small>
+      </div>
+    </li>
+  {% endfor %}
+</ol>

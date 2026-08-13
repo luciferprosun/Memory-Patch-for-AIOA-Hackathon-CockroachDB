@@ -28,6 +28,7 @@ from aioa_memory_kernel.demo_runtime.composition import (
     create_demo_runtime_app,
 )
 from aioa_memory_kernel.demo_runtime.config import (
+    COCKPIT_LEGACY_MODE_ENABLED_ENV,
     JUDGE_ALLOWED_SUBJECTS_ENV,
     OIDC_CLIENT_ID_ENV,
     OIDC_ISSUER_ENV,
@@ -254,6 +255,16 @@ class RuntimeConfigurationTests(unittest.TestCase):
         self.assertEqual(settings.port, 8000)
         self.assertEqual(settings.oidc.public_origin, "https://testserver")
         self.assertEqual(settings.profile.process_layout.web_workers, 1)
+        self.assertFalse(settings.legacy_cockpit_enabled)
+
+    def test_legacy_cockpit_requires_explicit_binary_enable_flag(self) -> None:
+        values = _environment()
+        values[COCKPIT_LEGACY_MODE_ENABLED_ENV] = "1"
+        self.assertTrue(RuntimeSettings.from_mapping(values).legacy_cockpit_enabled)
+        values[COCKPIT_LEGACY_MODE_ENABLED_ENV] = "true"
+        with self.assertRaises(RuntimeAssemblyError) as raised:
+            RuntimeSettings.from_mapping(values)
+        self.assertEqual(raised.exception.code, RuntimeErrorCode.CONFIG_INVALID)
 
     def test_local_demo_rejects_non_loopback_bind(self) -> None:
         values = _environment(RuntimeMode.LOCAL_DEMO)
@@ -334,7 +345,9 @@ class RuntimeCompositionTests(unittest.TestCase):
             )
         factory.assert_called_once()
         paths = {getattr(route, "path", None) for route in app.routes}
-        self.assertTrue({"/", "/memory", "/memory/login"}.issubset(paths))
+        self.assertTrue(
+            {"/", "/memory", "/memory/login", "/memory/demo"}.issubset(paths)
+        )
         self.assertNotIn("FastAPI(", inspect.getsource(composition))
 
     def test_startup_order_is_exact_and_provider_is_not_called(self) -> None:

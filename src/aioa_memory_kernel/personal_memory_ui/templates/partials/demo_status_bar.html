@@ -1,0 +1,14 @@
+<section class="runtime-strip" aria-labelledby="runtime-heading">
+  <div>
+    <p class="eyebrow">Runtime contract</p>
+    <h2 id="runtime-heading">One authority boundary</h2>
+  </div>
+  <dl class="runtime-grid">
+    <div><dt>Profile</dt><dd>{{ cockpit.runtime.profile_id }}</dd></div>
+    <div><dt>Authentication</dt><dd>{{ cockpit.runtime.authentication }}</dd></div>
+    <div><dt>Sessions</dt><dd>{{ cockpit.runtime.session_backend }}</dd></div>
+    <div><dt>Database</dt><dd>{{ cockpit.runtime.database }}</dd></div>
+    <div><dt>Provider</dt><dd>{{ cockpit.runtime.provider }}</dd></div>
+    <div><dt>Cost guard</dt><dd>{{ cockpit.runtime.provider_guard }}</dd></div>
+  </dl>
+</section>

@@ -17,6 +17,10 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from aioa_memory_kernel.contracts.enums import PersonalMemorySpaceState
+from aioa_memory_kernel.demo_cockpit import (
+    CockpitShell,
+    build_default_cockpit_shell,
+)
 from aioa_memory_kernel.state_machines.personal_memory import (
     personal_memory_transition_allowed,
 )
@@ -34,6 +38,7 @@ from .auth import (
     pkce_challenge,
 )
 from .backend import PersonalMemoryUiBackend
+from .cockpit_routes import register_cockpit_route
 from .models import (
     OwnerPrincipal,
     PersonalMemoryUiError,
@@ -106,6 +111,7 @@ def create_personal_memory_app(
     session_cookie_max_age: int = SESSION_TTL_SECONDS,
     oidc_flow_cookie_max_age: int = OIDC_FLOW_TTL_SECONDS,
     lifespan: Callable[[FastAPI], AbstractAsyncContextManager[None]] | None = None,
+    cockpit_shell: CockpitShell | None = None,
 ) -> FastAPI:
     """Create an app only from explicitly injected auth and backend boundaries."""
 
@@ -136,6 +142,7 @@ def create_personal_memory_app(
             autoescape=select_autoescape(("html", "xml"), default=True),
         )
     )
+    cockpit_shell = cockpit_shell or build_default_cockpit_shell()
     app.mount("/memory/static", StaticFiles(directory=str(_STATIC)), name="memory-static")
 
     @app.middleware("http")
@@ -250,6 +257,14 @@ def create_personal_memory_app(
             ),
             status_code=500,
         )
+
+    register_cockpit_route(
+        app=app,
+        templates=templates,
+        require_session=require_session,
+        context=context,
+        cockpit_shell=cockpit_shell,
+    )
 
     @app.get("/", include_in_schema=False)
     def root():

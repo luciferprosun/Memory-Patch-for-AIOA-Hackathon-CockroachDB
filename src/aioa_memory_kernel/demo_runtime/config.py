@@ -37,6 +37,7 @@ from aioa_memory_kernel.security.credentials import (
 RUNTIME_MODE_ENV = "AIOA_RUNTIME_MODE"
 RUNTIME_BIND_HOST_ENV = "AIOA_RUNTIME_BIND_HOST"
 RUNTIME_PORT_ENV = "AIOA_RUNTIME_PORT"
+COCKPIT_LEGACY_MODE_ENABLED_ENV = "AIOA_DEMO_LEGACY_MODE_ENABLED"
 OIDC_ISSUER_ENV = "AIOA_OIDC_ISSUER"
 OIDC_CLIENT_ID_ENV = "AIOA_OIDC_CLIENT_ID"
 PUBLIC_ORIGIN_ENV = "AIOA_RUNTIME_PUBLIC_ORIGIN"
@@ -781,6 +782,7 @@ class RuntimeSettings:
     database: RuntimeDatabaseSettings | None = None
     provider: RuntimeProviderSettings | None = None
     provider_guard: RuntimeProviderGuardSettings | None = None
+    legacy_cockpit_enabled: bool = False
 
     @classmethod
     def from_mapping(
@@ -857,6 +859,9 @@ class RuntimeSettings:
                 mode=mode,
                 profile=profile,
             )
+        legacy_mode_flag = environment.get(COCKPIT_LEGACY_MODE_ENABLED_ENV, "0")
+        if legacy_mode_flag not in {"0", "1"}:
+            raise RuntimeAssemblyError(RuntimeErrorCode.CONFIG_INVALID)
         return cls(
             mode=mode,
             bind_host=bind_host,
@@ -872,6 +877,7 @@ class RuntimeSettings:
                 mode=mode,
                 profile=profile,
             ),
+            legacy_cockpit_enabled=legacy_mode_flag == "1",
         )
 
     def require_database(self) -> RuntimeDatabaseSettings:
@@ -922,6 +928,7 @@ class RuntimeSettings:
             database=None,
             provider=None,
             provider_guard=None,
+            legacy_cockpit_enabled=False,
         )
 
 
@@ -937,6 +944,7 @@ __all__ = [
     "SESSION_PENDING_TTL_ENV",
     "SESSION_TTL_ENV",
     "APPLICATION_DATABASE_ROLE",
+    "COCKPIT_LEGACY_MODE_ENABLED_ENV",
     "DATABASE_ACQUISITION_TIMEOUT_ENV",
     "DATABASE_ALLOW_INSECURE_LOCAL_ENV",
     "DATABASE_CONNECTION_TIMEOUT_ENV",

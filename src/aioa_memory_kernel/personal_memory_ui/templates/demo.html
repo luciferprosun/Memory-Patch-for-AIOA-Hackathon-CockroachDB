@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Unified demo cockpit{% endblock %}
+{% block content %}
+  <section class="cockpit-hero" aria-labelledby="cockpit-heading">
+    <div>
+      <p class="eyebrow">AIOA evolution · one secured runtime</p>
+      <h1 id="cockpit-heading">{{ cockpit.heading }}</h1>
+      <p class="lede">{{ cockpit.introduction }}</p>
+    </div>
+    <div class="cockpit-badges" aria-label="Selected mode status">
+      <span class="mode-badge">{{ cockpit.mode_badge }}</span>
+      <span class="run-badge">RUN STATE: {{ cockpit.run_state.value }}</span>
+      <span class="execution-badge">{{ cockpit.execution_kind.value }}</span>
+    </div>
+  </section>
+
+  {% if cockpit.notice %}
+    <p class="cockpit-notice" role="status">{{ cockpit.notice }}</p>
+  {% endif %}
+
+  {% include "partials/demo_mode_selector.html" %}
+  {% include "partials/demo_status_bar.html" %}
+
+  <div class="cockpit-layout">
+    <section class="workflow-panel" aria-labelledby="workflow-heading">
+      <div class="section-heading cockpit-section-heading">
+        <div>
+          <p class="eyebrow">Bounded workflow</p>
+          <h2 id="workflow-heading">Stage-by-stage trace</h2>
+        </div>
+        <span class="read-only">PRESENTATION ONLY</span>
+      </div>
+      {% include "partials/demo_stage_timeline.html" %}
+    </section>
+
+    <aside class="jury-panel" aria-labelledby="jury-heading">
+      <p class="eyebrow">Jury guide</p>
+      <h2 id="jury-heading">Authority stays separated</h2>
+      {% if cockpit.selected_mode.value == "memory_patch" %}
+        <p>
+          Model output, canonical evidence, Personal Memory, Critic candidates
+          and owner approval are distinct. Verification decides what may be
+          returned; Personal Memory remains private and non-canonical.
+        </p>
+        <p class="boundary-note">
+          D1 provides the unified shell. No live Golden Path execution is
+          claimed here; D3 owns that server-backed trace.
+        </p>
+      {% else %}
+        <p>
+          This surface explains the origin concept only. It is not live and is
+          not a verified replay. Legacy observers are advisory and cannot write
+          evidence or mutate Personal Memory.
+        </p>
+        <dl class="legacy-facts">
+          <div><dt>Classification</dt><dd>{{ cockpit.legacy.classification }}</dd></div>
+          <div><dt>Availability</dt><dd>{{ cockpit.legacy.availability }}</dd></div>
+          <div><dt>Execution</dt><dd>NOT LIVE</dd></div>
+          <div><dt>Authority</dt><dd>ADVISORY / DEMO ONLY</dd></div>
+        </dl>
+      {% endif %}
+    </aside>
+  </div>
+
+  <section class="observer-section" aria-labelledby="observer-heading">
+    <div class="section-heading cockpit-section-heading">
+      <div>
+        <p class="eyebrow">Readable signals</p>
+        <h2 id="observer-heading">Three review lenses</h2>
+      </div>
+      <p>Status never grants authority.</p>
+    </div>
+    <div class="observer-grid">
+      {% for observer in cockpit.observer_cards %}
+        <article class="observer-card">
+          <span class="observer-status">{{ observer.status }}</span>
+          <h3>{{ observer.label }}</h3>
+          <p>{{ observer.detail }}</p>
+          <small>{{ observer.authority }}</small>
+        </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="evolution-note" aria-labelledby="evolution-heading">
+    <p class="eyebrow">Product evolution</p>
+    <h2 id="evolution-heading">From bounded critique to evidence-bound correction</h2>
+    <div class="evolution-flow" aria-label="AIOA product evolution">
+      <span>Critical Prompt Loop<br><small>Legacy / Origin</small></span>
+      <span aria-hidden="true">→</span>
+      <span>Memory Patch<br><small>Current / Evidence-bound</small></span>
+    </div>
+  </section>
+{% endblock %}

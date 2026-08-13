@@ -31,6 +31,7 @@ try:
         prepare_runtime_database,
     )
     from aioa_memory_kernel.demo_runtime.config import (  # noqa: E402
+        COCKPIT_LEGACY_MODE_ENABLED_ENV,
         DATABASE_ACQUISITION_TIMEOUT_ENV,
         DATABASE_ALLOW_INSECURE_LOCAL_ENV,
         DATABASE_CONNECTION_TIMEOUT_ENV,
@@ -126,6 +127,7 @@ def _parser() -> argparse.ArgumentParser:
         epilog=(
             "Configuration names: "
             f"{RUNTIME_MODE_ENV}, {RUNTIME_BIND_HOST_ENV}, {RUNTIME_PORT_ENV}, "
+            f"{COCKPIT_LEGACY_MODE_ENABLED_ENV}, "
             f"{OIDC_ISSUER_ENV}, {OIDC_CLIENT_ID_ENV}, {PUBLIC_ORIGIN_ENV}, "
             "DATABASE_URL_APP, DATABASE_URL_MIGRATOR, "
             f"{DATABASE_ALLOW_INSECURE_LOCAL_ENV}, {DATABASE_POOL_MIN_ENV}, "
