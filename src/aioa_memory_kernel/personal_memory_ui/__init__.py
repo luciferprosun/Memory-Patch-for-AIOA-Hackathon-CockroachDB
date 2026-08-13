@@ -43,12 +43,22 @@ _AUTH_EXPORTS = frozenset(
         "pkce_challenge",
     }
 )
+_DURABLE_SESSION_EXPORTS = frozenset(
+    {
+        "CockroachOwnerSessionRepository",
+        "CockroachOwnerSessionStore",
+        "DurableSessionError",
+        "DurableSessionLimits",
+    }
+)
 _WEB_EXPORTS = frozenset({"create_personal_memory_app"})
 
 
 def __getattr__(name: str):
     if name in _AUTH_EXPORTS:
         module = importlib.import_module(f"{__name__}.auth")
+    elif name in _DURABLE_SESSION_EXPORTS:
+        module = importlib.import_module(f"{__name__}.cockroach_sessions")
     elif name in _WEB_EXPORTS:
         module = importlib.import_module(f"{__name__}.web")
     else:
@@ -59,7 +69,11 @@ def __getattr__(name: str):
 
 __all__ = [
     "AuditEventView",
+    "CockroachOwnerSessionRepository",
+    "CockroachOwnerSessionStore",
     "DashboardView",
+    "DurableSessionError",
+    "DurableSessionLimits",
     "HttpxOidcClient",
     "KernelPersonalMemoryUiBackend",
     "MemoryOwnerSessionStore",

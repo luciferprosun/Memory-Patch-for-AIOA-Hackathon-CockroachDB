@@ -14,6 +14,7 @@ from aioa_memory_kernel.contracts.serialization import (
     to_canonical_data,
 )
 from aioa_memory_kernel.release_candidate import (
+    ReleaseCandidateManifest,
     RecoveryStateClass,
     build_rc_manifest,
     build_recovery_asset_manifest,
@@ -106,17 +107,45 @@ class Step42RcManifestTest(unittest.TestCase):
         self.assertFalse(any(name.startswith("docs/") for name, *_ in entries))
 
     def test_committed_manifests_and_recovery_evidence_are_canonical_and_bound(self):
-        assets, rc = self.manifests()
-        expected = {
-            "step42-recovery-asset-manifest-1a.json": to_canonical_data(assets),
-            "step42-rc-manifest-1a.json": to_canonical_data(rc),
-        }
+        assets, current_runtime_rc = self.manifests()
         evidence_root = ROOT / "docs/evidence/release"
-        for name, value in expected.items():
-            with self.subTest(name=name):
-                raw = (evidence_root / name).read_bytes()
-                self.assertEqual(raw, (canonical_json(value) + "\n").encode())
-                self.assertEqual(json.loads(raw), value)
+        assets_value = to_canonical_data(assets)
+        assets_raw = (
+            evidence_root / "step42-recovery-asset-manifest-1a.json"
+        ).read_bytes()
+        self.assertEqual(assets_raw, (canonical_json(assets_value) + "\n").encode())
+        self.assertEqual(json.loads(assets_raw), assets_value)
+
+        # Step 42 is a historical freeze. Post-roadmap runtime assembly may add
+        # code or migrations, so validate the committed RC against its own
+        # canonical bytes rather than rebuilding it from the current tree.
+        rc_path = evidence_root / "step42-rc-manifest-1a.json"
+        rc_raw = rc_path.read_bytes()
+        rc_value = json.loads(rc_raw.decode("utf-8", errors="strict"))
+        self.assertEqual(rc_raw, (canonical_json(rc_value) + "\n").encode())
+        pair_fields = (
+            "prompt_model_contract_identities",
+            "dependency_manifest_digests",
+            "build_container_identities",
+        )
+        rc_values = dict(rc_value)
+        for field in pair_fields:
+            rc_values[field] = tuple(tuple(item) for item in rc_values[field])
+        frozen_rc = ReleaseCandidateManifest(**rc_values)
+        self.assertEqual(verify_release_candidate_manifest(frozen_rc), frozen_rc)
+        self.assertEqual(frozen_rc.created_from_step41_sha, STEP41_BASE)
+        self.assertEqual(
+            frozen_rc.recovery_asset_manifest_digest,
+            assets.manifest_digest,
+        )
+        self.assertNotEqual(
+            current_runtime_rc.runtime_content_digest,
+            frozen_rc.runtime_content_digest,
+        )
+        self.assertNotEqual(
+            current_runtime_rc.migration_manifest_digest,
+            frozen_rc.migration_manifest_digest,
+        )
 
         evidence_path = evidence_root / "step42-rc-backup-restore-validation.json"
         raw = evidence_path.read_bytes()
@@ -126,7 +155,10 @@ class Step42RcManifestTest(unittest.TestCase):
         self.assertEqual(evidence["verdict"], "PASS_RC_BACKUP_RESTORE_CONTROLLED")
         self.assertTrue(evidence["closure_eligible"])
         self.assertFalse(evidence["step43_started"])
-        self.assertEqual(evidence["rc_manifest"]["digest"], rc.manifest_digest)
+        self.assertEqual(
+            evidence["rc_manifest"]["digest"],
+            frozen_rc.manifest_digest,
+        )
         self.assertEqual(
             evidence["recovery_asset_manifest"]["digest"],
             assets.manifest_digest,

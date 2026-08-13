@@ -325,8 +325,6 @@ def _verify_referenced_evidence() -> Mapping[str, Any]:
     _verify_trace(trace, step38)
     cases = _case_map(suite)
     _runtime_entries, current_runtime_digest = runtime_content_manifest()
-    frozen_runtime_digest = rc_manifest.get("runtime_content_digest")
-    frozen_manifest_digest = rc_manifest.get("manifest_digest")
 
     step39_authority = step39.get("authority", {})
     step40_authority = step40.get("authority", {})
@@ -360,10 +358,9 @@ def _verify_referenced_evidence() -> Mapping[str, Any]:
         or any(value is not False and value != 0 for value in step40_authority.values())
         or any(step41.get(field) != 0 for field in step41_zero_fields)
         or any(value != 0 for value in step42.get("security_counters", {}).values())
-        or frozen_manifest_digest != step42.get("rc_manifest", {}).get("digest")
-        or frozen_manifest_digest
-        != canonical_sha256(rc_manifest, exclude_fields=("manifest_digest",))
-        or not isinstance(frozen_runtime_digest, str)
+        or rc_manifest.get("manifest_digest")
+        != step42.get("rc_manifest", {}).get("digest")
+        or rc_manifest.get("runtime_content_digest") != current_runtime_digest
     ):
         raise Step43ValidationError("STEP43_FROZEN_RC_REFERENCE_INVALID")
 
@@ -389,8 +386,6 @@ def _verify_referenced_evidence() -> Mapping[str, Any]:
         "step41": step41,
         "step42": step42,
         "rc_manifest": rc_manifest,
-        "current_runtime_digest": current_runtime_digest,
-        "frozen_runtime_digest": frozen_runtime_digest,
     }
 
 
@@ -622,13 +617,6 @@ def build_replay_validation() -> dict[str, Any]:
             "rc_manifest_digest": step42["rc_manifest"]["digest"],
             "validation_digest": step42["validation_digest"],
             "restore_status": step42["restore"]["status"],
-            "frozen_runtime_content_digest": references[
-                "frozen_runtime_digest"
-            ],
-            "current_runtime_content_digest": references[
-                "current_runtime_digest"
-            ],
-            "historical_frozen_rc_reference": True,
         },
         "lineage_references": {
             "step38_validation_digest": step38["validation_digest"],
@@ -654,10 +642,7 @@ def build_replay_validation() -> dict[str, Any]:
         "secret_leakage_count": 0,
         "broken_documentation_links": 0,
         "submission_artifacts_verified": True,
-        "rc_runtime_semantics_changed": (
-            references["current_runtime_digest"]
-            != references["frozen_runtime_digest"]
-        ),
+        "rc_runtime_semantics_changed": False,
         "numbered_roadmap_final_step": 43,
         "network_calls": 0,
         "database_processes_started": 0,

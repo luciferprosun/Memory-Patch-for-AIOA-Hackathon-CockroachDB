@@ -34,6 +34,14 @@ class Step43DocumentationDemoTest(unittest.TestCase):
         self.assertEqual(result["network_calls"], 0)
         self.assertEqual(result["database_processes_started"], 0)
         self.assertEqual(result["production_resources_touched"], 0)
+        self.assertTrue(result["rc_runtime_semantics_changed"])
+        self.assertTrue(
+            result["rc_restore_reference"]["historical_frozen_rc_reference"]
+        )
+        self.assertNotEqual(
+            result["rc_restore_reference"]["frozen_runtime_content_digest"],
+            result["rc_restore_reference"]["current_runtime_content_digest"],
+        )
         self.assertEqual(result["secret_leakage_count"], 0)
         self.assertEqual(result["broken_documentation_links"], 0)
         self.assertTrue(result["submission_artifacts_verified"])
@@ -181,10 +189,16 @@ class Step43DocumentationDemoTest(unittest.TestCase):
         self.assertEqual(evidence["broken_documentation_links"], 0)
         self.assertTrue(evidence["submission_artifacts_verified"])
         current = step43.build_replay_validation()
-        self.assertEqual(
+        # The committed Step 43 digest remains historical evidence. The
+        # post-roadmap runtime compatibility change updates this runner and its
+        # tests, so the current submission surface must be validated afresh and
+        # must not be misrepresented as the exact frozen Step 43 byte set.
+        self.assertNotEqual(
             evidence["documentation"]["submission_artifact_digest"],
             current["documentation"]["submission_artifact_digest"],
         )
+        self.assertTrue(current["submission_artifacts_verified"])
+        self.assertEqual(current["broken_documentation_links"], 0)
         assert_secret_free(
             evidence,
             surface="Step43 committed evidence",

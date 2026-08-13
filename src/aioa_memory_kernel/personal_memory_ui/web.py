@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
-import secrets
 import re
+import secrets
 from collections.abc import Callable
+from contextlib import AbstractAsyncContextManager
 from pathlib import Path
 from urllib.parse import parse_qsl, quote, urlsplit
 
@@ -22,7 +23,9 @@ from aioa_memory_kernel.state_machines.personal_memory import (
 
 from .auth import (
     OIDC_FLOW_COOKIE_NAME,
+    OIDC_FLOW_TTL_SECONDS,
     SESSION_COOKIE_NAME,
+    SESSION_TTL_SECONDS,
     OidcClient,
     OidcSettings,
     OwnerSession,
@@ -59,6 +62,12 @@ _MAXIMUM_FORM_FIELDS = 32
 _MAXIMUM_STATE_VERSION = (1 << 63) - 1
 
 
+def _allow_authenticated_principal(_principal: OwnerPrincipal) -> bool:
+    """Step35 default; hosted composition injects the R4 judge policy."""
+
+    return True
+
+
 def _bounded_input(value: str, name: str, maximum_bytes: int) -> str:
     if (
         not isinstance(value, str)
@@ -91,14 +100,27 @@ def create_personal_memory_app(
     session_store: OwnerSessionStore,
     clock=current_time,
     action_token_factory: Callable[[str], str] = _action_token,
+    principal_authorizer: Callable[[OwnerPrincipal], bool] = (
+        _allow_authenticated_principal
+    ),
+    session_cookie_max_age: int = SESSION_TTL_SECONDS,
+    oidc_flow_cookie_max_age: int = OIDC_FLOW_TTL_SECONDS,
+    lifespan: Callable[[FastAPI], AbstractAsyncContextManager[None]] | None = None,
 ) -> FastAPI:
     """Create an app only from explicitly injected auth and backend boundaries."""
 
+    if (
+        not callable(principal_authorizer)
+        or not 900 <= session_cookie_max_age <= SESSION_TTL_SECONDS
+        or not 60 <= oidc_flow_cookie_max_age <= OIDC_FLOW_TTL_SECONDS
+    ):
+        raise ValueError("owner UI authentication policy is invalid")
     app = FastAPI(
         title="AIOA Personal Memory",
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
+        lifespan=lifespan,
     )
     public_host = urlsplit(oidc_settings.public_origin).hostname
     if public_host is None:  # pragma: no cover - OidcSettings verifies this
@@ -248,7 +270,7 @@ def create_personal_memory_app(
         response.set_cookie(
             OIDC_FLOW_COOKIE_NAME,
             handle,
-            max_age=600,
+            max_age=oidc_flow_cookie_max_age,
             secure=True,
             httponly=True,
             samesite="lax",
@@ -258,34 +280,45 @@ def create_personal_memory_app(
 
     @app.get("/memory/oidc/callback", response_class=HTMLResponse)
     def oidc_callback(request: Request):
+        def fail_safely() -> HTMLResponse:
+            response = HTMLResponse("OIDC callback failed safely.", status_code=401)
+            response.delete_cookie(
+                OIDC_FLOW_COOKIE_NAME, path="/memory/oidc/callback"
+            )
+            return response
+
         codes = request.query_params.getlist("code")
         states = request.query_params.getlist("state")
         if len(codes) != 1 or len(states) != 1:
-            return HTMLResponse("OIDC callback failed safely.", status_code=401)
-        code = codes[0]
-        state = states[0]
-        code = _bounded_input(code, "OIDC code", 4096)
-        state = _bounded_input(state, "OIDC state", 256)
-        handle = request.cookies.get(OIDC_FLOW_COOKIE_NAME, "")
-        pending = session_store.consume_pending(handle, now=clock())
-        if pending is None or not state or not secrets.compare_digest(state, pending.state):
-            return HTMLResponse("OIDC callback failed safely.", status_code=401)
+            return fail_safely()
         try:
+            handle = request.cookies.get(OIDC_FLOW_COOKIE_NAME, "")
+            pending = session_store.consume_pending(handle, now=clock())
+            code = _bounded_input(codes[0], "OIDC code", 4096)
+            state = _bounded_input(states[0], "OIDC state", 256)
+            if (
+                pending is None
+                or not state
+                or not secrets.compare_digest(state, pending.state)
+            ):
+                return fail_safely()
             principal = oidc_client.authenticate(
                 code=code,
                 code_verifier=pending.code_verifier,
                 nonce=pending.nonce,
             )
-            session_handle, _ = session_store.create_session(principal, now=clock())
+            if not principal_authorizer(principal):
+                return fail_safely()
             session_store.delete_session(request.cookies.get(SESSION_COOKIE_NAME, ""))
+            session_handle, _ = session_store.create_session(principal, now=clock())
         except Exception:
-            return HTMLResponse("OIDC callback failed safely.", status_code=401)
+            return fail_safely()
         response = RedirectResponse(pending.return_path, status_code=303)
         response.delete_cookie(OIDC_FLOW_COOKIE_NAME, path="/memory/oidc/callback")
         response.set_cookie(
             SESSION_COOKIE_NAME,
             session_handle,
-            max_age=8 * 60 * 60,
+            max_age=session_cookie_max_age,
             secure=True,
             httponly=True,
             samesite="lax",

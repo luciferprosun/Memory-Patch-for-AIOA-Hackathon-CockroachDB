@@ -1,0 +1,229 @@
+{
+  "asgi_module": "aioa_memory_kernel.demo_runtime.asgi:app",
+  "authority": {
+    "admin_master_fallback_count": 0,
+    "audit_reader_mutation_authority": false,
+    "authority_violation_count": 0,
+    "browser_database_authority": false,
+    "browser_privileged_secret_hits": 0,
+    "canonical_evidence_outranks_personal_memory": true,
+    "commit_helper_merged_with_application": false,
+    "critic_authority_widened": false,
+    "cross_owner_violation_count": 0,
+    "cross_tenant_violation_count": 0,
+    "migration_role_merged_with_application": false,
+    "personal_memory_canonical_evidence": false,
+    "provider_commit_helper_authority": false,
+    "provider_database_authority": false,
+    "provider_reviewer_authority": false,
+    "provider_source_publication_authority": false,
+    "reviewer_commit_helper_authority": false,
+    "rls_force_rls_preserved": true,
+    "unverified_final_answers_emitted": 0
+  },
+  "base_head": "d74a9b15cd3d60812bc3055e03985930c38e1bcd",
+  "closure_binding": {
+    "commit_subject": "feat(runtime): assemble bounded jury demo runtime 1a",
+    "final_commit": "SELF:GIT_COMMIT_CONTAINING_THIS_EVIDENCE",
+    "one_cumulative_runtime_commit": true,
+    "step44_created": false
+  },
+  "cockroachdb": {
+    "application_pool_maximum": 4,
+    "application_pool_minimum": 1,
+    "application_role": "mp_app_runtime",
+    "binary_sha256": "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf",
+    "current_schema_recovery": {
+      "backup_job": "succeeded",
+      "force_rls_preserved": true,
+      "migration_applied_count": 19,
+      "migration_replay_skipped_count": 19,
+      "production_resources_touched": 0,
+      "restore_job": "succeeded",
+      "restored_migration_replay_skipped_count": 19,
+      "restored_synthetic_session_count": 1,
+      "rls_preserved": true,
+      "security_catalog": "PASS",
+      "source_synthetic_session_count": 1,
+      "status": "PASS_NATIVE_BACKUP_RESTORE_CURRENT_SCHEMA"
+    },
+    "latest_migration": "0019_post_roadmap_demo_runtime_state",
+    "migration_count": 19,
+    "migration_manifest_sha256": "7038fe5ab670a383c217b767b7f1f52170d9d72aed9d94343cecea03207b117c",
+    "migration_role": "PURPOSE_SPECIFIC_DATABASE_URL_MIGRATOR",
+    "migration_state": "UP_TO_DATE",
+    "runtime_factory": "CockroachRuntimeDatabaseFactory",
+    "runtime_pool": "PsycopgApplicationPool",
+    "tls_hosted_policy": "VERIFY_FULL_FAIL_CLOSED",
+    "version": "v26.2.4"
+  },
+  "deployment_blocker": {
+    "id": "DEPLOYMENT_BLOCKED_MISSING_RUNTIME_ASSEMBLY",
+    "resolution": [
+      "CANONICAL_ASGI_ENTRYPOINT",
+      "CONTROLLED_LAUNCHER",
+      "COCKROACHDB_TLS_MIGRATION_AND_APPLICATION_POOL_ASSEMBLY",
+      "DURABLE_HOSTED_SESSIONS",
+      "DENY_BY_DEFAULT_JUDGE_AUTH",
+      "BOUNDED_DURABLE_PROVIDER_GUARD",
+      "LIVENESS_AND_READINESS",
+      "LIVE_GERMAN_LAW_RUNTIME_PROOF"
+    ],
+    "resolved": true
+  },
+  "golden_path": {
+    "backup_case_used": false,
+    "correction_packet_hash": "d01f5c938d6205d7aa279b5ef1b306b6c9cceb27fa07e4374db1765519b9558a",
+    "draft_v1_hash": "c70e78e4e657a0d4c48af62c00c19ce0294087296ff97897ff84bca323ca00e1",
+    "draft_v2_hash": "b77dde1d76a562b382ed142b5b5b0358c96f91d2492b2285bf1cd6195cb22b58",
+    "evidence_bundle_hash": "563401ac507d0eef448b0b189bbfde3a8ab117c17eedc490ba92a2d977ed291e",
+    "outcome": "MATERIAL_DEFECT_CORRECTED_AND_VERIFIED",
+    "personal_memory_branch": "PASS_REAL_COHERENT_PERSONAL_MEMORY_LINEAGE",
+    "primary_case": "primary-entry-into-force",
+    "r6_evidence_file_sha256": "c60b82f1a89241356eec119be515e363fa31b10a43dc5594f26f39ac31f83e5b",
+    "r6_evidence_path": "docs/evidence/demo/post-roadmap-r6-golden-path-runtime-proof-1a.json",
+    "r6_source_validation_digest": "c6a6e0f17a84037ecb554301baf60ab9052bea99cd7f967bc0f73bade2e98d98",
+    "status": "PASS_REAL_VERIFIED_LINEAGE",
+    "verification_summary_hash": "7031140b6ab46096ef6fc30f477c9ae3475dfbd8694c76291a64f40868166f0f",
+    "verified_answer_hash": "c09fe7d30cfb6c7ceee1f13c9250c5609014551d86b19dca46a3ad896bc5ae9a"
+  },
+  "health": {
+    "live": {
+      "paid_provider_calls": 0,
+      "payload_status": "LIVE",
+      "semantics": "MINIMAL_PROCESS_CHECK",
+      "status_code": 200
+    },
+    "ready": {
+      "dependencies": [
+        "application_database_pool",
+        "approved_provider_identity",
+        "cockroachdb_tls_policy",
+        "durable_session_store",
+        "judge_auth_configuration",
+        "mandatory_runtime_services",
+        "migration_state",
+        "provider_call_spend_guard",
+        "provider_configuration",
+        "runtime_configuration",
+        "startup_sequence"
+      ],
+      "not_ready_status_code": 503,
+      "paid_provider_calls": 0,
+      "payload_status": "READY",
+      "status_code": 200
+    },
+    "secret_leakage_count": 0,
+    "shutdown_state_before_teardown": "STOPPING"
+  },
+  "jury_archive": {
+    "artifact_count": 302,
+    "artifact_hashes": "PASS_302_OF_302",
+    "internal_links": "PASS_205_OF_205",
+    "manifest_sha256": "43286ca960ce95819946a76f668937bcc14213fd6aa012caf2bba2a047911684",
+    "path_or_symlink_escape_count": 0,
+    "unique_artifact_ids": 302
+  },
+  "known_limitations": [
+    "CONTROLLED_LOOPBACK_HOSTED_STYLE_PROOF_NOT_PUBLIC_AWS_DEPLOYMENT",
+    "LOCAL_DISPOSABLE_DATABASE_TLS_EXCEPTION_USED_ONLY_BY_CONTROLLED_PROOF",
+    "CONTROLLED_AUTH_TEST_HARNESS_NOT_EXTERNAL_OIDC_UPTIME_PROOF",
+    "SINGLE_PROCESS_DEMO_PROFILE_NOT_PRODUCTION_HA",
+    "EXTERNAL_VULNERABILITY_DATABASE_SCANNER_UNAVAILABLE_IN_APPROVED_LOCAL_TOOLCHAIN"
+  ],
+  "launcher": ".venv/bin/python scripts/run_demo_runtime_1a.py serve",
+  "provider": {
+    "adapter": "openrouter-chat-completions-step38-1a",
+    "code_execution_disabled": true,
+    "provider_key_variable_name": "OPENROUTER_API_KEY",
+    "fallback": false,
+    "function_calling_disabled": true,
+    "model": "moonshotai/kimi-k2",
+    "model_substitution": false,
+    "provider": "openrouter",
+    "tools_disabled": true,
+    "web_disabled": true
+  },
+  "provider_guard": {
+    "accounting_semantics": "CALL-COUNT CEILING",
+    "concurrent_calls_maximum": 1,
+    "global_call_ceiling": 32,
+    "input_bytes_maximum": 24576,
+    "owner_call_ceiling": 12,
+    "paid_calls_during_r7": 0,
+    "per_request_call_ceiling": 8,
+    "queue_maximum": 2,
+    "queue_wait_seconds": 2,
+    "response_tokens_maximum": 1024,
+    "restart_semantics": "COCKROACHDB_DURABLE_BUDGET_EPOCH",
+    "session_call_ceiling": 10,
+    "timeout_seconds": 45,
+    "unknown_completion": "CHARGED_CONSERVATIVELY"
+  },
+  "regression": {
+    "archive_validation": "PASS",
+    "contract_validator": "PASS_5_SCHEMAS_4_FIXTURES_2_UNRELATED_HAT_MANIFESTS",
+    "dependency_consistency": "PASS",
+    "external_vulnerability_database_scan": "NOT_RUN_TOOL_UNAVAILABLE",
+    "focused_runtime_security": {
+      "error_count": 0,
+      "failure_count": 0,
+      "test_count": 253
+    },
+    "full_repository": {
+      "duration_seconds": 146.651,
+      "error_count": 0,
+      "failure_count": 0,
+      "status": "PASS",
+      "test_count": 2304
+    },
+    "markdown_links": "PASS_736_OF_736",
+    "python_compile": "PASS",
+    "r6_campaign": "PASS_404_OF_404_AND_ONE_BOUNDED_LIVE_LINEAGE",
+    "step35_ui_asset_sha256": "22283ef68cb7545914f0a88a1bdedc7256a703d1d580c1d255217d0a50d31313",
+    "step42_step43_compatibility_fix": "PASS_14_OF_14"
+  },
+  "resource_profile": {
+    "configured_peak_budget_mib": 3000,
+    "critic_enabled_by_default": false,
+    "id": "memory-patch-4gb-demo-1a",
+    "profile_digest": "eb205843f34039418bd49663ab47390777cbdc861f671172c8f025d588a55ad8",
+    "profile_file_sha256": "5663595362ac20682a391639a64ff181ad5653ae438f0e939d41cb73246a667d",
+    "step40_conservative_core_peak_mib": 784,
+    "step40_current_validation_digest": "989a2af64dd16059cee4fdab75e57073628bce2fb87bafde39d5595ddc146818",
+    "status": "PASS_4GB_CONTROLLED",
+    "web_workers": 1
+  },
+  "runtime_content": {
+    "current_post_roadmap_digest": "deb4db48d671acf67c6907961f040a9baf05029afe0aa6203ccb8b3d03c26726",
+    "frozen_step42_digest": "baf2523ff423537b1ea5dc76135e6f40fc7121c5e9f66602675e365525fac7d1",
+    "historical_rc_preserved": true,
+    "requirements_runtime_sha256": "b9ccb41ac2e6247308613c864d08227c11fc04b2834531e48e82cb104c624d98",
+    "step43_current_submission_artifact_digest": "02bf8e2f780e1e548e41a8ca81adab0a4a93847fb817bb7764b28f6fd0387e11"
+  },
+  "schema_version": "post-roadmap-runtime-closure-1a",
+  "hygiene": {
+    "binary_or_model_cache_findings": 0,
+    "controlled_test_fixture_matches_only": true,
+    "private_irrelevant_data_count": 0,
+    "secret_leakage_count": 0,
+    "tracked_large_unexplained_files": 0
+  },
+  "session": {
+    "backend": "CockroachOwnerSessionStore",
+    "cookie": "OPAQUE_SECURE_HTTPONLY_SAMESITE_LAX",
+    "durable": true,
+    "judge_policy": "JudgeAccessPolicy",
+    "maximum_payload_bytes": 2048,
+    "maximum_pending_flows": 16,
+    "maximum_per_owner": 4,
+    "maximum_total": 64,
+    "oidc_client": "HttpxOidcClient",
+    "redis_required": false,
+    "test_fallback_in_hosted_mode": false
+  },
+  "status": "PASS_FULL_DEMO_RUNTIME_CLOSURE",
+  "step": "R7",
+  "validation_digest": "adf0150486c405f068c0770beabb3fb278492a1547ab9e4525af846729ddeebd",
+  "verdict": "READY FOR DEMO DEPLOYMENT"
+}

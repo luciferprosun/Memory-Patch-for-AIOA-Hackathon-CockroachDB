@@ -101,7 +101,17 @@ def _b64url(value: bytes) -> str:
     return base64.urlsafe_b64encode(value).rstrip(b"=").decode("ascii")
 
 
-def _token_hash(value: str) -> str:
+def _token_hash(value: str) -> str | None:
+    """Hash one bounded opaque ASCII handle; reject hostile cookie bytes."""
+
+    if (
+        not isinstance(value, str)
+        or not value
+        or len(value) > 256
+        or not value.isascii()
+        or any(ord(character) < 33 or ord(character) == 127 for character in value)
+    ):
+        return None
     return hashlib.sha256(value.encode("ascii")).hexdigest()
 
 
@@ -220,7 +230,10 @@ class MemoryOwnerSessionStore:
                 return_path=return_path,
                 expires_at=now + OIDC_FLOW_TTL_SECONDS,
             )
-            self._pending[_token_hash(handle)] = pending
+            handle_hash = _token_hash(handle)
+            if handle_hash is None:  # pragma: no cover - generated ASCII token
+                raise RuntimeError("OIDC flow handle generation failed safely")
+            self._pending[handle_hash] = pending
             return handle, pending
 
     def consume_pending(
@@ -230,7 +243,8 @@ class MemoryOwnerSessionStore:
             return None
         with self._lock:
             self._purge(now)
-            return self._pending.pop(_token_hash(handle), None)
+            handle_hash = _token_hash(handle)
+            return None if handle_hash is None else self._pending.pop(handle_hash, None)
 
     def create_session(
         self, principal: OwnerPrincipal, *, now: float
@@ -248,7 +262,10 @@ class MemoryOwnerSessionStore:
                 created_at=now,
                 expires_at=now + SESSION_TTL_SECONDS,
             )
-            self._sessions[_token_hash(handle)] = session
+            handle_hash = _token_hash(handle)
+            if handle_hash is None:  # pragma: no cover - generated ASCII token
+                raise RuntimeError("owner session handle generation failed safely")
+            self._sessions[handle_hash] = session
             return handle, session
 
     def get_session(self, handle: str, *, now: float) -> OwnerSession | None:
@@ -256,13 +273,16 @@ class MemoryOwnerSessionStore:
             return None
         with self._lock:
             self._purge(now)
-            return self._sessions.get(_token_hash(handle))
+            handle_hash = _token_hash(handle)
+            return None if handle_hash is None else self._sessions.get(handle_hash)
 
     def delete_session(self, handle: str) -> None:
         if not handle:
             return
         with self._lock:
-            self._sessions.pop(_token_hash(handle), None)
+            handle_hash = _token_hash(handle)
+            if handle_hash is not None:
+                self._sessions.pop(handle_hash, None)
 
 
 class HttpxOidcClient:
@@ -275,8 +295,17 @@ class HttpxOidcClient:
         client: httpx.Client | None = None,
     ) -> None:
         self.settings = settings
+        self._owns_client = client is None
+        self._closed = False
         self._client = client or httpx.Client(timeout=10.0, follow_redirects=False)
         self._metadata: Mapping[str, object] | None = None
+
+    def close(self) -> None:
+        """Close only the HTTP client created by this adapter."""
+
+        if self._owns_client and not self._closed:
+            self._client.close()
+            self._closed = True
 
     def _bounded_json(
         self,

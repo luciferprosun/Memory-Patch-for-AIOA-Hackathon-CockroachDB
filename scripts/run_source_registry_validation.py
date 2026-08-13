@@ -492,8 +492,8 @@ def offline_validate(*, run_tests: bool = True) -> dict[str, Any]:
         raise SourceRegistryValidationError(
             "source publication policy identity differs"
         )
-    if migration["migration_count"] != 18:
-        raise SourceRegistryValidationError("migration chain is not 0001-0018")
+    if migration["migration_count"] != 19:
+        raise SourceRegistryValidationError("migration chain is not 0001-0019")
     if migration["source_registry_table_count"] != 3:
         raise SourceRegistryValidationError(
             "source-registry table coverage differs"
@@ -1241,21 +1241,21 @@ def run_live_validation(paths: LiveValidationPaths) -> dict[str, Any]:
         recorder.check(
             "LIVE-003",
             "migration",
-            first_apply["applied_count"] == 18,
-            "eighteen migrations applied from zero",
+            first_apply["applied_count"] == 19,
+            "nineteen migrations applied from zero",
         )
         recorder.check(
             "LIVE-004",
             "migration",
             no_op_apply["applied_count"] == 0
-            and no_op_apply["skipped_count"] == 18,
+            and no_op_apply["skipped_count"] == 19,
             "checksum-verified migration replay was a complete no-op",
         )
         recorder.check(
             "LIVE-005",
             "migration",
-            reproduction_apply["applied_count"] == 18,
-            "second fresh database applied the same eighteen migrations",
+            reproduction_apply["applied_count"] == 19,
+            "second fresh database applied the same nineteen migrations",
         )
         primary_schema = migrations.schema_catalog(root, primary_database)
         reproduction_schema = migrations.schema_catalog(

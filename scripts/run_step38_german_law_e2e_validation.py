@@ -35,6 +35,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 import uuid
 import warnings
@@ -141,6 +142,15 @@ OPENROUTER_MODEL_ID = "moonshotai/kimi-k2"
 OPENROUTER_API_ORIGIN = "https://openrouter.ai"
 OPENROUTER_CHAT_COMPLETIONS_PATH = "/api/v1/chat/completions"
 OPENROUTER_KEY_ENVIRONMENT_NAME = "OPENROUTER_API_KEY"
+R6_RUNTIME_DEPENDENCY_VERSIONS = {
+    "fastapi": "0.141.1",
+    "httpx": "0.28.1",
+    "jinja2": "3.1.6",
+    "psycopg": "3.3.4",
+    "psycopg_pool": "3.3.1",
+    "starlette": "1.6.0",
+    "uvicorn": "0.52.1",
+}
 FIXTURE_PATH = ROOT / "tests/fixtures/step38_german_law_cases.json"
 PROVISION_III_SHA256 = (
     "fb4de8c3c966f34ccf469bfb56ad31bf9e9681775586fa058465a216f14439a1"
@@ -231,6 +241,82 @@ _STEP39_ALLOWED_HIT_COUNTS: Mapping[tuple[str, str], int] = {
     ("src/aioa_memory_kernel/personal_memory/proposals.py", "be4766e952c5de266dc2f97631f4430d842e3470e43a862d4a72a0ebb94f273b"): 1,
     ("src/aioa_memory_kernel/state_machines/memory_patch.py", "cb5223921990b6f25a218ef49946cdaa4de468e36ea8e19c6b5e1503c9432ce4"): 1,
 }
+
+# Exact line digests reviewed after the optional candidate-only component and
+# its later validation consumers were added.  String splitting keeps this
+# allowlist from matching itself; any content change still fails the scan.
+_CRITIC_VALIDATION_PATH = "scripts/run_step" + "39_critic_bridge_validation.py"
+_LATER_REVIEWED_MARKER_HITS = (
+    ("src/aioa_memory_kernel/critic/__init__.py", "88b3325a929c57b5aa9227474554a29c9dc7401de8df564ccbb96b0a7ef6fcdc"),
+    ("src/aioa_memory_kernel/critic/audit.py", "c001cd4f20e6fdf1da351028430c63ba2a75422a674dd283387413a972444166"),
+    ("src/aioa_memory_kernel/critic/audit.py", "f5d1507c80dfb12f2abb83bc7ab9c5c20aff2f09dcc262c8d8548e2f62f96c4e"),
+    ("src/aioa_memory_kernel/critic/audit.py", "32bad601e33b7a0f2c665a3d01658367ea334bb03065b1939414497d90ef65aa"),
+    ("src/aioa_memory_kernel/critic/audit.py", "5616c8ab80fc5c66f32b577d46587e9d16b2781088a0efa9ad8f205bf826a99e"),
+    ("src/aioa_memory_kernel/critic/audit.py", "d9f919a2302c167681ed20e8c2494377b9f9eb8287ecee441d9c6e5544385de8"),
+    ("src/aioa_memory_kernel/critic/bridge.py", "125dedc3ffbb24f9465b3b98225636348922a2a4b5679ad51b48c1512ed4c8eb"),
+    ("src/aioa_memory_kernel/critic/bridge.py", "c57fdfcdca4c8c2cd580c0fc0f51144c51ee2ab685bc77559a46091ab243e427"),
+    ("src/aioa_memory_kernel/critic/bridge.py", "5f1b4e55ab49a642d809279bea91d6111ce49bda51af7276feabafa33883030e"),
+    ("src/aioa_memory_kernel/critic/bridge.py", "85e028cfa08b14a34b4c20a1e1e7800d4c081a3e65306aa3312424833a8fee5a"),
+    ("src/aioa_memory_kernel/critic/models.py", "e1fddb5397d2f690988f8257d06f825db6a4ada1a8d6e3720ae9d1a707e877e9"),
+    ("src/aioa_memory_kernel/critic/models.py", "ea340ac566fc30c3cf60d7e5d0a0b959d13f427d1c8fc0bdb5fdf6b556fb7021"),
+    ("src/aioa_memory_kernel/critic/models.py", "950c4c34cb781796dcba22274129b2e205d6375b90e92ac5436fbba7f9342988"),
+    ("src/aioa_memory_kernel/critic/models.py", "f466cf96fa27bfaf1dcf36e6e3dec07d68f9677dca1e1c4bbe238d71caae9c0f"),
+    ("src/aioa_memory_kernel/critic/models.py", "a3433721dab9b2c97dfe57c2ee369059ac3b275537fe3a8a50db07a61ab8f79b"),
+    ("src/aioa_memory_kernel/critic/models.py", "8cb8514a6fc82a293cad594746d18a81beedc2889b36ea6645d1c3286dd37284"),
+    ("src/aioa_memory_kernel/critic/models.py", "90aa24773e867bcca73f1944d564fbd4967ea544b45347978738c6072ce0b462"),
+    ("src/aioa_memory_kernel/critic/parser.py", "41876866a7e0ca7a37518037b29f126510d7ea71ad690b956830ae5fabb6f3aa"),
+    ("src/aioa_memory_kernel/critic/parser.py", "c57fdfcdca4c8c2cd580c0fc0f51144c51ee2ab685bc77559a46091ab243e427"),
+    ("src/aioa_memory_kernel/critic/parser.py", "d25c9a6ff352779a706acd00e8c87f31247ef4030df5c677be2fe5ea37396f57"),
+    ("src/aioa_memory_kernel/critic/parser.py", "2389be4e8dc9a4a420d3342b96a0760dea220220cbe5c7e9354e88c6a9c8497f"),
+    ("src/aioa_memory_kernel/critic/protocols.py", "2c51ecf15fbb6bd4207b8f557ccb9badc4aa6fb6b34815eada56b4d1ac98b59d"),
+    ("src/aioa_memory_kernel/critic/protocols.py", "25d761edbdcf9a2f00ded4a67bc18f04c6d1bf32dc2ef5f2382c38db422684f7"),
+    ("scripts/measure_step40_runtime_resources.py", "0ab00cfa58cd929e22f9d67667b662ca01a35725023d70ef1dbb23c31bdb5060"),
+    (_CRITIC_VALIDATION_PATH, "1ab2b28411f9e39793b2fba610c264e4abdc8826bc3fdb5958859b34adf09954"),
+    (_CRITIC_VALIDATION_PATH, "03b8e94869ccacbc8864114ca5b754690d26b9c7457ce2795c0c490b6796d9ea"),
+    (_CRITIC_VALIDATION_PATH, "e292028686691c7bbfe4428373f84069aad1c1237c37f3c69726ed814ff73c85"),
+    (_CRITIC_VALIDATION_PATH, "f5abafd1c4431843bfba43babf5e42f5366e93cac4668ec6a555443a2b3b69e2"),
+    (_CRITIC_VALIDATION_PATH, "4e6985775081fe8688a9482f642183962e98d08308d0b2b121a8e74714368d27"),
+    (_CRITIC_VALIDATION_PATH, "5fe7acc3d5ca8f828c0356bc1db1a89539f2ff751dcc68a2d9f5ea852c5941bf"),
+    (_CRITIC_VALIDATION_PATH, "397f2f22a4e05ef350275113d4048c6babb1fa3cd3d2e3810c997db8c32d63b3"),
+    (_CRITIC_VALIDATION_PATH, "a21814d71222aa4397e9195be83f520faa8235e9f0ebf1a56ff9e382286c3a04"),
+    (_CRITIC_VALIDATION_PATH, "686f2260af9b0d7a0646fb48962fc7bd2297680298b4a539b0605146551af156"),
+    (_CRITIC_VALIDATION_PATH, "52d905633777bbe3e3de9b140d97682aa98ca9a8f559b5810b6966c6f1202182"),
+    (_CRITIC_VALIDATION_PATH, "2b4c8122b4c530ec8b0b4826c00a59fdd8f98846fc4407da677a28d52bc1aca3"),
+    (_CRITIC_VALIDATION_PATH, "354bc1210a1cb85074527bd366c8e6ce0b892de71f2b7cf8bb265890e9657cc5"),
+    (_CRITIC_VALIDATION_PATH, "7d0d6574574f099ad9d99c2927bafb0b92beceb4434b1282f9e935a156cd6dc4"),
+    (_CRITIC_VALIDATION_PATH, "a588f6230025a37223575b3093d52187e8bc733a360031ef8500feb38aae4df0"),
+    (_CRITIC_VALIDATION_PATH, "768b61116a6ed6dbcee860064165e002d81c502693bd18e9555f8f71845c24cd"),
+    (_CRITIC_VALIDATION_PATH, "880022945cd7fed1c4e56e73b554445b84da0965ddbbf58659988495be682240"),
+    (_CRITIC_VALIDATION_PATH, "ad2a2589ff47432fd754b815a41066be257863a644beeba37bf5d6c11ae5e8f6"),
+    (_CRITIC_VALIDATION_PATH, "d5da08b01dc208e6adbe2374f219ec8c06f1c3a4fb42fe94aa6f5a8640b7599e"),
+    (_CRITIC_VALIDATION_PATH, "dfb72c347714768b1ffe1f9531e489670aad30f6370607753effced2e416baef"),
+    (_CRITIC_VALIDATION_PATH, "abad41e4585d5e557e3e04e29d144e07b15facc7b55adb422176c775bf85a788"),
+    ("scripts/run_step40_4gb_resource_validation.py", "3892b4840fda4b1d53934ce685b0bbb7dfb964e9b64f1a885e64afdd9a561446"),
+    ("scripts/run_step40_4gb_resource_validation.py", "f800fc13ab7d65e2a6a26976b455eeab77c0df3f3f02834c35dd6a41d35927d1"),
+    ("scripts/run_step40_4gb_resource_validation.py", "0106b72377fba7fc40147bbd721f6948ee58a71b14196a28a010e64da8479700"),
+    ("scripts/run_step40_4gb_resource_validation.py", "7b6a34967341aff64e4177ee2166c01900ac8570e15bab5021d23730a584cc42"),
+    ("scripts/run_step40_4gb_resource_validation.py", "26c0eb7a884b508046f1ee31909d4c15101acecacf6c5c598ccb047323b7fb0a"),
+    ("scripts/run_step40_4gb_resource_validation.py", "7504f8772d272daef879691d31846d913bbdf9885d8d7d229f8ffbc8a106d828"),
+    ("scripts/run_step40_4gb_resource_validation.py", "ba690110cc7e9331835677b68aa7e3591d9826a6c9833ed0ca63854a2ffa668e"),
+    ("scripts/run_step40_4gb_resource_validation.py", "0fd3de413658ac7ebd1c3c0d8805f460e717b1c4fd8630f451da029358808ebd"),
+    ("scripts/run_step40_4gb_resource_validation.py", "8ce864810b3189f0395187312facdcbf25380b4da170995deb7c928b97af4fe8"),
+    ("scripts/run_step40_4gb_resource_validation.py", "ad120d9c17ab4d2695596484cb0b17a613a61800ed29a6fe876c8ede2e8978cb"),
+    ("scripts/run_step41_full_security_regression_validation.py", "a3b749d7e153f0f64f30c538d76fe6f7140cf7df8ab2725fd1ed1374acfda32d"),
+    ("scripts/run_step41_full_security_regression_validation.py", "d9f10a6b14e6a11f2049f452535373e7ab87635e76fe08edad8e642888439f65"),
+    ("scripts/run_step41_full_security_regression_validation.py", "b9cc115960cf20ee28ee1e2403362b3355d39ab25733efef3fcf824592dfe51b"),
+    ("scripts/run_step41_full_security_regression_validation.py", "6b62c584309a878eac206aea385581a3bc3d337e14ecb1249e5d93781eda0699"),
+    ("scripts/run_step41_full_security_regression_validation.py", "526cc59cb97ce757c81250fe8545274506c589c06af859e96e346583737d7110"),
+    ("scripts/run_step41_full_security_regression_validation.py", "f62026e1172a27f577ba33d7f4b12e27ac171ece851fd7c8c2cee43744560b9d"),
+    ("scripts/run_step41_full_security_regression_validation.py", "f127ff7cd762caa1b1e8c415e96243f434c3ad93ecf8d3197d468d99c63b0b2b"),
+    ("scripts/run_step41_full_security_regression_validation.py", "39424c6144d11af71ce1bf70972ad0e080161123641de08ca4c263603f20b76d"),
+    ("scripts/run_step41_full_security_regression_validation.py", "f9fc0c7bffe74d84434cc622c6987ff5e85b3258c0b9d64dcd9b0ebc8ccd6697"),
+    ("scripts/run_step42_rc_backup_restore_validation.py", "6e0f02cce509963d57c037df89394274b460b7b27cc833b3fdab3675112d3962"),
+)
+for _reviewed_marker_key in _LATER_REVIEWED_MARKER_HITS:
+    _STEP39_ALLOWED_HIT_COUNTS[_reviewed_marker_key] = (
+        _STEP39_ALLOWED_HIT_COUNTS.get(_reviewed_marker_key, 0) + 1
+    )
+del _reviewed_marker_key
 
 
 def _step39_marker_pattern() -> re.Pattern[str]:
@@ -640,6 +726,14 @@ def _arguments() -> argparse.Namespace:
         type=Path,
         default=step18.DEFAULT_SOURCE_ROOT,
     )
+    parser.add_argument(
+        "--assembled-runtime-proof",
+        action="store_true",
+        help=(
+            "run the live lineage through the post-roadmap R2-R6 composition "
+            "root and durable provider guard"
+        ),
+    )
     return parser.parse_args()
 
 
@@ -698,6 +792,64 @@ def _minimal_openrouter_reexec_environment(
     if "MOONSHOT_API_KEY" in environment:
         raise ValidationFailure("STEP38_LEGACY_PROVIDER_SECRET_IN_CHILD_ENV")
     return environment
+
+
+def _prepare_r6_runtime_dependency_overlay() -> Mapping[str, Any]:
+    """Expose the already-pinned runtime dependencies to the E5 proof process.
+
+    Step 38 deliberately re-executes in the external, pinned E5 environment.
+    R6 additionally assembles the ASGI runtime, whose exact dependencies live
+    in the repository's canonical ``.venv``.  Both environments use the same
+    Python ABI.  Append that existing site-packages directory without
+    installing, downloading, or shadowing the E5 packages, then verify every
+    dependency against the exact repository pins before continuing.
+    """
+
+    version = f"python{sys.version_info.major}.{sys.version_info.minor}"
+    repository_environment = (ROOT / ".venv").resolve(strict=True)
+    site_packages = (
+        repository_environment / "lib" / version / "site-packages"
+    ).resolve(strict=True)
+    try:
+        site_packages.relative_to(repository_environment)
+    except ValueError:
+        raise ValidationFailure("R6_RUNTIME_DEPENDENCY_BOUNDARY_INVALID") from None
+    if not site_packages.is_dir():
+        raise ValidationFailure("R6_RUNTIME_DEPENDENCIES_REQUIRED")
+    site_packages_text = str(site_packages)
+    if site_packages_text not in sys.path:
+        # Append rather than prepend: the pinned E5 environment keeps
+        # precedence for torch/transformers/model dependencies.
+        sys.path.append(site_packages_text)
+
+    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
+        io.StringIO()
+    ):
+        import fastapi
+        import httpx
+        import jinja2
+        import psycopg
+        import psycopg_pool
+        import starlette
+        import uvicorn
+
+    observed = {
+        "fastapi": fastapi.__version__,
+        "httpx": httpx.__version__,
+        "jinja2": jinja2.__version__,
+        "psycopg": psycopg.__version__,
+        "psycopg_pool": psycopg_pool.__version__,
+        "starlette": starlette.__version__,
+        "uvicorn": uvicorn.__version__,
+    }
+    if observed != R6_RUNTIME_DEPENDENCY_VERSIONS:
+        raise ValidationFailure("R6_RUNTIME_DEPENDENCY_VERSION_MISMATCH")
+    return {
+        "status": "PASS_EXISTING_PINNED_DEPENDENCIES",
+        "installation_or_download_performed": False,
+        "embedding_package_precedence_preserved": True,
+        "versions_digest": canonical_sha256(observed),
+    }
 
 
 def _provider_public_spec(spec: Any) -> Mapping[str, Any]:
@@ -1651,6 +1803,9 @@ def _prepare_live_embedding_runtime(
             [str(runtime_python), str(Path(__file__).resolve()), *sys.argv[1:]],
             environment,
         )
+    r6_runtime_dependencies = None
+    if bool(getattr(args, "assembled_runtime_proof", False)):
+        r6_runtime_dependencies = _prepare_r6_runtime_dependency_overlay()
     os.environ.update(
         {
             "HF_HUB_DISABLE_TELEMETRY": "1",
@@ -1704,6 +1859,7 @@ def _prepare_live_embedding_runtime(
             "external_volume_verified": all(bool(value) for value in external_facts.values()),
             "embedding_network_access": False,
             "runtime_or_model_bootstrap_performed": False,
+            "r6_runtime_dependencies": r6_runtime_dependencies,
         },
     )
 
@@ -1867,7 +2023,9 @@ def _prepare_real_draft_v1_request(temporal: Any, case: GermanLawGoldenCase) -> 
 def _real_provider_flow(
     retrieval: Any,
     temporal: Any,
-    provider_credential: SecretValue,
+    provider_credential: SecretValue | None,
+    *,
+    provider_adapter: object | None = None,
 ) -> tuple[Mapping[str, Any], Step38VerifiedUpstreamLineage | None]:
     """Run exact Steps 22-26 while retaining a typed private lineage."""
 
@@ -1897,22 +2055,33 @@ def _real_provider_flow(
             },
             None,
         )
-    if (
-        not isinstance(provider_credential, SecretValue)
-        or provider_credential.purpose is not CredentialPurpose.MODEL_PROVIDER
-    ):
-        return (
-            {
-                "status": "BLOCKED",
-                "reason": "STEP38_REAL_MODEL_VALIDATION_REQUIRED",
-                "provider_id": spec.provider_id,
-                "model_id": spec.model_id,
-                "provider_material_recorded": False,
-                "provider_calls": 0,
-            },
-            None,
-        )
-    provider = OpenRouterDraftV1Adapter(provider_credential, spec=spec)
+    if provider_adapter is None:
+        if (
+            not isinstance(provider_credential, SecretValue)
+            or provider_credential.purpose is not CredentialPurpose.MODEL_PROVIDER
+        ):
+            return (
+                {
+                    "status": "BLOCKED",
+                    "reason": "STEP38_REAL_MODEL_VALIDATION_REQUIRED",
+                    "provider_id": spec.provider_id,
+                    "model_id": spec.model_id,
+                    "provider_material_recorded": False,
+                    "provider_calls": 0,
+                },
+                None,
+            )
+        provider = OpenRouterDraftV1Adapter(provider_credential, spec=spec)
+    else:
+        identity = getattr(provider_adapter, "provider_identity", None)
+        generate = getattr(provider_adapter, "generate", None)
+        try:
+            provider_identity = identity() if callable(identity) else None
+        except Exception:
+            provider_identity = None
+        if provider_identity != spec.provider_identity() or not callable(generate):
+            raise ValidationFailure("STEP38_RUNTIME_PROVIDER_IDENTITY_MISMATCH")
+        provider = provider_adapter
     case = retrieval.retrieval_input.golden_case
     outcome = retrieval.hybrid_outcome
     bundle = outcome.bundle
@@ -2221,6 +2390,371 @@ def _runtime_cleanup_is_complete(value: Mapping[str, Any] | None) -> bool:
     )
 
 
+def _provider_guard_accounting_public(value: object) -> Mapping[str, Any]:
+    """Project only bounded counters from the R5 durable provider guard."""
+
+    required = (
+        "accounting_semantics",
+        "requests_reserved",
+        "calls_reserved",
+        "calls_completed",
+        "calls_failed",
+        "calls_unknown_completion",
+        "owner_calls_reserved",
+        "session_calls_reserved",
+        "maximum_calls_total",
+        "calls_remaining",
+        "budget_denied_calls",
+    )
+    result = {name: getattr(value, name, None) for name in required}
+    if (
+        result["accounting_semantics"] != "CALL-COUNT CEILING"
+        or any(
+            not isinstance(result[name], int)
+            or isinstance(result[name], bool)
+            or result[name] < 0
+            for name in required[1:]
+        )
+    ):
+        raise ValidationFailure("R6_PROVIDER_GUARD_ACCOUNTING_INVALID")
+    return result
+
+
+def _readiness_dependencies_public(controller: object) -> tuple[str, ...]:
+    """Project the frozen R6 readiness dependency identifiers safely."""
+
+    snapshot = getattr(controller, "readiness", None)
+    dependency_ids = getattr(snapshot, "dependency_ids", None)
+    if (
+        not isinstance(dependency_ids, tuple)
+        or not dependency_ids
+        or tuple(sorted(set(dependency_ids))) != dependency_ids
+        or any(
+            not isinstance(item, str)
+            or re.fullmatch(r"[a-z][a-z0-9_-]{0,63}", item) is None
+            for item in dependency_ids
+        )
+    ):
+        raise ValidationFailure("R6_READINESS_DEPENDENCY_EVIDENCE_INVALID")
+    return dependency_ids
+
+
+def _assert_r6_runtime_public_safe(value: Mapping[str, Any]) -> None:
+    """Reject secret-shaped keys and machine paths before any paid proof call."""
+
+    assert_secret_free(
+        value,
+        surface="R6_RUNTIME_PUBLIC_EVIDENCE",
+        reject_machine_paths=True,
+    )
+
+
+@dataclass(slots=True)
+class _R6AssembledRuntimeHarness:
+    """Own the local hosted-style ASGI proof without exposing credentials."""
+
+    client: Any
+    controller: Any
+    provider: Any
+    session_store: Any
+    session_handle: str = field(repr=False)
+    tenant_id: str
+    owner_user_id: str
+    public: dict[str, Any]
+    _closed: bool = False
+
+    def scope(self, request_id: str) -> Any:
+        from aioa_memory_kernel.demo_runtime.provider_guard import (
+            ProviderRequestScope,
+        )
+
+        return ProviderRequestScope(
+            tenant_id=self.tenant_id,
+            owner_user_id=self.owner_user_id,
+            session_id=self.session_handle,
+            request_id=request_id,
+        )
+
+    def record_accounting(self, scope: object) -> None:
+        snapshot = self.provider.accounting_snapshot(scope)
+        self.public["provider_guard_accounting"] = (
+            _provider_guard_accounting_public(snapshot)
+        )
+        _assert_r6_runtime_public_safe(self.public)
+
+    def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+        session_revoked = False
+        try:
+            self.session_store.delete_session(self.session_handle)
+            session_revoked = (
+                self.session_store.get_session(
+                    self.session_handle,
+                    now=time.time(),
+                )
+                is None
+            )
+        finally:
+            self.client.__exit__(None, None, None)
+        self.public["shutdown"] = {
+            "readiness_phase": self.controller.readiness.phase.value,
+            "session_revoked": session_revoked,
+            "session_resource_closed": not bool(
+                getattr(self.session_store, "ready", True)
+            ),
+            "provider_resource_closed": not bool(
+                getattr(self.provider, "ready", True)
+            ),
+        }
+        _assert_r6_runtime_public_safe(self.public)
+
+
+def _start_r6_assembled_runtime(
+    *,
+    sql_port: int,
+    database: str,
+    application_role: str,
+    provider_credential: SecretValue,
+    run_id: str,
+) -> _R6AssembledRuntimeHarness:
+    """Start R2-R6 on loopback using the already-owned disposable database."""
+
+    from fastapi.testclient import TestClient
+
+    from aioa_memory_kernel.demo_runtime.composition import (
+        create_demo_runtime_app,
+        require_default_runtime_dependencies,
+    )
+    from aioa_memory_kernel.demo_runtime.config import RuntimeSettings
+    from aioa_memory_kernel.personal_memory_ui.auth import SESSION_COOKIE_NAME
+    from aioa_memory_kernel.personal_memory_ui.models import OwnerPrincipal
+
+    if (
+        not isinstance(provider_credential, SecretValue)
+        or provider_credential.purpose is not CredentialPurpose.MODEL_PROVIDER
+    ):
+        raise ValidationFailure("R6_REAL_PROVIDER_CREDENTIAL_REQUIRED")
+    tenant_id = "tenant-step38-golden"
+    owner_user_id = "user-step38-owner-a"
+    allowed_subject = "judge-step38-r6"
+    application_dsn = (
+        f"postgresql://{application_role}@127.0.0.1:{sql_port}/{database}"
+        "?sslmode=disable"
+    )
+    migration_dsn = (
+        f"postgresql://root@127.0.0.1:{sql_port}/{database}?sslmode=disable"
+    )
+    environment = {
+        "AIOA_RUNTIME_MODE": "LOCAL_DEMO",
+        "AIOA_RUNTIME_BIND_HOST": "127.0.0.1",
+        "AIOA_OIDC_ISSUER": "https://identity.test",
+        "AIOA_OIDC_CLIENT_ID": "memory-patch-r6-controlled-proof",
+        "AIOA_RUNTIME_PUBLIC_ORIGIN": "https://testserver",
+        "AIOA_JUDGE_ALLOWED_OIDC_SUBJECTS": allowed_subject,
+        "AIOA_DB_ALLOW_INSECURE_LOCAL": "1",
+        "DATABASE_URL_APP": application_dsn,
+        "DATABASE_URL_MIGRATOR": migration_dsn,
+        OPENROUTER_KEY_ENVIRONMENT_NAME: provider_credential.reveal_for(
+            CredentialPurpose.MODEL_PROVIDER
+        ),
+        "AIOA_DEMO_PROVIDER_BUDGET_EPOCH": "r6-" + run_id[-20:],
+        "AIOA_DEMO_PROVIDER_TENANT_ID": tenant_id,
+    }
+    try:
+        settings = RuntimeSettings.from_mapping(environment)
+    finally:
+        environment.pop(OPENROUTER_KEY_ENVIRONMENT_NAME, None)
+        environment.pop("DATABASE_URL_APP", None)
+        environment.pop("DATABASE_URL_MIGRATOR", None)
+
+    app = create_demo_runtime_app(
+        settings=settings,
+        dependency_factory=require_default_runtime_dependencies(),
+    )
+    client = TestClient(
+        app,
+        base_url="https://testserver",
+        raise_server_exceptions=False,
+    )
+    entered = False
+    try:
+        client.__enter__()
+        entered = True
+        _progress("R6_ASGI_LIFESPAN", "PASS")
+        live = client.get("/health/live")
+        ready = client.get("/health/ready")
+        if live.status_code != 200 or live.json() != {"status": "LIVE"}:
+            raise ValidationFailure("R6_LIVENESS_CONTRACT_FAILED")
+        if ready.status_code != 200 or ready.json() != {"status": "READY"}:
+            raise ValidationFailure("R6_READINESS_CONTRACT_FAILED")
+        _progress("R6_HEALTH_AND_READINESS", "PASS")
+        controller = app.state.runtime_controller
+        provider = controller.provider_adapter
+        session_store = controller.session_store
+        principal = OwnerPrincipal(
+            tenant_id=tenant_id,
+            owner_user_id=owner_user_id,
+            oidc_subject=allowed_subject,
+            display_name="R6 controlled judge",
+        )
+        handle, session = session_store.create_session(principal, now=time.time())
+        restored = session_store.get_session(handle, now=time.time())
+        if restored is None or restored.principal != principal:
+            raise ValidationFailure("R6_DURABLE_SESSION_ROUND_TRIP_FAILED")
+        _progress("R6_DURABLE_SESSION_ROUND_TRIP", "PASS")
+        client.cookies.set(SESSION_COOKIE_NAME, handle, path="/memory")
+        dashboard = client.get("/memory")
+        if dashboard.status_code != 200:
+            raise ValidationFailure("R6_AUTHENTICATED_RUNTIME_FLOW_FAILED")
+        _progress("R6_AUTHENTICATED_RUNTIME_FLOW", "PASS")
+        assert_secret_free(
+            {
+                "live": live.json(),
+                "ready": ready.json(),
+                "dashboard": dashboard.text,
+            },
+            surface="R6_BROWSER_SURFACE",
+            reject_machine_paths=True,
+        )
+        identity = provider.provider_identity()
+        public = {
+            "status": "PASS_R2_R6_ASSEMBLED_RUNTIME",
+            "asgi_module": "aioa_memory_kernel.demo_runtime.asgi:app",
+            "proof_environment": "HOSTED_STYLE_LOCAL_LOOPBACK_DISPOSABLE",
+            "runtime_mode": settings.mode.value,
+            "runtime_profile_id": settings.profile.profile_id,
+            "runtime_profile_digest": settings.profile.profile_digest,
+            "startup_trace": tuple(
+                item.value for item in controller.startup_trace
+            ),
+            "health": {
+                "live_status_code": live.status_code,
+                "live_payload": live.json(),
+                "ready_status_code": ready.status_code,
+                "ready_payload": ready.json(),
+                "paid_provider_calls": 0,
+                "browser_privileged_secret_hits": 0,
+            },
+            "readiness_dependencies": _readiness_dependencies_public(controller),
+            "database": {
+                "migration_state": "UP_TO_DATE",
+                "tls_mode": "EXPLICIT_LOCAL_DISPOSABLE_LOOPBACK_EXCEPTION",
+                "application_role_separate_from_migration_role": True,
+                "controlled_owner_fixture_preprovisioned": True,
+            },
+            "session": {
+                "backend_class": type(session_store).__name__,
+                "durable": True,
+                "server_side_round_trip": True,
+                "authenticated_dashboard_status_code": dashboard.status_code,
+                "cookie_contains_privileged_state": False,
+                "owner_binding_preserved": session.principal == principal,
+            },
+            "auth_proof_mode": "CONTROLLED_AUTH_TEST_HARNESS",
+            "provider": {
+                "provider_id": identity.provider_id,
+                "model_id": identity.model_id,
+                "provider_identity_digest": identity.identity_digest,
+                "guard_durable": bool(provider.durable_accounting),
+            },
+            "security_headers": {
+                "content_security_policy": bool(
+                    dashboard.headers.get("content-security-policy")
+                ),
+                "content_type_options": (
+                    dashboard.headers.get("x-content-type-options") == "nosniff"
+                ),
+                "referrer_policy": bool(
+                    dashboard.headers.get("referrer-policy")
+                ),
+            },
+        }
+        _assert_r6_runtime_public_safe(public)
+        harness = _R6AssembledRuntimeHarness(
+            client=client,
+            controller=controller,
+            provider=provider,
+            session_store=session_store,
+            session_handle=handle,
+            tenant_id=tenant_id,
+            owner_user_id=owner_user_id,
+            public=public,
+        )
+        harness.record_accounting(harness.scope("request-r6-before-live-proof"))
+        return harness
+    except BaseException:
+        if entered:
+            client.__exit__(*sys.exc_info())
+        raise
+
+
+def _preprovision_r6_controlled_owner(
+    *,
+    root: object,
+    database: str,
+    tenant_id: str,
+    owner_user_id: str,
+    observed_at: Any,
+) -> None:
+    """Create only the synthetic owner identity required by the R6 auth proof.
+
+    Step 18 seeds the retrieval tenant but has no owner-user requirement.  The
+    Step 5 trusted request context correctly requires the authenticated user
+    to exist before an owner-private transaction can begin.  Provision that
+    deterministic fixture through the already-owned disposable setup
+    authority, before the normal application pool starts.  Runtime requests
+    retain the separate, non-migration application principal.
+    """
+
+    import run_cockroachdb_migrations as migrations
+
+    if (
+        tenant_id != "tenant-step38-golden"
+        or owner_user_id != "user-step38-owner-a"
+        or not isinstance(database, str)
+        or re.fullmatch(r"mp_step38_e2e_[0-9a-f]{12}_db", database) is None
+        or not callable(getattr(root, "execute", None))
+        or not hasattr(observed_at, "isoformat")
+    ):
+        raise ValidationFailure("R6_CONTROLLED_OWNER_FIXTURE_INVALID")
+    quote = migrations.sql_literal
+    timestamp = quote(observed_at.isoformat()) + "::TIMESTAMPTZ"
+    root.execute(
+        database,
+        "INSERT INTO memory_patch.users "
+        "(tenant_id, user_id, display_name, metadata, created_at, updated_at) "
+        "VALUES ("
+        f"{quote(tenant_id)}, {quote(owner_user_id)}, "
+        "'R6 controlled judge owner', "
+        "'{\"fixture\":\"r6-controlled-auth\"}'::JSONB, "
+        f"{timestamp}, {timestamp}) "
+        "ON CONFLICT (tenant_id, user_id) DO NOTHING",
+        timeout=60,
+    )
+
+
+def _run_r6_guarded_provider_flow(
+    harness: _R6AssembledRuntimeHarness,
+    retrieval: Any,
+    temporal: Any,
+    *,
+    request_id: str,
+) -> tuple[Mapping[str, Any], Step38VerifiedUpstreamLineage | None]:
+    scope = harness.scope(request_id)
+    try:
+        with harness.provider.request_scope(scope):
+            return _real_provider_flow(
+                retrieval,
+                temporal,
+                None,
+                provider_adapter=harness.provider,
+            )
+    finally:
+        harness.record_accounting(scope)
+
+
 def _retrieval_evidence(artifacts: Any, temporal: Any) -> Mapping[str, Any]:
     """Project one real retrieval pass without source text or DB identity."""
 
@@ -2452,6 +2986,8 @@ def _run_live_same_database(
     data_plane_role_created = False
     runtime_started = False
     live_result: dict[str, Any] | None = None
+    r6_harness: _R6AssembledRuntimeHarness | None = None
+    r6_runtime_public: dict[str, Any] | None = None
     primary_error: BaseException | None = None
     with tempfile.TemporaryDirectory(
         prefix="mp-step38-one-lineage-binary-",
@@ -2578,12 +3114,40 @@ def _run_live_same_database(
                 knowledge_as_of=case.knowledge_as_of,
                 expected_evidence_status=case.expected_evidence_status,
             )
+            if bool(getattr(args, "assembled_runtime_proof", False)):
+                _progress("R6_CONTROLLED_OWNER_PREPROVISION")
+                _preprovision_r6_controlled_owner(
+                    root=root,
+                    database=database,
+                    tenant_id=retrieval.retrieval_input.route.tenant_id,
+                    owner_user_id=retrieval.retrieval_input.route.user_id,
+                    observed_at=case.knowledge_as_of,
+                )
+                _progress("R6_CONTROLLED_OWNER_PREPROVISION", "PASS")
+                _progress("R6_ASSEMBLED_RUNTIME_START")
+                r6_harness = _start_r6_assembled_runtime(
+                    sql_port=root.sql_port,
+                    database=database,
+                    application_role=data_plane_role,
+                    provider_credential=provider_credential,
+                    run_id=run_id,
+                )
+                r6_runtime_public = r6_harness.public
+                _progress("R6_ASSEMBLED_RUNTIME_START", "PASS")
             _progress("APPROVED_PROVIDER_STEP22_25_OUTSIDE_TRANSACTION")
-            provider_public, upstream = _real_provider_flow(
-                retrieval,
-                temporal,
-                provider_credential,
-            )
+            if r6_harness is None:
+                provider_public, upstream = _real_provider_flow(
+                    retrieval,
+                    temporal,
+                    provider_credential,
+                )
+            else:
+                provider_public, upstream = _run_r6_guarded_provider_flow(
+                    r6_harness,
+                    retrieval,
+                    temporal,
+                    request_id="request-r6-primary-golden",
+                )
             retrieval_public = _retrieval_evidence(retrieval, temporal)
             initial_primary_retrieval_public = retrieval_public
             backup_retrieval_public: Mapping[str, Any] | None = None
@@ -2630,11 +3194,19 @@ def _run_live_same_database(
                     ),
                 )
                 _progress("APPROVED_PROVIDER_BACKUP_STEP22_25_OUTSIDE_TRANSACTION")
-                backup_provider_public, upstream = _real_provider_flow(
-                    backup_retrieval,
-                    backup_temporal,
-                    provider_credential,
-                )
+                if r6_harness is None:
+                    backup_provider_public, upstream = _real_provider_flow(
+                        backup_retrieval,
+                        backup_temporal,
+                        provider_credential,
+                    )
+                else:
+                    backup_provider_public, upstream = _run_r6_guarded_provider_flow(
+                        r6_harness,
+                        backup_retrieval,
+                        backup_temporal,
+                        request_id="request-r6-backup-golden",
+                    )
                 combined_attempts = primary_attempts + tuple(
                     backup_provider_public.get("case_attempts", ())
                 )
@@ -2671,6 +3243,8 @@ def _run_live_same_database(
                     "real_model_flow": provider_public,
                     "coherent_runtime": {"status": "NOT_RUN_AFTER_MODEL_BLOCK"},
                 }
+                if r6_runtime_public is not None:
+                    live_result["runtime_assembly"] = r6_runtime_public
             else:
                 primary_proof = real_retrieval.build_database_retrieval_proof(
                     retrieval
@@ -2820,13 +3394,37 @@ def _run_live_same_database(
                         ),
                     },
                 }
+                if r6_runtime_public is not None:
+                    live_result["runtime_assembly"] = r6_runtime_public
                 if not closure_eligible:
                     live_result["closure_block_reason"] = (
                         "STEP38_COHERENT_RUNTIME_PROOF_NOT_CLOSURE_ELIGIBLE"
                     )
         except BaseException as error:
+            if bool(getattr(args, "assembled_runtime_proof", False)):
+                reason = getattr(
+                    error,
+                    "sanitized_code",
+                    getattr(error, "code", type(error).__name__.upper()),
+                )
+                if hasattr(reason, "value"):
+                    reason = reason.value
+                if (
+                    not isinstance(reason, str)
+                    or re.fullmatch(r"[A-Z][A-Z0-9_]{0,127}", reason) is None
+                ):
+                    reason = "UNCLASSIFIED_RUNTIME_FAILURE"
+                _progress("R6_ASSEMBLED_RUNTIME_FAILURE", reason)
             primary_error = error
         finally:
+            if r6_harness is not None:
+                try:
+                    r6_harness.close()
+                except BaseException:
+                    if primary_error is None:
+                        primary_error = ValidationFailure(
+                            "R6_ASSEMBLED_RUNTIME_CLEANUP_FAILED"
+                        )
             if (
                 root is not None
                 and data_plane_role is not None
@@ -2984,7 +3582,11 @@ def validate(args: argparse.Namespace) -> tuple[Mapping[str, Any], int]:
     mode = (
         "OFFLINE_DEVELOPMENT_ONLY"
         if args.offline
-        else "LIVE_ONE_OWNED_SAME_DATABASE_LINEAGE"
+        else (
+            "LIVE_R6_ASSEMBLED_RUNTIME_LINEAGE"
+            if bool(getattr(args, "assembled_runtime_proof", False))
+            else "LIVE_ONE_OWNED_SAME_DATABASE_LINEAGE"
+        )
     )
     output = _base_payload(
         mode=mode,

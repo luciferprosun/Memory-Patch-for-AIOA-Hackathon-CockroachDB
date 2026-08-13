@@ -116,7 +116,7 @@ CREDENTIAL_AUTHORITY_SECURITY_MANIFEST_PATH = (
 VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
-RUNNER_VERSION = "16.0.0"
+RUNNER_VERSION = "17.0.0"
 PINNED_VERSION = "v26.2.4"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
@@ -342,6 +342,10 @@ STEP36_FUNCTION_SIGNATURES = {
         "step36_source_publisher_authorized()"
     ),
 }
+R4_RUNTIME_MIGRATION_ID = "0019_post_roadmap_demo_runtime_state"
+R4_RUNTIME_MIGRATION_SHA256 = (
+    "e7e716f5176915569300a56d5a3d1f4f87df5a81fe7eb38a309fc234b63e0e2d"
+)
 STEP5_CLUSTER_ROLE_BEGIN = "-- STEP5_CLUSTER_ROLE_DDL_BEGIN"
 STEP5_CLUSTER_ROLE_END = "-- STEP5_CLUSTER_ROLE_DDL_END"
 STEP5_DATABASE_PHASE_MARKERS = tuple(
@@ -2074,6 +2078,55 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
             re.IGNORECASE,
         ):
             raise MigrationError("Step 36 starts the Step 37 boundary")
+    elif migration_id == R4_RUNTIME_MIGRATION_ID:
+        forbidden_patterns = ()
+        for fragment in (
+            "CREATE TABLE memory_patch.owner_ui_sessions",
+            "session_handle_hash ~ '^[0-9a-f]{64}$'",
+            "record_kind IN ('OIDC_PENDING', 'AUTHENTICATED')",
+            "ttl_expiration_expression = 'expires_at'",
+            "owner_ui_sessions_capacity_uq",
+            "owner_ui_sessions_pending_slot_uq",
+            "owner_ui_sessions_owner_slot_uq",
+            "r4_session_runtime_authorized",
+            "ENABLE ROW LEVEL SECURITY",
+            "FORCE ROW LEVEL SECURITY",
+            "CREATE POLICY owner_ui_sessions_r4_select",
+            "CREATE POLICY owner_ui_sessions_r4_insert",
+            "CREATE POLICY owner_ui_sessions_r4_delete",
+            "GRANT SELECT, INSERT, DELETE ON TABLE",
+            "REVOKE ALL ON TABLE memory_patch.owner_ui_sessions FROM PUBLIC",
+            "OWNER TO mp_schema_owner",
+            "SECURITY INVOKER",
+        ):
+            if fragment not in sql:
+                raise MigrationError(
+                    f"{migration_id} lacks required R4 session fragment: {fragment}"
+                )
+        if len(re.findall(r"^CREATE TABLE memory_patch\.", sql, re.MULTILINE)) != 1:
+            raise MigrationError("R4 session table delta is not exact")
+        if re.search(
+            r"\bGRANT\b[^;]*\bTO\s+PUBLIC\b", sql, re.IGNORECASE | re.DOTALL
+        ):
+            raise MigrationError("R4 grants authority to PUBLIC")
+        if re.search(
+            r"\b(?:BYPASSRLS|CREATE\s+ROLE|ON\s+DELETE\s+CASCADE)\b",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("R4 weakens a database security boundary")
+        if re.search(
+            r"\b(?:provider|access|refresh|bearer|database|commit_helper)_token\b",
+            sql,
+            re.IGNORECASE,
+        ):
+            raise MigrationError("R4 session schema attempts to retain a privileged token")
+        if re.search(
+            r"^\s*(?:UPDATE|TRUNCATE|DROP\s+TABLE)\b",
+            sql,
+            re.IGNORECASE | re.MULTILINE,
+        ):
+            raise MigrationError("R4 contains destructive or mutable session DDL")
     else:
         raise MigrationError(f"unrecognized migration security generation: {migration_id}")
     for description, pattern in forbidden_patterns:
@@ -2083,11 +2136,11 @@ def validate_migration_sql(migration_id: str, sql: str) -> None:
 
 def load_migrations() -> list[Migration]:
     manifest = load_json(MIGRATION_MANIFEST_PATH)
-    if manifest.get("schema_version") != 16:
-        raise MigrationError("migration manifest schema_version must be 16")
+    if manifest.get("schema_version") != 17:
+        raise MigrationError("migration manifest schema_version must be 17")
     if (
         manifest.get("manifest_id")
-        != "memory-patch-step36-credential-authority-hardening-1a"
+        != "memory-patch-post-roadmap-demo-runtime-r4-1a"
     ):
         raise MigrationError("migration manifest identity mismatch")
     if manifest.get("runner_version") != RUNNER_VERSION:
@@ -2106,7 +2159,8 @@ def load_migrations() -> list[Migration]:
         "STEP30_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL_"
         "STEP32_ONE_TRANSACTION_STEP33_ONE_TRANSACTION_"
         "STEP34_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL_"
-        "STEP36_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL"
+        "STEP36_ONE_TRANSACTION_WITH_NONATOMIC_CLUSTER_ROLE_DDL_"
+        "POST_ROADMAP_R4_ONE_TRANSACTION"
     ):
         raise MigrationError("unsupported migration transaction policy")
     if manifest.get("cluster_role_policy") != (
@@ -2197,6 +2251,11 @@ def load_migrations() -> list[Migration]:
             raise MigrationError("Step 34 checksum differs from the audited migration")
         if migration_id == STEP36_MIGRATION_ID and checksum != STEP36_MIGRATION_SHA256:
             raise MigrationError("Step 36 checksum differs from the audited migration")
+        if (
+            migration_id == R4_RUNTIME_MIGRATION_ID
+            and checksum != R4_RUNTIME_MIGRATION_SHA256
+        ):
+            raise MigrationError("R4 runtime checksum differs from the audited migration")
         migrations.append(Migration(migration_id, filename, checksum, path, sql))
         seen.add(migration_id)
     identifiers = [migration.migration_id for migration in migrations]
@@ -2223,13 +2282,14 @@ def load_migrations() -> list[Migration]:
         STEP33_MIGRATION_ID,
         STEP34_MIGRATION_ID,
         STEP36_MIGRATION_ID,
+        R4_RUNTIME_MIGRATION_ID,
     ]
     if identifiers != expected_identifiers:
         raise MigrationError(
             "migration chain is not the exact Step 4 -> Step 5 -> Step 6 -> "
             "Step 9 -> Step 10 -> Step 11 -> Step 12 -> Step 19 -> "
             "Step 27 -> Step 28 -> Step 29 -> Step 30 -> Step 32 -> Step 33 -> "
-            "Step 34 -> Step 36 chain"
+            "Step 34 -> Step 36 -> post-roadmap R4 chain"
         )
     return migrations
 

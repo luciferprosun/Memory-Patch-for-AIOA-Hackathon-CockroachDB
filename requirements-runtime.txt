@@ -1,0 +1,6 @@
+-r requirements-ui.txt
+
+# Post-roadmap demo runtime CockroachDB pgwire transport. Exact releases are
+# independently pinned; no ORM or second persistence layer is introduced.
+psycopg[binary]==3.3.4
+psycopg-pool==3.3.1

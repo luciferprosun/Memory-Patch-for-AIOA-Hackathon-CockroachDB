@@ -57,6 +57,9 @@ from aioa_memory_kernel.contracts.enums import (  # noqa: E402
     PatchState,
 )
 from aioa_memory_kernel.contracts.evidence import ClaimCandidate  # noqa: E402
+from aioa_memory_kernel.contracts.exceptions import (  # noqa: E402
+    ContractValidationError,
+)
 from aioa_memory_kernel.contracts.identities import KernelRunIdentity  # noqa: E402
 from aioa_memory_kernel.contracts.serialization import (  # noqa: E402
     canonical_sha256,
@@ -2098,26 +2101,34 @@ def run_coherent_lineage_on_owned_database(
             and later_retrieval_proof.database_instance_digest
             == database_instance_digest
         )
-        proof_evidence_complete = all(
-            (
-                cross_model_same_patch,
-                disallowed_model_denied,
-                cross_user_denied,
-                cross_tenant_denied,
-                cross_user_approval_denied,
-                cross_user_export_denied,
-                canonical_conflict_suppressed,
-                ordinary_review_denied,
-                final_verification.verified,
-                lifecycle_audit_events_distinct,
-                audit_export_hash_only,
-                detail.audit_context_verified,
-                ui_awaiting_verified,
-                ui_active_verified,
-                len(same_patch) == 1,
-                activation_ack_lost_recovered,
-            )
+        proof_evidence_flags = (
+            ("CROSS_MODEL_SAME_PATCH", cross_model_same_patch),
+            ("DISALLOWED_MODEL_DENIED", disallowed_model_denied),
+            ("CROSS_USER_DENIED", cross_user_denied),
+            ("CROSS_TENANT_DENIED", cross_tenant_denied),
+            ("CROSS_USER_APPROVAL_DENIED", cross_user_approval_denied),
+            ("CROSS_USER_EXPORT_DENIED", cross_user_export_denied),
+            ("CANONICAL_CONFLICT_SUPPRESSED", canonical_conflict_suppressed),
+            ("ORDINARY_REVIEW_DENIED", ordinary_review_denied),
+            ("AUDIT_CHAIN_VERIFIED", final_verification.verified),
+            ("LIFECYCLE_AUDIT_DISTINCT", lifecycle_audit_events_distinct),
+            ("AUDIT_EXPORT_HASH_ONLY", audit_export_hash_only),
+            ("REVIEW_CONTEXT_VERIFIED", detail.audit_context_verified),
+            ("UI_AWAITING_VERIFIED", ui_awaiting_verified),
+            ("UI_ACTIVE_VERIFIED", ui_active_verified),
+            ("UI_SINGLE_ACTIVE_PATCH", len(same_patch) == 1),
+            ("ACTIVATION_ACK_RECOVERED", activation_ack_lost_recovered),
         )
+        proof_evidence_complete = all(
+            value for _name, value in proof_evidence_flags
+        )
+        if not proof_evidence_complete:
+            failed_name = next(
+                name for name, value in proof_evidence_flags if not value
+            )
+            raise Step38CoherentRuntimeError(
+                f"COHERENT_PROOF_{failed_name}_FAILED"
+            )
         closure_eligible = (
             attestation.real_retrieval_lineage
             and later_retrieval_proof.closure_eligible
@@ -2125,7 +2136,8 @@ def run_coherent_lineage_on_owned_database(
             and proof_evidence_complete
         )
         mark("COHERENT_PROOF_ASSEMBLY")
-        return Step38CoherentRuntimeProof(
+        try:
+            proof = Step38CoherentRuntimeProof(
             proof_version=STEP38_COHERENT_RUNTIME_PROOF_VERSION,
             scenario_hash=scenario.scenario_hash,
             upstream_runtime_attestation_hash=attestation.attestation_hash,
@@ -2216,9 +2228,16 @@ def run_coherent_lineage_on_owned_database(
             later_real_retrieval_lineage=later_retrieval_proof.closure_eligible,
             upstream_and_downstream_same_database=same_database,
             step39_started=False,
-            closure_eligible=closure_eligible,
-        )
+                closure_eligible=closure_eligible,
+            )
+        except ContractValidationError as error:
+            raise Step38CoherentRuntimeError(
+                "COHERENT_PROOF_CONTRACT_INVALID"
+            ) from error
+        mark("COHERENT_PROOF_ASSEMBLY", "PASS")
+        return proof
     finally:
+        mark("COHERENT_ROLE_CLEANUP")
         for role, memberships in reversed(created):
             if role == commit_role:
                 step30._drop_commit_validation_role(root, role)
@@ -2227,6 +2246,7 @@ def run_coherent_lineage_on_owned_database(
             else:
                 assert memberships is not None
                 step34._drop_validation_role(root, role, memberships)
+        mark("COHERENT_ROLE_CLEANUP", "PASS")
 
 
 def run_coherent_disposable_lineage(

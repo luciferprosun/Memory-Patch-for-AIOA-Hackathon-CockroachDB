@@ -1057,9 +1057,9 @@ class PersistenceAndBoundaryTests(unittest.TestCase):
         manifest = json.loads(
             (ROOT / "sql/cockroachdb/migrations/manifest.json").read_text()
         )
-        self.assertEqual(manifest["schema_version"], 16)
-        self.assertEqual(manifest["runner_version"], "16.0.0")
-        self.assertEqual(len(manifest["migrations"]), 18)
+        self.assertEqual(manifest["schema_version"], 17)
+        self.assertEqual(manifest["runner_version"], "17.0.0")
+        self.assertEqual(len(manifest["migrations"]), 19)
         latest = next(
             item
             for item in manifest["migrations"]

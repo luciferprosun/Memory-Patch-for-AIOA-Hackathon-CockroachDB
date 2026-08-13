@@ -1562,6 +1562,91 @@ class PrimaryCorrectionFlowTests(unittest.TestCase):
 
 
 class PersonalMemoryAndSafetyIntegrationTests(unittest.TestCase):
+    def test_r6_preprovisions_only_the_bounded_synthetic_owner(self) -> None:
+        class Root:
+            calls = []
+
+            def execute(self, database, sql, *, timeout):
+                self.calls.append((database, sql, timeout))
+
+        root = Root()
+        controlled_validation._preprovision_r6_controlled_owner(
+            root=root,
+            database="mp_step38_e2e_012345abcdef_db",
+            tenant_id="tenant-step38-golden",
+            owner_user_id="user-step38-owner-a",
+            observed_at=NOW,
+        )
+
+        self.assertEqual(len(root.calls), 1)
+        database, sql, timeout = root.calls[0]
+        self.assertEqual(database, "mp_step38_e2e_012345abcdef_db")
+        self.assertEqual(timeout, 60)
+        self.assertIn("INSERT INTO memory_patch.users", sql)
+        self.assertIn("ON CONFLICT (tenant_id, user_id) DO NOTHING", sql)
+        self.assertNotIn("password", sql.casefold())
+
+        with self.assertRaises(controlled_validation.ValidationFailure):
+            controlled_validation._preprovision_r6_controlled_owner(
+                root=root,
+                database="production",
+                tenant_id="tenant-step38-golden",
+                owner_user_id="user-step38-owner-a",
+                observed_at=NOW,
+            )
+        self.assertEqual(len(root.calls), 1)
+
+    def test_r6_runtime_dependency_overlay_accepts_only_exact_pins(self) -> None:
+        result = controlled_validation._prepare_r6_runtime_dependency_overlay()
+
+        self.assertEqual(
+            result["status"],
+            "PASS_EXISTING_PINNED_DEPENDENCIES",
+        )
+        self.assertFalse(result["installation_or_download_performed"])
+        self.assertTrue(result["embedding_package_precedence_preserved"])
+        self.assertEqual(len(result["versions_digest"]), 64)
+
+        wrong = dict(controlled_validation.R6_RUNTIME_DEPENDENCY_VERSIONS)
+        wrong["fastapi"] = "0.0.0"
+        with patch.object(
+            controlled_validation,
+            "R6_RUNTIME_DEPENDENCY_VERSIONS",
+            wrong,
+        ):
+            with self.assertRaises(controlled_validation.ValidationFailure):
+                controlled_validation._prepare_r6_runtime_dependency_overlay()
+
+    def test_r6_readiness_evidence_uses_the_frozen_dependency_ids(self) -> None:
+        controller = SimpleNamespace(
+            readiness=SimpleNamespace(
+                dependency_ids=("auth", "database", "provider_guard", "sessions")
+            )
+        )
+
+        self.assertEqual(
+            controlled_validation._readiness_dependencies_public(controller),
+            ("auth", "database", "provider_guard", "sessions"),
+        )
+        with self.assertRaises(controlled_validation.ValidationFailure):
+            controlled_validation._readiness_dependencies_public(
+                SimpleNamespace(readiness=SimpleNamespace(dependencies=("database",)))
+            )
+
+    def test_r6_public_evidence_is_scanned_before_paid_provider_work(self) -> None:
+        controlled_validation._assert_r6_runtime_public_safe(
+            {
+                "health": {
+                    "browser_privileged_secret_hits": 0,
+                    "paid_provider_calls": 0,
+                }
+            }
+        )
+        with self.assertRaises(ValueError):
+            controlled_validation._assert_r6_runtime_public_safe(
+                {"health": {"secret_exposure": 0}}
+            )
+
     def test_same_active_patch_is_reused_by_two_models_and_denied_to_other_owner(self) -> None:
         _value, slot, _committed, active, first, second = active_fixture()
         patch_hashes = []

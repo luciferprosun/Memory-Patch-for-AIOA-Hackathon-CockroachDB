@@ -65,7 +65,7 @@ class OfflineManifestTests(unittest.TestCase):
         result = migrations.offline_validate()
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["target_version"], "v26.2.4")
-        self.assertEqual(result["migration_count"], 18)
+        self.assertEqual(result["migration_count"], 19)
         self.assertEqual(result["step4_table_count"], 29)
         self.assertEqual(result["schema_table_count"], 43)
         self.assertEqual(result["protected_table_count"], 40)
@@ -111,6 +111,7 @@ class OfflineManifestTests(unittest.TestCase):
                 "0016_step33_audit_ledger_hash_chain",
                 "0017_step34_human_review_workspace",
                 "0018_step36_credential_authority_hardening",
+                "0019_post_roadmap_demo_runtime_state",
             ],
         )
 
@@ -715,7 +716,7 @@ class MigrationRunnerSafetyTests(unittest.TestCase):
         ):
             result = migrations.apply_migrations(client, "mp_step5_noop")
         self.assertEqual(result["applied_count"], 0)
-        self.assertEqual(result["skipped_count"], 18)
+        self.assertEqual(result["skipped_count"], 19)
         client.execute.assert_not_called()
 
     def test_applied_checksum_mismatch_fails_closed(self) -> None:
