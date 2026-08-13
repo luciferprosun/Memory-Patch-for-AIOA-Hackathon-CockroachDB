@@ -19,6 +19,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 from aioa_memory_kernel.demo_cockpit import (
+    BoundedJuryRunCoordinator,
     CockpitRuntimeStatus,
     CockpitShell,
     LegacyCompatibilityMode,
@@ -59,6 +60,7 @@ from .provider_guard import (
     CockroachProviderGuardLedger,
     GuardedProviderAdapter,
 )
+from .current_jury_flow import LiveMemoryPatchJuryFlow
 
 
 class RuntimeStartupStage(str, Enum):
@@ -116,6 +118,7 @@ class RuntimeDependencies:
     session_store: object
     provider_adapter: object
     session_storage_class: SessionStorageClass
+    jury_flow: object | None = None
     principal_authorizer: Callable[[OwnerPrincipal], bool] = _allow_test_principal
     owned_background_resources: tuple[object, ...] = ()
     owned_provider_resources: tuple[object, ...] = ()
@@ -239,6 +242,7 @@ class ProviderRuntimeServiceDependencyFactory:
 
     def __init__(self) -> None:
         self._partial_provider: GuardedProviderAdapter | None = None
+        self._partial_jury_flow: BoundedJuryRunCoordinator | None = None
 
     def validate_availability(self, settings: RuntimeSettings) -> None:
         if not isinstance(settings, RuntimeSettings):
@@ -309,11 +313,17 @@ class ProviderRuntimeServiceDependencyFactory:
                 ledger=ledger,
                 limits=guard_settings,
             )
+            jury_executor = LiveMemoryPatchJuryFlow(runner, guarded_provider)
+            jury_flow = BoundedJuryRunCoordinator(
+                jury_executor,
+                jury_executor.cases,
+            )
         except RuntimeAssemblyError:
             raise
         except Exception:
             raise RuntimeAssemblyError(RuntimeErrorCode.PROVIDER_CONFIG_INVALID) from None
         self._partial_provider = guarded_provider
+        self._partial_jury_flow = jury_flow
         recorder.advance(RuntimeStartupStage.PROVIDER_ADAPTER_INITIALIZED)
         if not guarded_provider.durable_accounting:
             raise RuntimeAssemblyError(RuntimeErrorCode.PROVIDER_GUARD_CONFIG_INVALID)
@@ -324,13 +334,20 @@ class ProviderRuntimeServiceDependencyFactory:
             session_store=session_store,
             provider_adapter=guarded_provider,
             session_storage_class=SessionStorageClass.DURABLE,
+            jury_flow=jury_flow,
+            owned_background_resources=(jury_flow,),
             principal_authorizer=principal_authorizer,
             owned_provider_resources=(guarded_provider,),
         )
         self._partial_provider = None
+        self._partial_jury_flow = None
         return dependencies
 
     def cleanup_partial(self) -> None:
+        jury_flow = self._partial_jury_flow
+        self._partial_jury_flow = None
+        if jury_flow is not None:
+            jury_flow.close()
         provider = self._partial_provider
         self._partial_provider = None
         if provider is not None:
@@ -553,6 +570,10 @@ class _DeferredDependency:
     def clear(self) -> None:
         self._delegate = None
 
+    @property
+    def is_bound(self) -> bool:
+        return self._delegate is not None
+
     def __getattr__(self, name: str):
         delegate = self._delegate
         if delegate is None:
@@ -639,6 +660,11 @@ def _validate_dependencies(
         for resource in dependencies.owned_database_resources
     ):
         raise RuntimeAssemblyError(RuntimeErrorCode.STARTUP_FAILED)
+    if dependencies.jury_flow is not None and not _has_callables(
+        dependencies.jury_flow,
+        ("submit", "get", "close"),
+    ):
+        raise RuntimeAssemblyError(RuntimeErrorCode.DEPENDENCY_MISSING)
 
     if settings.mode is not RuntimeMode.TEST:
         if (
@@ -788,6 +814,7 @@ class RuntimeController:
         oidc_proxy: _DeferredDependency,
         session_proxy: _DeferredDependency,
         authorizer_proxy: _DeferredDependency,
+        jury_proxy: _DeferredDependency,
         readiness: RuntimeReadinessState,
     ) -> None:
         self._import_settings = import_settings
@@ -797,6 +824,7 @@ class RuntimeController:
         self._oidc_proxy = oidc_proxy
         self._session_proxy = session_proxy
         self._authorizer_proxy = authorizer_proxy
+        self._jury_proxy = jury_proxy
         self._readiness = readiness
         self._dependencies: RuntimeDependencies | None = None
         self._started = False
@@ -869,6 +897,8 @@ class RuntimeController:
             self._oidc_proxy.bind(dependencies.oidc_client)
             self._session_proxy.bind(dependencies.session_store)
             self._authorizer_proxy.bind(dependencies.principal_authorizer)
+            if dependencies.jury_flow is not None:
+                self._jury_proxy.bind(dependencies.jury_flow)
             recorder.advance(RuntimeStartupStage.APPLICATION_STARTED)
             self._dependencies = dependencies
             self._startup_trace = recorder.events
@@ -880,6 +910,7 @@ class RuntimeController:
             self._oidc_proxy.clear()
             self._session_proxy.clear()
             self._authorizer_proxy.clear()
+            self._jury_proxy.clear()
             if dependencies is not None:
                 await _close_dependencies(dependencies)
             elif initialization_attempted:
@@ -906,6 +937,7 @@ class RuntimeController:
         self._oidc_proxy.clear()
         self._session_proxy.clear()
         self._authorizer_proxy.clear()
+        self._jury_proxy.clear()
         dependencies = self._dependencies
         self._dependencies = None
         self._started = False
@@ -928,6 +960,7 @@ def create_demo_runtime_app(
     oidc_proxy = _DeferredDependency("oidc-client")
     session_proxy = _DeferredDependency("owner-session-store")
     authorizer_proxy = _DeferredDependency("judge-principal-authorizer")
+    jury_proxy = _DeferredDependency("live-memory-patch-jury-flow")
     readiness = RuntimeReadinessState()
     controller = RuntimeController(
         import_settings=settings,
@@ -937,6 +970,7 @@ def create_demo_runtime_app(
         oidc_proxy=oidc_proxy,
         session_proxy=session_proxy,
         authorizer_proxy=authorizer_proxy,
+        jury_proxy=jury_proxy,
         readiness=readiness,
     )
     approved_provider = load_approved_provider_spec()
@@ -998,6 +1032,7 @@ def create_demo_runtime_app(
         oidc_flow_cookie_max_age=settings.sessions.limits.pending_ttl_seconds,
         lifespan=lifespan,
         cockpit_shell=cockpit_shell,
+        jury_flow=jury_proxy,
     )
     app.state.runtime_controller = controller
     app.state.runtime_mode = settings.mode.value

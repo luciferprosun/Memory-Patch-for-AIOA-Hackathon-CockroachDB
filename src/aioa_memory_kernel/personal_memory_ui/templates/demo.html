@@ -9,8 +9,8 @@
     </div>
     <div class="cockpit-badges" aria-label="Selected mode status">
       <span class="mode-badge">{{ cockpit.mode_badge }}</span>
-      <span class="run-badge">RUN STATE: {{ cockpit.run_state.value }}</span>
-      <span class="execution-badge">{{ cockpit.execution_kind.value }}</span>
+      <span class="run-badge">RUN STATE: {{ jury_run.state.value if jury_run else cockpit.run_state.value }}</span>
+      <span class="execution-badge">{{ jury_run.execution_kind.value if jury_run else cockpit.execution_kind.value }}</span>
     </div>
   </section>
 
@@ -21,6 +21,43 @@
   {% include "partials/demo_mode_selector.html" %}
   {% include "partials/demo_status_bar.html" %}
 
+  {% if cockpit.selected_mode.value == "memory_patch" and jury_enabled %}
+    <section class="jury-run-form" aria-labelledby="guided-run-heading">
+      <div>
+        <p class="eyebrow">Guided German Law demo</p>
+        <h2 id="guided-run-heading">Run the current evidence-bound flow</h2>
+        <p>
+          Choose one canonical Step 38 case. Loading this page, polling status,
+          and switching modes make zero provider calls.
+        </p>
+      </div>
+      <form method="post" action="/memory/jury-runs">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="idempotency_key" value="{{ action_token('d3-jury-run') }}">
+        <label for="guided-case">Guided case</label>
+        <select id="guided-case" name="case_id" required>
+          {% for case in jury_cases %}
+            <option value="{{ case.case_id }}">{{ case.label }}</option>
+          {% endfor %}
+        </select>
+        <button class="button primary" type="submit">Start bounded live run</button>
+      </form>
+      <div class="guided-case-list" aria-label="Guided case questions">
+        {% for case in jury_cases %}
+          <article>
+            <h3>{{ case.label }}</h3>
+            <p lang="de">{{ case.question }}</p>
+            <small>Question SHA-256: <code>{{ case.question_digest }}</code></small>
+          </article>
+        {% endfor %}
+      </div>
+      <p class="boundary-note">
+        Draft V1 receives only the selected question. The browser never receives
+        the provider key, database credentials, OIDC secret, or Commit Helper authority.
+      </p>
+    </section>
+  {% endif %}
+
   <div class="cockpit-layout">
     <section class="workflow-panel" aria-labelledby="workflow-heading">
       <div class="section-heading cockpit-section-heading">
@@ -30,7 +67,11 @@
         </div>
         <span class="read-only">PRESENTATION ONLY</span>
       </div>
-      {% include "partials/demo_stage_timeline.html" %}
+      {% if jury_run %}
+        {% include "partials/demo_current_run.html" %}
+      {% else %}
+        {% include "partials/demo_stage_timeline.html" %}
+      {% endif %}
     </section>
 
     <aside class="jury-panel" aria-labelledby="jury-heading">
@@ -43,8 +84,9 @@
           returned; Personal Memory remains private and non-canonical.
         </p>
         <p class="boundary-note">
-          D1 provides the unified shell. No live Golden Path execution is
-          claimed here; D3 owns that server-backed trace.
+          D3 runs only the approved guided cases through the guarded provider,
+          canonical CockroachDB evidence, and the existing verifier. A model
+          draft is never relabeled as a Verified Answer.
         </p>
       {% else %}
         <p>
@@ -85,6 +127,10 @@
 
   {% if cockpit.selected_mode.value == "critical_prompt_loop" %}
     {% include "partials/demo_legacy_archive.html" %}
+  {% endif %}
+
+  {% if cockpit.selected_mode.value == "memory_patch" and jury_enabled and dashboard %}
+    {% include "partials/demo_personal_memory.html" %}
   {% endif %}
 
   <section class="evolution-note" aria-labelledby="evolution-heading">

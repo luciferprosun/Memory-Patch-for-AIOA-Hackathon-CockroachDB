@@ -112,6 +112,7 @@ def create_personal_memory_app(
     oidc_flow_cookie_max_age: int = OIDC_FLOW_TTL_SECONDS,
     lifespan: Callable[[FastAPI], AbstractAsyncContextManager[None]] | None = None,
     cockpit_shell: CockpitShell | None = None,
+    jury_flow: object | None = None,
 ) -> FastAPI:
     """Create an app only from explicitly injected auth and backend boundaries."""
 
@@ -264,6 +265,9 @@ def create_personal_memory_app(
         require_session=require_session,
         context=context,
         cockpit_shell=cockpit_shell,
+        backend=backend,
+        require_csrf=require_csrf,
+        jury_flow=jury_flow,
     )
 
     @app.get("/", include_in_schema=False)

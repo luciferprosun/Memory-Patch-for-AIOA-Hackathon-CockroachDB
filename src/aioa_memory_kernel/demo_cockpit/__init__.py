@@ -22,6 +22,21 @@ from .models import (
     LegacyModeStatus,
 )
 from .shell import CockpitShell, build_default_cockpit_shell
+from .jury_flow import (
+    BoundedJuryRunCoordinator,
+    GuidedJuryCase,
+    JuryCorrectionProjection,
+    JuryEvidenceProjection,
+    JuryExecutionKind,
+    JuryFlowExecutor,
+    JuryFlowRequest,
+    JuryFlowResult,
+    JuryProviderSummary,
+    JuryRunProjection,
+    JuryRunState,
+    JuryStageProjection,
+    JuryStageState,
+)
 
 __all__ = [
     "AOIA_CORE_REPOSITORY",
@@ -34,6 +49,19 @@ __all__ = [
     "CockpitShell",
     "CockpitStageSummary",
     "CockpitView",
+    "BoundedJuryRunCoordinator",
+    "GuidedJuryCase",
+    "JuryCorrectionProjection",
+    "JuryEvidenceProjection",
+    "JuryExecutionKind",
+    "JuryFlowExecutor",
+    "JuryFlowRequest",
+    "JuryFlowResult",
+    "JuryProviderSummary",
+    "JuryRunProjection",
+    "JuryRunState",
+    "JuryStageProjection",
+    "JuryStageState",
     "LegacyModeStatus",
     "LegacyArchiveManifest",
     "LegacyCompatibilityMode",

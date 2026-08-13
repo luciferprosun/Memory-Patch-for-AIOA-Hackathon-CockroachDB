@@ -1,0 +1,101 @@
+<section
+  id="jury-run-{{ jury_run.run_id }}"
+  class="jury-run"
+  aria-live="polite"
+  aria-busy="{{ 'false' if jury_run.terminal else 'true' }}"
+  {% if not jury_run.terminal %}
+    hx-get="/memory/jury-runs/{{ jury_run.run_id }}"
+    hx-trigger="load delay:1500ms"
+    hx-swap="outerHTML"
+  {% endif %}
+>
+  <div class="run-summary">
+    <div>
+      <p class="eyebrow">{{ jury_run.execution_kind.value }}</p>
+      <h3>{{ jury_run.case.label }}</h3>
+      <p class="run-reference">Run {{ jury_run.run_id[:15] }}… · {{ jury_run.reason_code }}</p>
+    </div>
+    <span class="run-badge">{{ jury_run.state.value }}</span>
+  </div>
+
+  <ol class="cockpit-timeline jury-trace">
+    {% for stage in jury_run.stages %}
+      <li class="stage-{{ stage.state.value|lower|replace(' ', '-') }}">
+        <span class="stage-number">{{ loop.index }}</span>
+        <div class="stage-copy">
+          <div class="stage-heading">
+            <h3>{{ stage.label }}</h3>
+            <span>{{ stage.state.value }}</span>
+          </div>
+          <p>{{ stage.summary }}</p>
+          <small>{{ stage.authority }}</small>
+          {% if stage.reference %}<code class="lineage-ref">{{ stage.reference }}</code>{% endif %}
+        </div>
+      </li>
+    {% else %}
+      <li><span class="stage-number">1</span><div class="stage-copy"><h3>Queued</h3><p>The bounded worker has accepted this run.</p></div></li>
+    {% endfor %}
+  </ol>
+
+  {% if jury_run.evidence %}
+    <section class="run-detail" aria-labelledby="evidence-heading-{{ jury_run.run_id }}">
+      <h3 id="evidence-heading-{{ jury_run.run_id }}">Canonical evidence</h3>
+      <div class="evidence-cards">
+        {% for item in jury_run.evidence %}
+          <article>
+            <span class="observer-status">{{ item.relation }}</span>
+            <h4>{{ item.official_identifier }} · {{ item.provision }}</h4>
+            <blockquote>{{ item.excerpt }}</blockquote>
+            <dl>
+              <div><dt>Authority</dt><dd>{{ item.authority }}</dd></div>
+              <div><dt>Temporal</dt><dd>{{ item.temporal_status }}</dd></div>
+              <div><dt>Source</dt><dd>{{ item.source_id }}</dd></div>
+              <div><dt>Citation</dt><dd>{{ item.source_reference }}</dd></div>
+            </dl>
+            <code class="lineage-ref">{{ item.item_hash }}</code>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+
+  {% if jury_run.corrections %}
+    <section class="run-detail" aria-labelledby="correction-heading-{{ jury_run.run_id }}">
+      <h3 id="correction-heading-{{ jury_run.run_id }}">Correction Packet projection</h3>
+      {% for item in jury_run.corrections %}
+        <article class="correction-card">
+          <dl>
+            <div><dt>Original claim</dt><dd>{{ item.original_claim }}</dd></div>
+            <div><dt>Evidence verdict</dt><dd>{{ item.verdict }}</dd></div>
+            <div><dt>Required correction</dt><dd>{{ item.required_correction }}</dd></div>
+            <div><dt>Canonical citation</dt><dd>{{ item.citation }}</dd></div>
+          </dl>
+        </article>
+      {% endfor %}
+    </section>
+  {% endif %}
+
+  {% if jury_run.verified_answer %}
+    <section class="verified-answer-card" aria-labelledby="verified-heading-{{ jury_run.run_id }}">
+      <p class="eyebrow">Step 26 output boundary</p>
+      <h3 id="verified-heading-{{ jury_run.run_id }}">Verified Answer</h3>
+      <p>{{ jury_run.verified_answer }}</p>
+      <code class="lineage-ref">{{ jury_run.verified_answer_hash }}</code>
+      <p class="microcopy">German federal-law scope and the displayed knowledge-as-of date apply.</p>
+    </section>
+  {% elif jury_run.terminal %}
+    <p class="cockpit-notice" role="status">
+      No Verified Answer was emitted. Draft V1 is not used as a fallback.
+    </p>
+  {% endif %}
+
+  {% if jury_run.provider_summary %}
+    <dl class="provider-summary" aria-label="Bounded provider guard summary">
+      <div><dt>Accounting</dt><dd>{{ jury_run.provider_summary.accounting_semantics }}</dd></div>
+      <div><dt>Calls reserved</dt><dd>{{ jury_run.provider_summary.calls_reserved }}</dd></div>
+      <div><dt>Calls completed</dt><dd>{{ jury_run.provider_summary.calls_completed }}</dd></div>
+      <div><dt>Calls failed</dt><dd>{{ jury_run.provider_summary.calls_failed }}</dd></div>
+      <div><dt>Calls remaining</dt><dd>{{ jury_run.provider_summary.calls_remaining }}</dd></div>
+    </dl>
+  {% endif %}
+</section>

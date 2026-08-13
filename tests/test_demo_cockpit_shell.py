@@ -37,7 +37,7 @@ class UnifiedCockpitShellTests(unittest.TestCase):
             view.legacy.classification,
             "DISABLED_WITH_ARCHIVAL_VIEW",
         )
-        self.assertEqual(len(view.stages), 11)
+        self.assertEqual(len(view.stages), 14)
         self.assertEqual(len(view.observer_cards), 3)
 
     def test_enabled_legacy_is_truthful_view_only(self) -> None:

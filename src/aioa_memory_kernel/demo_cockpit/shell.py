@@ -22,17 +22,20 @@ from .models import (
 
 
 _CURRENT_STAGES = (
-    ("question", "Question", "Owner-authenticated input; no run has started."),
+    ("question", "User Question", "Owner-authenticated input; no run has started."),
     ("draft-v1", "Draft V1", "Evidence-blind provider boundary."),
-    ("german-law-route", "German Law route / HAT", "Typed route and source authority."),
-    ("evidence-bundle", "Evidence Bundle", "Independent canonical evidence lineage."),
-    ("temporal-status", "Temporal status", "Scope, freshness and conflict resolution."),
+    ("route-hat", "Route / HAT Decision", "Typed German Law route and source authority."),
+    ("retrieved-evidence", "Retrieved Evidence", "Independent canonical Evidence Bundle lineage."),
+    ("temporal", "Temporal / Conflict / Freshness", "Scope, freshness and conflict resolution."),
+    ("claims", "Claim Analysis", "Claims are bound to canonical evidence before correction."),
     ("correction-packet", "Correction Packet", "Deterministic evidence-bound correction."),
     ("draft-v2", "Draft V2", "Corrected draft generated from the bounded packet."),
-    ("verification", "Verification", "Layered claim and evidence-binding gates."),
+    ("verification", "Layered Verification", "Layered claim and evidence-binding gates."),
     ("verified-answer", "Verified Answer", "Only eligible output may cross the boundary."),
-    ("personal-memory", "Personal Memory", "Private, owner-approved and non-canonical."),
-    ("audit", "Audit", "Receipt and integrity projection without authority."),
+    ("memory-proposal", "Personal Memory Proposal", "Optional private candidate only."),
+    ("owner-approval", "Owner Approval", "Explicit CSRF-bound owner action only."),
+    ("activation", "Commit / Activation", "Separate Commit Helper receipt required."),
+    ("later-reuse", "Later Question / Reuse", "Private non-canonical context only."),
 )
 
 _CURRENT_OBSERVERS = (
@@ -235,7 +238,8 @@ class CockpitShell:
             introduction=(
                 "The current production-authority path independently retrieves "
                 "evidence, constructs corrections and emits only verified or "
-                "fail-closed results. D3 will bind this shell to the live jury trace."
+                "fail-closed results. The guided D3 trace uses the same current "
+                "runtime, verifier and provider guard."
             ),
             notice=notice,
             mode_options=mode_options,
@@ -245,7 +249,7 @@ class CockpitShell:
                     stage_id,
                     label,
                     detail,
-                    status="READY FOR D3",
+                    status="NOT RUN",
                     authority="Current typed Memory Patch contract",
                 )
                 for stage_id, label, detail in _CURRENT_STAGES

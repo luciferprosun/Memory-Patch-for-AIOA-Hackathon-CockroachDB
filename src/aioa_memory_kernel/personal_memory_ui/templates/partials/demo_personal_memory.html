@@ -1,0 +1,56 @@
+<section class="memory-demo-panel" aria-labelledby="memory-demo-heading">
+  <div class="section-heading cockpit-section-heading">
+    <div>
+      <p class="eyebrow">Private and owner-scoped</p>
+      <h2 id="memory-demo-heading">Personal Memory approval and reuse</h2>
+    </div>
+    <a class="button ghost" href="/memory">Open full owner workspace</a>
+  </div>
+  <p>
+    A verified correction may become a proposal, but never automatically. Approval
+    is an explicit owner action; commit and activation remain separate receipt-driven
+    steps. Personal Memory is not canonical evidence and does not retrain the model.
+  </p>
+  <div class="memory-demo-metrics">
+    <span>Awaiting approval <strong>{{ dashboard.pending_approval_count }}</strong></span>
+    <span>Active patches <strong>{{ dashboard.active_patch_count }}</strong></span>
+    <span>Active spaces <strong>{{ dashboard.active_slot_count }}</strong></span>
+  </div>
+
+  {% for patch in dashboard.pending_approvals %}
+    <article class="memory-demo-card">
+      <span class="state awaiting">AWAITING APPROVAL</span>
+      <h3>{{ patch.statement }}</h3>
+      <p>{{ patch.validation_summary }}</p>
+      <form method="post" action="/memory/proposals/{{ patch.proposal_id }}/approve" class="approval-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <input type="hidden" name="proposal_hash" value="{{ patch.proposal_hash }}">
+        <input type="hidden" name="expected_state_version" value="{{ patch.state_version }}">
+        <input type="hidden" name="expected_state_hash" value="{{ patch.state_hash }}">
+        <input type="hidden" name="idempotency_key" value="{{ action_token('d3-approval') }}">
+        <label class="confirmation"><input type="checkbox" required> I approve this exact private-memory statement.</label>
+        <button class="button primary" type="submit">Approve exact proposal</button>
+      </form>
+      <p class="microcopy">Approval alone does not commit or activate the patch.</p>
+    </article>
+  {% else %}
+    <p class="empty-state compact">No real proposal is awaiting approval. Nothing is fabricated for the demo.</p>
+  {% endfor %}
+
+  {% for patch in dashboard.recent_patches if patch.state == 'ACTIVE' %}
+    <article class="memory-demo-card">
+      <span class="state active">ACTIVE · AVAILABLE FOR LATER REUSE</span>
+      <h3>{{ patch.statement }}</h3>
+      <p>
+        Owner-scoped context from AIOA/Kernel persistence; canonical evidence
+        authority = false. A later bound query may reuse this context, but
+        canonical evidence still wins.
+      </p>
+      <dl>
+        <div><dt>Model binding</dt><dd>{{ patch.model_binding_id }}</dd></div>
+        <div><dt>Context applied</dt><dd>AVAILABLE TO THE EXISTING BOUND RETRIEVAL PATH</dd></div>
+      </dl>
+      <code class="lineage-ref">{{ patch.patch_hash }}</code>
+    </article>
+  {% endfor %}
+</section>
