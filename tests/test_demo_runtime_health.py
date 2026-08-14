@@ -153,6 +153,24 @@ class RuntimeHealthTests(unittest.TestCase):
         self.assertNotIn("postgresql://", combined)
         self.assertNotIn("openrouter", combined.casefold())
 
+    def test_alb_target_host_can_probe_health_without_widening_app_hosts(self) -> None:
+        app, provider = _app()
+        target_headers = {"Host": "172.31.40.235:8000"}
+        with TestClient(app, base_url="https://testserver") as client:
+            live = client.get("/health/live", headers=target_headers)
+            ready = client.get("/health/ready", headers=target_headers)
+            workspace = client.get(
+                "/memory",
+                headers=target_headers,
+                follow_redirects=False,
+            )
+        self.assertEqual(live.status_code, 200)
+        self.assertEqual(live.json(), {"status": "LIVE"})
+        self.assertEqual(ready.status_code, 200)
+        self.assertEqual(ready.json(), {"status": "READY"})
+        self.assertEqual(workspace.status_code, 400)
+        self.assertEqual(provider.generate_calls, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

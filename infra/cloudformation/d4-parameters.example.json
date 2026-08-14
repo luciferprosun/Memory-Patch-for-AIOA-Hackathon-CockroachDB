@@ -20,6 +20,10 @@
     "ParameterValue": "d4-hosted-demo-1a"
   },
   {
+    "ParameterKey": "PublicOrigin",
+    "ParameterValue": "https://bootstrap.invalid"
+  },
+  {
     "ParameterKey": "ServiceName",
     "ParameterValue": "memory-patch-aioa-demo-1a"
   }

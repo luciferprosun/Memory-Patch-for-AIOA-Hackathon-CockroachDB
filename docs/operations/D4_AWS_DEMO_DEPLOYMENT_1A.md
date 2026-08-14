@@ -31,8 +31,8 @@ Stop before mutation if any of these is true:
 | CloudFormation | `infra/cloudformation/d4-aws-demo-runtime-1a.json` |
 | ASGI app | `aioa_memory_kernel.demo_runtime.asgi:app` |
 | Launcher | `python scripts/run_demo_runtime_1a.py serve` |
-| Public origin | `https://memory-patch-aioa-demo-1a.ecs.eu-central-1.on.aws` |
-| OIDC callback | `https://memory-patch-aioa-demo-1a.ecs.eu-central-1.on.aws/memory/oidc/callback` |
+| Public origin | Exact AWS-assigned ECS Express HTTPS endpoint |
+| OIDC callback | `<exact-public-origin>/memory/oidc/callback` |
 | Cockpit | `/memory/demo` |
 | Liveness | `/health/live` |
 | Readiness | `/health/ready` |
@@ -197,11 +197,15 @@ env -u GOOGLE_OAUTH_CLIENT_CONFIG_JSON \
     --max-results 20
 ```
 
-CloudFormation registers this exact callback on the public Cognito client:
+The base phase registers a non-routable bootstrap callback on the public
+Cognito client:
 
 ```text
-https://memory-patch-aioa-demo-1a.ecs.eu-central-1.on.aws/memory/oidc/callback
+https://bootstrap.invalid/memory/oidc/callback
 ```
+
+It is replaced by the exact AWS-assigned callback before judge login is
+enabled. The bootstrap value is never a working login redirect.
 
 The stack outputs the exact non-secret OIDC issuer and public client ID and
 binds them directly into the service. Do not invent or pass an OIDC client
@@ -222,6 +226,7 @@ DeployService=false
 ImageUri=<repository-uri>@sha256:<digest>
 ProviderBudgetEpoch=<deliberately-armed-epoch>
 SourceSha=<exact-committed-sha>
+PublicOrigin=https://bootstrap.invalid
 ```
 
 Create an `UPDATE` change set with `CAPABILITY_NAMED_IAM`, inspect every
@@ -244,8 +249,22 @@ env -u GOOGLE_OAUTH_CLIENT_CONFIG_JSON \
   AWS_PROFILE=aoia-admin AWS_REGION=eu-central-1 AWS_PAGER='' \
   aws ecs monitor-express-gateway-service \
     --service-arn <exact-service-arn> \
-    --monitor-mode RESOURCE
+    --resource-view RESOURCE \
+    --mode TEXT-ONLY
 ```
+
+The ECS Express target health probe uses the target IP in its `Host` header.
+The application accepts that host only for `GET /health/live` and
+`GET /health/ready`; every application, authentication and mutation route
+remains behind the exact-host check. After the service resource exposes its
+AWS-assigned endpoint, run one final reviewed update with:
+
+```text
+PublicOrigin=https://<exact-aws-assigned-endpoint>
+```
+
+This binds the runtime trusted host and CSRF origin, plus the Cognito callback
+and logout URLs, to the same exact origin. Do not use a wildcard.
 
 ## 6. D4 no-cost smoke
 
@@ -253,10 +272,10 @@ Do not submit a jury run. D4 expects zero paid provider calls.
 
 ```bash
 curl --fail --silent --show-error \
-  https://memory-patch-aioa-demo-1a.ecs.eu-central-1.on.aws/health/live
+  https://<exact-aws-assigned-endpoint>/health/live
 
 curl --fail --silent --show-error \
-  https://memory-patch-aioa-demo-1a.ecs.eu-central-1.on.aws/health/ready
+  https://<exact-aws-assigned-endpoint>/health/ready
 ```
 
 Require HTTP 200, bounded JSON, security headers and no secret. Confirm API

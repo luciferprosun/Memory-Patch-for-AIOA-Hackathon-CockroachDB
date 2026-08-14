@@ -35,6 +35,13 @@
       "MinLength": 2,
       "Type": "String"
     },
+    "PublicOrigin": {
+      "AllowedPattern": "^https://(?:bootstrap\\.invalid|[a-z0-9-]{1,63}\\.ecs\\.eu-central-1\\.on\\.aws)$",
+      "Default": "https://bootstrap.invalid",
+      "Description": "Exact ECS Express HTTPS origin, updated from bootstrap after AWS assigns the endpoint",
+      "MaxLength": 255,
+      "Type": "String"
+    },
     "ServiceName": {
       "AllowedValues": [
         "memory-patch-aioa-demo-1a"
@@ -450,7 +457,7 @@
         "AuthSessionValidity": 3,
         "CallbackURLs": [
           {
-            "Fn::Sub": "https://${ServiceName}.ecs.${AWS::Region}.on.aws/memory/oidc/callback"
+            "Fn::Sub": "${PublicOrigin}/memory/oidc/callback"
           }
         ],
         "ClientName": {
@@ -464,7 +471,7 @@
         "IdTokenValidity": 1,
         "LogoutURLs": [
           {
-            "Fn::Sub": "https://${ServiceName}.ecs.${AWS::Region}.on.aws/memory"
+            "Fn::Sub": "${PublicOrigin}/memory"
           }
         ],
         "PreventUserExistenceErrors": "ENABLED",
@@ -693,7 +700,7 @@
             {
               "Name": "AIOA_RUNTIME_PUBLIC_ORIGIN",
               "Value": {
-                "Fn::Sub": "https://${ServiceName}.ecs.${AWS::Region}.on.aws"
+                "Ref": "PublicOrigin"
               }
             },
             {
@@ -934,7 +941,7 @@
     "OidcCallbackUrl": {
       "Description": "Exact callback that must be registered with the OIDC provider",
       "Value": {
-        "Fn::Sub": "https://${ServiceName}.ecs.${AWS::Region}.on.aws/memory/oidc/callback"
+        "Fn::Sub": "${PublicOrigin}/memory/oidc/callback"
       }
     },
     "OidcClientId": {
@@ -974,7 +981,7 @@
       "Condition": "CreateService",
       "Description": "Managed HTTPS origin for the unified cockpit",
       "Value": {
-        "Fn::Sub": "https://${ServiceName}.ecs.${AWS::Region}.on.aws"
+        "Ref": "PublicOrigin"
       }
     },
     "ServiceArn": {

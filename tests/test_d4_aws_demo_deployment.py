@@ -155,7 +155,7 @@ class D4AwsDemoDeploymentTests(unittest.TestCase):
         self.assertTrue(SECRET_ENVIRONMENT_NAMES.isdisjoint(environment))
         self.assertEqual(
             environment["AIOA_RUNTIME_PUBLIC_ORIGIN"],
-            {"Fn::Sub": "https://${ServiceName}.ecs.${AWS::Region}.on.aws"},
+            {"Ref": "PublicOrigin"},
         )
 
     def test_only_exact_runtime_secret_is_read_by_execution_role(self) -> None:
@@ -305,14 +305,18 @@ class D4AwsDemoDeploymentTests(unittest.TestCase):
         )
 
     def test_public_origin_and_oidc_callback_are_exact(self) -> None:
-        outputs = _template()["Outputs"]
+        template = _template()
+        outputs = template["Outputs"]
+        public_origin = template["Parameters"]["PublicOrigin"]
+        self.assertEqual(public_origin["Default"], "https://bootstrap.invalid")
+        self.assertIn("ecs\\.eu-central-1\\.on\\.aws", public_origin["AllowedPattern"])
         self.assertEqual(
-            outputs["PublicOrigin"]["Value"]["Fn::Sub"],
-            "https://${ServiceName}.ecs.${AWS::Region}.on.aws",
+            outputs["PublicOrigin"]["Value"],
+            {"Ref": "PublicOrigin"},
         )
         self.assertEqual(
             outputs["OidcCallbackUrl"]["Value"]["Fn::Sub"],
-            "https://${ServiceName}.ecs.${AWS::Region}.on.aws/memory/oidc/callback",
+            "${PublicOrigin}/memory/oidc/callback",
         )
 
     def test_cognito_is_lite_admin_only_public_pkce_code_flow(self) -> None:
@@ -348,12 +352,13 @@ class D4AwsDemoDeploymentTests(unittest.TestCase):
             client["CallbackURLs"],
             [
                 {
-                    "Fn::Sub": (
-                        "https://${ServiceName}.ecs.${AWS::Region}.on.aws/"
-                        "memory/oidc/callback"
-                    )
+                    "Fn::Sub": "${PublicOrigin}/memory/oidc/callback"
                 }
             ],
+        )
+        self.assertEqual(
+            client["LogoutURLs"],
+            [{"Fn::Sub": "${PublicOrigin}/memory"}],
         )
         self.assertEqual(
             resources["DemoJudgeUserPoolDomain"]["Properties"][

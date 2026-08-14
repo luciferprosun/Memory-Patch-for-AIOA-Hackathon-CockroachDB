@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from aioa_memory_kernel.contracts.enums import PersonalMemorySpaceState
 from aioa_memory_kernel.demo_cockpit import (
@@ -65,6 +66,40 @@ _SAFE_HEADERS = {
 _MAXIMUM_FORM_BYTES = 32 * 1024
 _MAXIMUM_FORM_FIELDS = 32
 _MAXIMUM_STATE_VERSION = (1 << 63) - 1
+_HOST_AGNOSTIC_HEALTH_PATHS = frozenset({"/health/live", "/health/ready"})
+
+
+class _HealthAwareTrustedHostMiddleware:
+    """Permit ALB target health probes without widening application hosts."""
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        *,
+        allowed_hosts: list[str],
+        www_redirect: bool = False,
+    ) -> None:
+        self._app = app
+        self._trusted = TrustedHostMiddleware(
+            app,
+            allowed_hosts=allowed_hosts,
+            www_redirect=www_redirect,
+        )
+
+    async def __call__(
+        self,
+        scope: Scope,
+        receive: Receive,
+        send: Send,
+    ) -> None:
+        if (
+            scope["type"] == "http"
+            and scope.get("method") == "GET"
+            and scope.get("path") in _HOST_AGNOSTIC_HEALTH_PATHS
+        ):
+            await self._app(scope, receive, send)
+            return
+        await self._trusted(scope, receive, send)
 
 
 def _allow_authenticated_principal(_principal: OwnerPrincipal) -> bool:
@@ -133,7 +168,7 @@ def create_personal_memory_app(
     if public_host is None:  # pragma: no cover - OidcSettings verifies this
         raise ValueError("public origin hostname is required")
     app.add_middleware(
-        TrustedHostMiddleware,
+        _HealthAwareTrustedHostMiddleware,
         allowed_hosts=[public_host],
         www_redirect=False,
     )
