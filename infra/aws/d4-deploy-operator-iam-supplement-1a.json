@@ -23,7 +23,8 @@
       ],
       "Resource": [
         "arn:aws:iam::787391403107:role/memory-patch-aioa-demo-1a-execution",
-        "arn:aws:iam::787391403107:role/memory-patch-aioa-demo-1a-infrastructure"
+        "arn:aws:iam::787391403107:role/memory-patch-aioa-demo-1a-infrastructure",
+        "arn:aws:iam::787391403107:role/memory-patch-aioa-demo-1a-oidc-claims"
       ]
     },
     {
@@ -45,6 +46,17 @@
       "Condition": {
         "StringEquals": {
           "iam:PassedToService": "ecs.amazonaws.com"
+        }
+      }
+    },
+    {
+      "Sid": "PassD4OidcClaimsRoleOnlyToLambda",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": "arn:aws:iam::787391403107:role/memory-patch-aioa-demo-1a-oidc-claims",
+      "Condition": {
+        "StringEquals": {
+          "iam:PassedToService": "lambda.amazonaws.com"
         }
       }
     }

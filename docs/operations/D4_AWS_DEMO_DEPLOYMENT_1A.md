@@ -62,9 +62,9 @@ Before the service phase, an account administrator must review and apply the
 exact supplement in
 `infra/aws/d4-deploy-operator-iam-supplement-1a.json` to the `LuciferSOL`
 permission set, provision it to account `787391403107`, and start a fresh SSO
-session. The supplement is limited to the two named D4 roles and permits
-passing them only to ECS. Do not attach `AdministratorAccess` and do not widen
-the role-name resources.
+session. The supplement is limited to the three named D4 roles: two service
+roles passed only to ECS and one claims-trigger role passed only to Lambda. Do
+not attach `AdministratorAccess` and do not widen the role-name resources.
 
 Run provider-free predeployment validation:
 
@@ -91,10 +91,12 @@ Freeze the committed SHA in a task-specific variable:
 AIOA_D4_SOURCE_SHA="$(git rev-parse HEAD)"
 ```
 
-Create a CloudFormation change set with `DeployApplication=false`. This first
-phase creates only the immutable ECR repository, a dedicated retained rotating
-KMS key and an empty retained Secrets Manager object. A change set must be
-reviewed and explicitly approved before execution.
+Create or update a CloudFormation change set with `DeployApplication=false`.
+This phase owns the immutable ECR repository, dedicated retained rotating KMS
+key, empty retained Secrets Manager object, and the admin-only Cognito Lite
+pool with its public code-flow client, managed domain, and bounded V1 claims
+trigger. A change set must be reviewed and explicitly approved before
+execution.
 
 ```bash
 env -u GOOGLE_OAUTH_CLIENT_CONFIG_JSON \
@@ -195,38 +197,40 @@ env -u GOOGLE_OAUTH_CLIENT_CONFIG_JSON \
     --max-results 20
 ```
 
-Register this callback at the OIDC provider before service creation:
+CloudFormation registers this exact callback on the public Cognito client:
 
 ```text
 https://memory-patch-aioa-demo-1a.ecs.eu-central-1.on.aws/memory/oidc/callback
 ```
 
-The OIDC issuer and public client ID are non-secret parameters. Do not invent
-or pass an OIDC client secret because the application has no such input.
+The stack outputs the exact non-secret OIDC issuer and public client ID and
+binds them directly into the service. Do not invent or pass an OIDC client
+secret because the application has no such input. Self-registration is off;
+create only the approved judge user through the Cognito admin API.
 
 ## 5. Prepare and execute the service change set
 
 Use a protected, untracked parameter file or direct parameter overrides. It
-may contain only the image digest URI, OIDC issuer, public client ID, budget
-epoch and source SHA. It must contain no secret value.
+may contain only the image digest URI, budget epoch and source SHA. It must
+contain no secret value.
 
 The update must set:
 
 ```text
 DeployApplication=true
 ImageUri=<repository-uri>@sha256:<digest>
-OidcIssuer=<exact-https-issuer>
-OidcClientId=<public-client-id>
 ProviderBudgetEpoch=<deliberately-armed-epoch>
 SourceSha=<exact-committed-sha>
 ```
 
 Create an `UPDATE` change set with `CAPABILITY_NAMED_IAM`, inspect every
 resource and IAM change, and request explicit approval. Only then execute it.
-Expected new resources are one log group, one task execution role, one ECS
-infrastructure role and one ECS Express service. ECS Express manages the one
-Fargate service, ALB, certificate, target group, security groups and scaling
-policy. No NAT Gateway, database, Redis, Kubernetes or task role is expected.
+Expected service-phase resources are one runtime log group, one task execution
+role, one ECS infrastructure role and one ECS Express service. The Cognito
+pool, client, domain and claims trigger already belong to the base phase. ECS
+Express manages the one Fargate service, ALB, certificate, target group,
+security groups and scaling policy. No NAT Gateway, database, Redis,
+Kubernetes or task role is expected.
 
 Monitor with:
 

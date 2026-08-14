@@ -18,18 +18,6 @@
       "MaxLength": 512,
       "Type": "String"
     },
-    "OidcClientId": {
-      "Default": "",
-      "Description": "Public OIDC client identifier; never a client secret",
-      "MaxLength": 255,
-      "Type": "String"
-    },
-    "OidcIssuer": {
-      "Default": "",
-      "Description": "Exact HTTPS OIDC issuer",
-      "MaxLength": 1024,
-      "Type": "String"
-    },
     "ProviderBudgetEpoch": {
       "AllowedPattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,126}[A-Za-z0-9]$",
       "Default": "d4-hosted-demo-1a",
@@ -77,48 +65,20 @@
                 ]
               },
               {
-                "Fn::And": [
+                "Fn::Not": [
                   {
-                    "Fn::Not": [
+                    "Fn::Equals": [
                       {
-                        "Fn::Equals": [
-                          {
-                            "Ref": "ImageUri"
-                          },
-                          ""
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "Fn::Not": [
-                      {
-                        "Fn::Equals": [
-                          {
-                            "Ref": "OidcClientId"
-                          },
-                          ""
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "Fn::Not": [
-                      {
-                        "Fn::Equals": [
-                          {
-                            "Ref": "OidcIssuer"
-                          },
-                          ""
-                        ]
-                      }
+                        "Ref": "ImageUri"
+                      },
+                      ""
                     ]
                   }
                 ]
               }
             ]
           },
-          "AssertDescription": "Image digest and OIDC configuration are required before service creation"
+          "AssertDescription": "An immutable image digest is required before service creation"
         }
       ]
     }
@@ -230,6 +190,254 @@
       },
       "Type": "AWS::ECR::Repository",
       "UpdateReplacePolicy": "Retain"
+    },
+    "DemoOidcClaimsLogGroup": {
+      "DeletionPolicy": "Delete",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${ServiceName}-oidc-claims"
+        },
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "MemoryPatchForAIOA"
+          },
+          {
+            "Key": "Environment",
+            "Value": "demo"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cloudformation"
+          }
+        ]
+      },
+      "Type": "AWS::Logs::LogGroup",
+      "UpdateReplacePolicy": "Delete"
+    },
+    "DemoOidcClaimsRole": {
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::Sub": "arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${ServiceName}-oidc-claims:*"
+                  }
+                }
+              ],
+              "Version": "2012-10-17"
+            },
+            "PolicyName": "write-exact-oidc-claims-log-group"
+          }
+        ],
+        "RoleName": {
+          "Fn::Sub": "${ServiceName}-oidc-claims"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "MemoryPatchForAIOA"
+          },
+          {
+            "Key": "Environment",
+            "Value": "demo"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cloudformation"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::Role"
+    },
+    "DemoOidcClaimsFunction": {
+      "DependsOn": "DemoOidcClaimsLogGroup",
+      "Properties": {
+        "Architectures": [
+          "x86_64"
+        ],
+        "Code": {
+          "ZipFile": "def handler(event, context):\n    if event.get(\"version\") != \"1\":\n        raise ValueError(\"unsupported token event version\")\n    request = event.get(\"request\")\n    if not isinstance(request, dict):\n        raise ValueError(\"missing token request\")\n    attributes = request.get(\"userAttributes\")\n    if not isinstance(attributes, dict):\n        raise ValueError(\"missing user attributes\")\n    subject = attributes.get(\"sub\")\n    if not isinstance(subject, str) or not subject or len(subject) > 255:\n        raise ValueError(\"invalid immutable subject\")\n    details = {\"claimsToAddOrOverride\": {\"tenant_id\": \"memory-patch-aioa-demo-1a\", \"owner_user_id\": subject}}\n    groups = request.get(\"groupConfiguration\")\n    if isinstance(groups, dict):\n        details[\"groupOverrideDetails\"] = groups\n    response = event.setdefault(\"response\", {})\n    response[\"claimsOverrideDetails\"] = details\n    return event\n"
+        },
+        "Description": "Add fixed demo tenant and immutable Cognito subject ownership claims",
+        "FunctionName": {
+          "Fn::Sub": "${ServiceName}-oidc-claims"
+        },
+        "Handler": "index.handler",
+        "MemorySize": 128,
+        "Role": {
+          "Fn::GetAtt": [
+            "DemoOidcClaimsRole",
+            "Arn"
+          ]
+        },
+        "Runtime": "python3.12",
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "MemoryPatchForAIOA"
+          },
+          {
+            "Key": "Environment",
+            "Value": "demo"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cloudformation"
+          }
+        ],
+        "Timeout": 3
+      },
+      "Type": "AWS::Lambda::Function"
+    },
+    "DemoOidcClaimsPermission": {
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "DemoOidcClaimsFunction",
+            "Arn"
+          ]
+        },
+        "Principal": "cognito-idp.amazonaws.com",
+        "SourceAccount": {
+          "Ref": "AWS::AccountId"
+        }
+      },
+      "Type": "AWS::Lambda::Permission"
+    },
+    "DemoJudgeUserPool": {
+      "DependsOn": "DemoOidcClaimsPermission",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "AccountRecoverySetting": {
+          "RecoveryMechanisms": [
+            {
+              "Name": "admin_only",
+              "Priority": 1
+            }
+          ]
+        },
+        "AdminCreateUserConfig": {
+          "AllowAdminCreateUserOnly": true
+        },
+        "DeletionProtection": "ACTIVE",
+        "LambdaConfig": {
+          "PreTokenGenerationConfig": {
+            "LambdaArn": {
+              "Fn::GetAtt": [
+                "DemoOidcClaimsFunction",
+                "Arn"
+              ]
+            },
+            "LambdaVersion": "V1_0"
+          }
+        },
+        "MfaConfiguration": "OFF",
+        "Policies": {
+          "PasswordPolicy": {
+            "MinimumLength": 16,
+            "RequireLowercase": true,
+            "RequireNumbers": true,
+            "RequireSymbols": true,
+            "RequireUppercase": true,
+            "TemporaryPasswordValidityDays": 1
+          }
+        },
+        "UserPoolName": {
+          "Fn::Sub": "${ServiceName}-judges"
+        },
+        "UserPoolTier": "LITE",
+        "UsernameConfiguration": {
+          "CaseSensitive": false
+        },
+        "UserPoolTags": {
+          "Environment": "demo",
+          "ManagedBy": "cloudformation",
+          "Project": "MemoryPatchForAIOA"
+        }
+      },
+      "Type": "AWS::Cognito::UserPool",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "DemoJudgeUserPoolClient": {
+      "Properties": {
+        "AccessTokenValidity": 1,
+        "AllowedOAuthFlows": [
+          "code"
+        ],
+        "AllowedOAuthFlowsUserPoolClient": true,
+        "AllowedOAuthScopes": [
+          "openid",
+          "profile"
+        ],
+        "AuthSessionValidity": 3,
+        "CallbackURLs": [
+          {
+            "Fn::Sub": "https://${ServiceName}.ecs.${AWS::Region}.on.aws/memory/oidc/callback"
+          }
+        ],
+        "ClientName": {
+          "Fn::Sub": "${ServiceName}-public"
+        },
+        "EnableTokenRevocation": true,
+        "ExplicitAuthFlows": [
+          "ALLOW_REFRESH_TOKEN_AUTH"
+        ],
+        "GenerateSecret": false,
+        "IdTokenValidity": 1,
+        "LogoutURLs": [
+          {
+            "Fn::Sub": "https://${ServiceName}.ecs.${AWS::Region}.on.aws/memory"
+          }
+        ],
+        "PreventUserExistenceErrors": "ENABLED",
+        "RefreshTokenValidity": 1,
+        "SupportedIdentityProviders": [
+          "COGNITO"
+        ],
+        "TokenValidityUnits": {
+          "AccessToken": "hours",
+          "IdToken": "hours",
+          "RefreshToken": "days"
+        },
+        "UserPoolId": {
+          "Ref": "DemoJudgeUserPool"
+        }
+      },
+      "Type": "AWS::Cognito::UserPoolClient"
+    },
+    "DemoJudgeUserPoolDomain": {
+      "Properties": {
+        "Domain": {
+          "Fn::Sub": "${ServiceName}-${AWS::AccountId}"
+        },
+        "ManagedLoginVersion": 1,
+        "UserPoolId": {
+          "Ref": "DemoJudgeUserPool"
+        }
+      },
+      "Type": "AWS::Cognito::UserPoolDomain"
     },
     "DemoLogGroup": {
       "Condition": "CreateApplication",
@@ -435,13 +643,16 @@
             {
               "Name": "AIOA_OIDC_ISSUER",
               "Value": {
-                "Ref": "OidcIssuer"
+                "Fn::GetAtt": [
+                  "DemoJudgeUserPool",
+                  "ProviderURL"
+                ]
               }
             },
             {
               "Name": "AIOA_OIDC_CLIENT_ID",
               "Value": {
-                "Ref": "OidcClientId"
+                "Ref": "DemoJudgeUserPoolClient"
               }
             },
             {
@@ -689,10 +900,36 @@
       }
     },
     "OidcCallbackUrl": {
-      "Condition": "CreateApplication",
       "Description": "Exact callback that must be registered with the OIDC provider",
       "Value": {
         "Fn::Sub": "https://${ServiceName}.ecs.${AWS::Region}.on.aws/memory/oidc/callback"
+      }
+    },
+    "OidcClientId": {
+      "Description": "Public Cognito app client identifier",
+      "Value": {
+        "Ref": "DemoJudgeUserPoolClient"
+      }
+    },
+    "OidcIssuer": {
+      "Description": "Exact Cognito OIDC issuer",
+      "Value": {
+        "Fn::GetAtt": [
+          "DemoJudgeUserPool",
+          "ProviderURL"
+        ]
+      }
+    },
+    "OidcLoginUrl": {
+      "Description": "Managed Cognito authorization endpoint for the public PKCE client",
+      "Value": {
+        "Fn::Sub": "https://${ServiceName}-${AWS::AccountId}.auth.${AWS::Region}.amazoncognito.com/oauth2/authorize"
+      }
+    },
+    "OidcUserPoolId": {
+      "Description": "Cognito user pool that owns the single demo judge identity",
+      "Value": {
+        "Ref": "DemoJudgeUserPool"
       }
     },
     "RuntimeSecretArn": {

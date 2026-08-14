@@ -235,9 +235,11 @@ class D4AwsDemoDeploymentTests(unittest.TestCase):
             "memory-patch-aioa-demo-1a-execution",
             "arn:aws:iam::787391403107:role/"
             "memory-patch-aioa-demo-1a-infrastructure",
+            "arn:aws:iam::787391403107:role/"
+            "memory-patch-aioa-demo-1a-oidc-claims",
         }
         statements = policy["Statement"]
-        self.assertEqual(len(statements), 3)
+        self.assertEqual(len(statements), 4)
         self.assertEqual(set(statements[0]["Resource"]), expected_roles)
         self.assertEqual(statements[1]["Action"], "iam:PassRole")
         self.assertEqual(
@@ -258,6 +260,16 @@ class D4AwsDemoDeploymentTests(unittest.TestCase):
         self.assertEqual(
             statements[2]["Condition"]["StringEquals"]["iam:PassedToService"],
             "ecs.amazonaws.com",
+        )
+        self.assertEqual(statements[3]["Action"], "iam:PassRole")
+        self.assertEqual(
+            statements[3]["Resource"],
+            "arn:aws:iam::787391403107:role/"
+            "memory-patch-aioa-demo-1a-oidc-claims",
+        )
+        self.assertEqual(
+            statements[3]["Condition"]["StringEquals"]["iam:PassedToService"],
+            "lambda.amazonaws.com",
         )
 
     def test_task_execution_trust_is_account_and_ecs_source_scoped(self) -> None:
@@ -287,6 +299,116 @@ class D4AwsDemoDeploymentTests(unittest.TestCase):
         self.assertEqual(
             outputs["OidcCallbackUrl"]["Value"]["Fn::Sub"],
             "https://${ServiceName}.ecs.${AWS::Region}.on.aws/memory/oidc/callback",
+        )
+
+    def test_cognito_is_lite_admin_only_public_pkce_code_flow(self) -> None:
+        template = _template()
+        resources = template["Resources"]
+        pool = resources["DemoJudgeUserPool"]
+        self.assertEqual(pool["Type"], "AWS::Cognito::UserPool")
+        self.assertEqual(pool["DeletionPolicy"], "Retain")
+        properties = pool["Properties"]
+        self.assertEqual(properties["UserPoolTier"], "LITE")
+        self.assertEqual(properties["DeletionProtection"], "ACTIVE")
+        self.assertEqual(
+            properties["AdminCreateUserConfig"], {"AllowAdminCreateUserOnly": True}
+        )
+        self.assertEqual(properties["MfaConfiguration"], "OFF")
+        self.assertNotIn(
+            "PasswordHistorySize", properties["Policies"]["PasswordPolicy"]
+        )
+        self.assertEqual(
+            properties["LambdaConfig"]["PreTokenGenerationConfig"][
+                "LambdaVersion"
+            ],
+            "V1_0",
+        )
+
+        client = resources["DemoJudgeUserPoolClient"]["Properties"]
+        self.assertFalse(client["GenerateSecret"])
+        self.assertTrue(client["AllowedOAuthFlowsUserPoolClient"])
+        self.assertEqual(client["AllowedOAuthFlows"], ["code"])
+        self.assertEqual(client["AllowedOAuthScopes"], ["openid", "profile"])
+        self.assertEqual(client["SupportedIdentityProviders"], ["COGNITO"])
+        self.assertEqual(
+            client["CallbackURLs"],
+            [
+                {
+                    "Fn::Sub": (
+                        "https://${ServiceName}.ecs.${AWS::Region}.on.aws/"
+                        "memory/oidc/callback"
+                    )
+                }
+            ],
+        )
+        self.assertEqual(
+            resources["DemoJudgeUserPoolDomain"]["Properties"][
+                "ManagedLoginVersion"
+            ],
+            1,
+        )
+
+    def test_oidc_claims_lambda_is_fixed_bounded_and_non_secret_bearing(self) -> None:
+        template = _template()
+        resources = template["Resources"]
+        function = resources["DemoOidcClaimsFunction"]["Properties"]
+        self.assertEqual(function["Runtime"], "python3.12")
+        self.assertEqual(function["Timeout"], 3)
+        self.assertEqual(function["MemorySize"], 128)
+        self.assertNotIn("ReservedConcurrentExecutions", function)
+        code = function["Code"]["ZipFile"]
+        self.assertIn('event.get("version") != "1"', code)
+        self.assertIn('"tenant_id": "memory-patch-aioa-demo-1a"', code)
+        self.assertIn('"owner_user_id": subject', code)
+        self.assertNotIn("OPENROUTER_API_KEY", code)
+        self.assertNotIn("DATABASE_URL", code)
+        self.assertNotIn('attributes["sub"] =', code)
+        namespace: dict[str, object] = {}
+        exec(code, namespace)
+        event = {
+            "version": "1",
+            "request": {
+                "userAttributes": {"sub": "immutable-cognito-sub"},
+                "groupConfiguration": {"groupsToOverride": ["judge"]},
+            },
+            "response": {},
+        }
+        result = namespace["handler"](event, None)
+        claims = result["response"]["claimsOverrideDetails"]
+        self.assertEqual(
+            claims["claimsToAddOrOverride"],
+            {
+                "tenant_id": "memory-patch-aioa-demo-1a",
+                "owner_user_id": "immutable-cognito-sub",
+            },
+        )
+        self.assertEqual(
+            result["request"]["userAttributes"]["sub"], "immutable-cognito-sub"
+        )
+
+        permission = resources["DemoOidcClaimsPermission"]["Properties"]
+        self.assertEqual(permission["Principal"], "cognito-idp.amazonaws.com")
+        self.assertEqual(permission["SourceAccount"], {"Ref": "AWS::AccountId"})
+        role = resources["DemoOidcClaimsRole"]["Properties"]
+        actions = role["Policies"][0]["PolicyDocument"]["Statement"][0]["Action"]
+        self.assertEqual(actions, ["logs:CreateLogStream", "logs:PutLogEvents"])
+
+    def test_runtime_uses_the_stack_owned_oidc_identity(self) -> None:
+        template = _template()
+        self.assertNotIn("OidcIssuer", template["Parameters"])
+        self.assertNotIn("OidcClientId", template["Parameters"])
+        environment = {
+            entry["Name"]: entry["Value"]
+            for entry in template["Resources"]["DemoService"]["Properties"][
+                "PrimaryContainer"
+            ]["Environment"]
+        }
+        self.assertEqual(
+            environment["AIOA_OIDC_ISSUER"],
+            {"Fn::GetAtt": ["DemoJudgeUserPool", "ProviderURL"]},
+        )
+        self.assertEqual(
+            environment["AIOA_OIDC_CLIENT_ID"], {"Ref": "DemoJudgeUserPoolClient"}
         )
 
     def test_template_contains_no_literal_credentials(self) -> None:

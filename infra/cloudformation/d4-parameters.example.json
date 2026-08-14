@@ -12,14 +12,6 @@
     "ParameterValue": ""
   },
   {
-    "ParameterKey": "OidcIssuer",
-    "ParameterValue": ""
-  },
-  {
-    "ParameterKey": "OidcClientId",
-    "ParameterValue": ""
-  },
-  {
     "ParameterKey": "ProviderBudgetEpoch",
     "ParameterValue": "d4-hosted-demo-1a"
   },
