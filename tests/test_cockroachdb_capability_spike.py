@@ -833,9 +833,9 @@ class RuntimeGuardTests(unittest.TestCase):
             with mock.patch.object(spike, "run_process", return_value=result):
                 with self.assertRaisesRegex(
                     spike.HarnessError,
-                    r"binary version mismatch: expected v26\.2\.4, found v26\.2\.3",
+                    r"binary version mismatch: expected v26\.2\.5, found v26\.2\.3",
                 ):
-                    spike.verify_binary_version(binary, "v26.2.4")
+                    spike.verify_binary_version(binary, "v26.2.5")
 
     def test_local_sql_client_scrubs_external_connection_overrides(self) -> None:
         inherited = {

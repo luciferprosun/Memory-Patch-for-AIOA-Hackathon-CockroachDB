@@ -64,7 +64,7 @@ class OfflineManifestTests(unittest.TestCase):
     def test_offline_validation_passes(self) -> None:
         result = migrations.offline_validate()
         self.assertEqual(result["status"], "PASS")
-        self.assertEqual(result["target_version"], "v26.2.4")
+        self.assertEqual(result["target_version"], "v26.2.5")
         self.assertEqual(result["migration_count"], 19)
         self.assertEqual(result["step4_table_count"], 29)
         self.assertEqual(result["schema_table_count"], 43)
@@ -256,7 +256,7 @@ class OfflineManifestTests(unittest.TestCase):
 
     def test_version_pin_is_exact(self) -> None:
         pin = migrations.load_version_pin()
-        self.assertEqual(pin["exact_version"], "v26.2.4")
+        self.assertEqual(pin["exact_version"], "v26.2.5")
         self.assertEqual(pin["runtime"]["cluster_version"], "26.2")
 
     def test_schema_manifest_matches_created_tables(self) -> None:

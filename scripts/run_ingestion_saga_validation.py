@@ -110,7 +110,7 @@ S3_BUCKET = "aioa-memory-patch-global-3f105fcd-eu-central-1"
 S3_PREFIX = "memory-patch/snapshots/v1"
 S3_RETENTION_DAYS = 7
 PINNED_BINARY_SHA256 = (
-    "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf"
+    "5ad89c804abb3bf5afa9c073faecb3710a1c4f34a870f08cdef889c1c91d314b"
 )
 FIXTURE_PATH = (
     REPOSITORY_ROOT / "tests" / "fixtures" / "step10_ingestion_saga_payload.json"

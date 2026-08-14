@@ -151,7 +151,7 @@ def validate(binary: Path) -> dict:
     if cleanup.get("cleanup_errors") or cleanup.get("force_kill_used") or not cleanup.get("temporary_store_removed"):
         raise RuntimeError("disposable CockroachDB cleanup failed")
     assert result is not None
-    result["cockroachdb_cleanup"]={"version":"v26.2.4","runtime_mode":"DISPOSABLE_LOCAL_SINGLE_NODE","graceful_drain":cleanup["drain_command_completed"],"force_kill":cleanup["force_kill_used"],"pid_exited":cleanup["pid_exited"],"ports_closed":cleanup["ports_closed"],"temporary_store_removed":cleanup["temporary_store_removed"],"persistent_database":False}
+    result["cockroachdb_cleanup"]={"version":"v26.2.5","runtime_mode":"DISPOSABLE_LOCAL_SINGLE_NODE","graceful_drain":cleanup["drain_command_completed"],"force_kill":cleanup["force_kill_used"],"pid_exited":cleanup["pid_exited"],"ports_closed":cleanup["ports_closed"],"temporary_store_removed":cleanup["temporary_store_removed"],"persistent_database":False}
     result["evidence_digest"] = canonical_sha256(result, exclude_fields=("evidence_digest",))
     return result
 

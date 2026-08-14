@@ -188,7 +188,7 @@
       "table": "persistence_operations"
     }
   ],
-  "target_cockroachdb_version": "v26.2.4",
+  "target_cockroachdb_version": "v26.2.5",
   "transition_edges": [
     "AWAITING_APPROVAL_TO_APPROVED",
     "APPROVED_TO_COMMITTED",

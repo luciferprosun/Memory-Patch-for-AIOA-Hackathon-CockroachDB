@@ -2970,8 +2970,8 @@ def _run_live_same_database(
         args.cockroach_binary
         if args.cockroach_binary is not None
         else config.data_root
-        / "cache/xdg/cockroachdb/v26.2.4/linux-amd64/server/"
-        "cockroach-v26.2.4.linux-amd64/cockroach"
+        / "cache/xdg/cockroachdb/v26.2.5/linux-amd64/server/"
+        "cockroach-v26.2.5.linux-amd64/cockroach"
     ).expanduser().resolve(strict=True)
     source_identity = migrations.verify_binary_identity(source_binary)
     if source_identity["binary_sha256"] != step19.EXPECTED_COCKROACH_SHA256:

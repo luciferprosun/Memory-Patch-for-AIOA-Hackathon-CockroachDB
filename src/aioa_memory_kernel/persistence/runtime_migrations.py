@@ -29,7 +29,7 @@ from aioa_memory_kernel.security.credentials import CredentialPurpose, SecretVal
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 CANONICAL_RUNNER_PATH = REPOSITORY_ROOT / "scripts" / "run_cockroachdb_migrations.py"
 CANONICAL_RUNNER_MODULE_NAME = "_aioa_memory_patch_canonical_migration_runner"
-PINNED_COCKROACHDB_VERSION = "v26.2.4"
+PINNED_COCKROACHDB_VERSION = "v26.2.5"
 CANONICAL_MIGRATION_COUNT = 19
 LATEST_MIGRATION_ID = "0019_post_roadmap_demo_runtime_state"
 MAX_MIGRATION_SESSION_SECONDS = 45 * 60

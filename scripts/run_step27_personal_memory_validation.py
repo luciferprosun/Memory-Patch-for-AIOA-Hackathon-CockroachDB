@@ -80,12 +80,12 @@ from aioa_memory_kernel.storage import (  # noqa: E402
 
 START_SHA = "31b23f662be329a1e70440e50a50f41d2550b89c"
 EXPECTED_COCKROACH_SHA256 = (
-    "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf"
+    "5ad89c804abb3bf5afa9c073faecb3710a1c4f34a870f08cdef889c1c91d314b"
 )
 DEFAULT_EXTERNAL_ENV = ROOT / ".local/external-data.env"
 COCKROACH_RELATIVE = Path(
-    "cache/xdg/cockroachdb/v26.2.4/linux-amd64/server/"
-    "cockroach-v26.2.4.linux-amd64/cockroach"
+    "cache/xdg/cockroachdb/v26.2.5/linux-amd64/server/"
+    "cockroach-v26.2.5.linux-amd64/cockroach"
 )
 FIXTURE_TIME = datetime(2042, 1, 2, 3, 4, 5, tzinfo=UTC)
 TENANT_A = "tenant-step27-a"

@@ -48,5 +48,5 @@
     "users"
   ],
   "schema_version": 1,
-  "target_cockroachdb_version": "v26.2.4"
+  "target_cockroachdb_version": "v26.2.5"
 }

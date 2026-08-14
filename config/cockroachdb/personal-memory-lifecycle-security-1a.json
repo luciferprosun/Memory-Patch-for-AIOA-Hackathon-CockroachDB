@@ -121,7 +121,7 @@
       "update_policy": "memory_items_s32_terminal_update"
     }
   ],
-  "target_cockroachdb_version": "v26.2.4",
+  "target_cockroachdb_version": "v26.2.5",
   "terminal_states": [
     "SUPERSEDED",
     "REVOKED",

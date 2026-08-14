@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-07-27
+- Amended: 2026-08-14
 
 ## Context
 
@@ -18,33 +19,33 @@ distributed, production-load, or managed-service behavior.
 
 ## Decision
 
-Pin the regular GA CockroachDB `v26.2.4` release for Step 4 and later Memory
-Patch database work. The machine-readable source of truth is
+Pin the regular GA CockroachDB `v26.2.5` release for the current Memory Patch
+database runtime. The machine-readable source of truth is
 [`config/cockroachdb/version-pin.json`](../../config/cockroachdb/version-pin.json).
 The pin includes:
 
-- exact version `v26.2.4`, target series `v26.2`, and server build tag
-  `v26.2.4`;
+- exact version `v26.2.5`, target series `v26.2`, and server build tag
+  `v26.2.5`;
 - Linux `amd64` official archive source;
 - vendor-verified archive SHA-256
-  `3c7de055c07f9101eb0f71b3f5e6b489b0fcf449d3d5a55bfe61eff4f935ce8f`;
+  `067bd264ff1d39483049f5c75b26f704a10038d8d11fca53b5b8a48894c92d5d`;
 - extracted binary SHA-256
-  `a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf`;
+  `5ad89c804abb3bf5afa9c073faecb3710a1c4f34a870f08cdef889c1c91d314b`;
 - live server identity, finalized cluster version `26.2`, and the official
   evidence used for selection.
 
-At verification time, `v26.2.4` was the newest supported production patch in
-the v26.2 series with a public, reproducible self-hosted Linux artifact and a
-separately published vendor checksum. The numerically newer `v26.2.5` was not
-selected because availability was limited to selected CockroachDB Cloud
-clusters and support-coordinated self-hosted access; a public reproducible
-binary and checksum were not available.
+The original Step 3 evidence remains an immutable `v26.2.4` historical proof.
+On 2026-08-14 the approved free CockroachDB Cloud Basic demo cluster reported
+exact server version `v26.2.5`; the matching public Linux archive and vendor
+checksum were then available and independently verified. The extracted binary
+was used for the required targeted local migration and security regression
+before provisioning the managed demo database.
 
 The official selection evidence is the
 [v26.2 release record](https://www.cockroachlabs.com/docs/releases/v26.2),
 [release support policy](https://www.cockroachlabs.com/docs/releases/release-support-policy),
 [security advisories](https://www.cockroachlabs.com/docs/advisories), and the
-[v26.2.4 vendor checksum](https://binaries.cockroachdb.com/cockroach-v26.2.4.linux-amd64.tgz.sha256sum).
+[v26.2.5 vendor checksum](https://binaries.cockroachdb.com/cockroach-v26.2.5.linux-amd64.tgz.sha256sum).
 
 ## Capability Decisions
 
@@ -137,7 +138,7 @@ documentation or syntax acceptance alone cannot authorize a pin change.
 
 Step 4 must:
 
-- fail closed when the client/server runtime is not exactly `v26.2.4`;
+- fail closed when the client/server runtime is not exactly `v26.2.5`;
 - design tenant ownership around RLS plus `FORCE ROW LEVEL SECURITY` where
   owner bypass is unacceptable, while keeping application roles non-admin;
 - treat vector prefix columns as performance and query-scope dimensions only;

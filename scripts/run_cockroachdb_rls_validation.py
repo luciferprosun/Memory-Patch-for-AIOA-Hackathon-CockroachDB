@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Memory Patch Step 5 tenant/user isolation on CockroachDB v26.2.4.
+"""Validate Memory Patch Step 5 tenant/user isolation on CockroachDB v26.2.5.
 
 Offline validation is deterministic and opens no socket. Live validation needs
 an explicit opt-in, the exact pinned full-server binary, one loopback-only
@@ -34,7 +34,7 @@ from aioa_memory_kernel.security.credentials import (  # noqa: E402
 
 
 REPOSITORY_ROOT = SCRIPT_ROOT.parent
-PINNED_VERSION = "v26.2.4"
+PINNED_VERSION = "v26.2.5"
 PINNED_CLUSTER_VERSION = "26.2"
 RUN_PREFIX = "mp_step5_"
 FIXED_ROLES = (
@@ -2506,7 +2506,7 @@ def binary_identity(binary: Path) -> dict[str, str]:
         raise RlsValidationError("CockroachDB version command failed")
     commit = re.search(r"^Build Commit ID:\s+([0-9a-f]{40})$", result.stdout, re.M)
     platform = re.search(r"^Platform:\s+(.+)$", result.stdout, re.M)
-    if commit is None or commit.group(1) != "80586181eb50e380e2cc982f61841eaf38af9982":
+    if commit is None or commit.group(1) != "c8455423826d0c4ba75a9ae78eb2dbd7e11648bb":
         raise RlsValidationError("CockroachDB build commit differs from pin")
     if platform is None or "linux" not in platform.group(1).lower():
         raise RlsValidationError("CockroachDB platform is not Linux")
@@ -2551,7 +2551,7 @@ def run_live_validation(binary: Path, json_output: Path) -> dict[str, Any]:
             root.execute("defaultdb", "SELECT version()")
         )
         if PINNED_VERSION not in server_version:
-            raise RlsValidationError("live server version differs from v26.2.4")
+            raise RlsValidationError("live server version differs from v26.2.5")
         cluster_version = migrations.one_value(
             root.execute("defaultdb", "SHOW CLUSTER SETTING version")
         )

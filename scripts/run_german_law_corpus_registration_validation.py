@@ -75,7 +75,7 @@ from aioa_memory_kernel.storage import (  # noqa: E402
 DEFAULT_CONFIG = ROOT / ".local/external-data.env"
 EXPECTED_BRANCH = "main"
 EXPECTED_BINARY_SHA256 = (
-    "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf"
+    "5ad89c804abb3bf5afa9c073faecb3710a1c4f34a870f08cdef889c1c91d314b"
 )
 EVIDENCE_SCHEMA_VERSION = "1.0.0"
 BATCH_SIZE = 24

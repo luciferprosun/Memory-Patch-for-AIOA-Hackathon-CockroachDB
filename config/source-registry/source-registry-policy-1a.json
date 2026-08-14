@@ -187,7 +187,7 @@
       "user_owner_resolution": "Registry source_id and hat_scope_id resolve through the existing forced-RLS HAT scope."
     }
   ],
-  "target_cockroachdb_version": "v26.2.4",
+  "target_cockroachdb_version": "v26.2.5",
   "transitions": {
     "ELIGIBLE": [
       "PUBLISHED",

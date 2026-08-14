@@ -400,7 +400,7 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
 
     binary = args.cockroach_binary
     if binary is None:
-        binary = config.data_root / "cache/xdg/cockroachdb/v26.2.4/linux-amd64/server/cockroach-v26.2.4.linux-amd64/cockroach"
+        binary = config.data_root / "cache/xdg/cockroachdb/v26.2.5/linux-amd64/server/cockroach-v26.2.5.linux-amd64/cockroach"
     source_binary = binary.resolve(strict=True)
     binary_identity = migrations.verify_binary_identity(source_binary)
     if binary_identity["binary_sha256"] != step19.EXPECTED_COCKROACH_SHA256:

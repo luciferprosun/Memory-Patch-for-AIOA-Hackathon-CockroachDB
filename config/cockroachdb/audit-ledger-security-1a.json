@@ -27,7 +27,7 @@
   "normal_runtime_role": "mp_app_runtime",
   "schema_version": 1,
   "secret_storage": false,
-  "target_cockroachdb_version": "v26.2.4",
+  "target_cockroachdb_version": "v26.2.5",
   "triggers": [
     {
       "function": "guard_step33_audit_append_only",

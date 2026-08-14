@@ -3,7 +3,7 @@
 
 Ordinary repository tests import this module without opening a socket or
 starting a process. Live actions require ``--allow-live`` and an exact pinned
-CockroachDB v26.2.4 binary.
+CockroachDB v26.2.5 binary.
 """
 
 from __future__ import annotations
@@ -117,7 +117,7 @@ VERSION_PIN_PATH = (
     REPOSITORY_ROOT / "config" / "cockroachdb" / "version-pin.json"
 )
 RUNNER_VERSION = "17.0.0"
-PINNED_VERSION = "v26.2.4"
+PINNED_VERSION = "v26.2.5"
 PINNED_CLUSTER_VERSION = "26.2"
 DEFAULT_TIMEOUT_SECONDS = 60.0
 MAX_SQL_COMMAND_TIMEOUT_SECONDS = 300.0
@@ -1227,7 +1227,7 @@ def load_json(path: Path) -> dict[str, Any]:
 def load_version_pin() -> dict[str, Any]:
     pin = load_json(VERSION_PIN_PATH)
     if pin.get("exact_version") != PINNED_VERSION:
-        raise MigrationError("Step 4 requires the immutable v26.2.4 version pin")
+        raise MigrationError("Step 4 requires the immutable v26.2.5 version pin")
     if pin.get("target_series") != "v26.2":
         raise MigrationError("version pin target series is not v26.2")
     runtime = pin.get("runtime")
@@ -8409,7 +8409,7 @@ def run_live_validation(
         client = runtime.start()
         server_version = one_value(client.execute("defaultdb", "SELECT version()"))
         if PINNED_VERSION not in server_version:
-            raise MigrationError("live server version differs from pinned v26.2.4")
+            raise MigrationError("live server version differs from pinned v26.2.5")
         cluster_version = one_value(
             client.execute("defaultdb", "SHOW CLUSTER SETTING version")
         )

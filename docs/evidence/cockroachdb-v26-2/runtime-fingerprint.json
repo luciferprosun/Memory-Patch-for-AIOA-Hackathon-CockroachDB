@@ -1,53 +1,53 @@
 {
   "artifact": {
     "architecture": "amd64",
-    "archive_sha256": "3c7de055c07f9101eb0f71b3f5e6b489b0fcf449d3d5a55bfe61eff4f935ce8f",
-    "binary_sha256": "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf",
+    "archive_sha256": "067bd264ff1d39483049f5c75b26f704a10038d8d11fca53b5b8a48894c92d5d",
+    "binary_sha256": "5ad89c804abb3bf5afa9c073faecb3710a1c4f34a870f08cdef889c1c91d314b",
     "platform": "linux",
-    "source": "https://binaries.cockroachdb.com/cockroach-v26.2.4.linux-amd64.tgz",
+    "source": "https://binaries.cockroachdb.com/cockroach-v26.2.5.linux-amd64.tgz",
     "vendor_checksum_verified": true
   },
-  "capability_matrix_sha256": "b50f52d5985e9eccf44f9c63fb3edf9b2ee002907e20cf646262bdf9b6c485cf",
+  "capability_matrix_sha256": "6804f1d10de4fc2477871cb89bb1e8eb5f9117c1ce75302277e8b7d4212be762",
   "capability_probe_context": {
     "created_resources": {
-      "database": "mp_step3_20260727t041950z_075525_f42fd6ea",
+      "database": "mp_step3_20260814t081651z_133565_fadca0b9",
       "objects": [
-        "mp_step3_20260727t041950z_075525_f42fd6ea_aost_items",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_changefeed_items",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_full_text_de_idx",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_full_text_documents",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_full_text_en_idx",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_one_current_key_idx",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_partial_unique_items",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_retry_counter",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_rls_items",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_tenant_policy",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_ttl_items",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_vector_index_items",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_vector_items",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_vector_l2_idx"
+        "mp_step3_20260814t081651z_133565_fadca0b9_aost_items",
+        "mp_step3_20260814t081651z_133565_fadca0b9_changefeed_items",
+        "mp_step3_20260814t081651z_133565_fadca0b9_full_text_de_idx",
+        "mp_step3_20260814t081651z_133565_fadca0b9_full_text_documents",
+        "mp_step3_20260814t081651z_133565_fadca0b9_full_text_en_idx",
+        "mp_step3_20260814t081651z_133565_fadca0b9_one_current_key_idx",
+        "mp_step3_20260814t081651z_133565_fadca0b9_partial_unique_items",
+        "mp_step3_20260814t081651z_133565_fadca0b9_retry_counter",
+        "mp_step3_20260814t081651z_133565_fadca0b9_rls_items",
+        "mp_step3_20260814t081651z_133565_fadca0b9_tenant_policy",
+        "mp_step3_20260814t081651z_133565_fadca0b9_ttl_items",
+        "mp_step3_20260814t081651z_133565_fadca0b9_vector_index_items",
+        "mp_step3_20260814t081651z_133565_fadca0b9_vector_items",
+        "mp_step3_20260814t081651z_133565_fadca0b9_vector_l2_idx"
       ],
       "roles": [
-        "mp_step3_20260727t041950z_075525_f42fd6ea_app",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_owner",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_tenant_a",
-        "mp_step3_20260727t041950z_075525_f42fd6ea_tenant_b"
+        "mp_step3_20260814t081651z_133565_fadca0b9_app",
+        "mp_step3_20260814t081651z_133565_fadca0b9_owner",
+        "mp_step3_20260814t081651z_133565_fadca0b9_tenant_a",
+        "mp_step3_20260814t081651z_133565_fadca0b9_tenant_b"
       ],
-      "ttl_schedule_id": 1196214674220941313
+      "ttl_schedule_id": 1201357341943988225
     },
     "database_prefix": "mp_step3_",
-    "harness_source_sha256": "f755c33eb22cdfb2a81ccd6e0a88e1ec9dd835a7d05545b626a5ecbb052be597",
+    "harness_source_sha256": "fe745880489878fac8cb9034b896c2a16f2cf1876a1a13b11bb353c6f46254e5",
     "rendered_reference_sql_asset_sha256": {
-      "00_runtime_identity.sql": "c2e4d298db55eb89f8cbac7480506a3b29f03746cf3366d25925282798f53407",
-      "10_vector.sql": "d507211e7197be66aed6983ce823ea758af9171feb6f44d3174be0850a35cf40",
-      "20_full_text.sql": "938a7a6f67ee127b6498e95fbbe178a394f25c6c7d1b1202167c81f2658a7037",
-      "30_rls.sql": "b820c82103b35dfaa66de303b69c4f38f26671d89fd19af9a2238b1c199960d2",
-      "40_ttl.sql": "04a05681d80cfeb660b5e8e9ae66008e97eaac6f5722f96772898e037a493105",
-      "50_changefeed.sql": "976fec3c54eabbc0970441a58d6f58ad56b8b652f12ccc5dbd957e70fa5a248b",
-      "60_partial_unique.sql": "f0bf28ee026f9af457e21415cff0d69ed17aa0d0a30e75d03468a4917accaee0",
-      "70_as_of_system_time.sql": "34f5072aff4d3b1f28a9c5915c856854b7ffff96fcfdc5be099a2457f71b2bd1",
-      "80_serializable_retry.sql": "a2cd035b28e14d4816023962af02dc1d2dc5e72ff4c349d0a4264d9372f8bfdd",
-      "90_cleanup.sql": "922bff82c8f8a884bcc5feeaedfeb5f02bf83091caaee4c25949380156486bbb"
+      "00_runtime_identity.sql": "18b1821a1304a2c558b6a136e5ac50b660b4d8c51842b6b5edbce42dddce8f9b",
+      "10_vector.sql": "485a4fe39b929ee719d3cea1ca8d55c52f80a3d5260a85cb583a2920324a74e6",
+      "20_full_text.sql": "151a40a9d20756cba92de37ef62395be9d688deea76f6335e132a685c3dee82c",
+      "30_rls.sql": "5752626d7d302863946f08f4992bdb5d3e27dff09c56fcb75cd041f37984c15e",
+      "40_ttl.sql": "662d6127368bc35e5a847d2a061a24037bdf1b5e2d87049b84511fd33d1df0d8",
+      "50_changefeed.sql": "2ab923f3b2847ac11278e71182798457a8a6cd8e99eff35892cfd5904b749d70",
+      "60_partial_unique.sql": "572bbfd39685b1cf3c3e4258c3138e236985b07a0c7470bbe52155edc920a31f",
+      "70_as_of_system_time.sql": "83a666deea18f738aa3619566c0d02b20d6c95a910ff87227cfa630b588db35f",
+      "80_serializable_retry.sql": "7d9a4dec9bef2f9d498eebe23d2be26d102138cdaf6371c974cd437712e54726",
+      "90_cleanup.sql": "d17163813020e190990cda8128ed01d26811e059f2a1f9def09ebddedf200e03"
     },
     "role_prefix": "mp_step3_",
     "synthetic_data_only": true
@@ -57,95 +57,95 @@
       "events_decoded": 5,
       "forced_kill_used": false,
       "initial_scan_observed": true,
-      "pid": 76336,
+      "pid": 1134529,
       "process_exited": true,
       "resolved_observed": true,
-      "sanitized_output_sha256": "4571f4f426f9c4690faf1af3dd87cee365e713b0cc230d35919627df9a543833"
+      "sanitized_output_sha256": "88dfb7cdc1d3827a87f500638e8bdb1aca89925e3345d1aee71f57427bd000df"
     },
     "child_cleanup_errors": [],
     "child_processes": [
       {
-        "pid": 76336,
+        "pid": 1134529,
         "returncode": -15
       },
       {
-        "pid": 76972,
+        "pid": 1135407,
         "returncode": 0
       },
       {
-        "pid": 76973,
+        "pid": 1135408,
         "returncode": 0
       },
       {
-        "pid": 77020,
+        "pid": 1135474,
         "returncode": 0
       },
       {
-        "pid": 77021,
+        "pid": 1135475,
         "returncode": 0
       },
       {
-        "pid": 77068,
+        "pid": 1135518,
         "returncode": 0
       },
       {
-        "pid": 77069,
+        "pid": 1135519,
         "returncode": 0
       },
       {
-        "pid": 77115,
+        "pid": 1135566,
         "returncode": 0
       },
       {
-        "pid": 77116,
+        "pid": 1135567,
         "returncode": 0
       },
       {
-        "pid": 77165,
+        "pid": 1135614,
         "returncode": 0
       },
       {
-        "pid": 77166,
+        "pid": 1135615,
         "returncode": 0
       },
       {
-        "pid": 77210,
+        "pid": 1135659,
         "returncode": 0
       },
       {
-        "pid": 77212,
+        "pid": 1135660,
         "returncode": 0
       },
       {
-        "pid": 77257,
+        "pid": 1135715,
         "returncode": 0
       },
       {
-        "pid": 77258,
+        "pid": 1135716,
         "returncode": 0
       },
       {
-        "pid": 77304,
+        "pid": 1135785,
         "returncode": 0
       },
       {
-        "pid": 77305,
+        "pid": 1135786,
         "returncode": 0
       },
       {
-        "pid": 77369,
+        "pid": 1135852,
         "returncode": 0
       },
       {
-        "pid": 77370,
+        "pid": 1135853,
         "returncode": 0
       },
       {
-        "pid": 77421,
+        "pid": 1135902,
         "returncode": 0
       },
       {
-        "pid": 77423,
+        "pid": 1135904,
         "returncode": 0
       }
     ],
@@ -154,18 +154,18 @@
     "errors": [],
     "force_kill_used": false,
     "owned_children_exited": true,
-    "pid": 75585,
+    "pid": 1133606,
     "pid_exited": true,
     "ports": {
-      "http": 34693,
-      "rpc": 51803,
-      "sql": 35293
+      "http": 44637,
+      "rpc": 34121,
+      "sql": 39039
     },
     "ports_closed": true,
     "remaining_changefeed": false,
     "remaining_ttl_job": false,
     "roles_absent": true,
-    "runtime_duration_seconds": 419.911,
+    "runtime_duration_seconds": 436.481,
     "settings_match": true,
     "settings_original": {
       "feature.vector_index.enabled": "t",
@@ -176,7 +176,7 @@
       "kv.rangefeed.enabled": "f"
     },
     "sql_resources_removed": true,
-    "temporary_path": "/tmp/mp_step3_20260727t041950z_075525_f42fd6ea_1qd90q22",
+    "temporary_path": "/tmp/mp_step3_20260814t081651z_133565_fadca0b9_yc651zsx",
     "temporary_path_removed": true,
     "ttl_schedule_absent": true
   },
@@ -204,14 +204,14 @@
     ],
     "temporary_store_type": "BOUNDED_IN_MEMORY"
   },
-  "generated_at_utc": "2026-07-27T04:26:52Z",
+  "generated_at_utc": "2026-08-14T08:24:09Z",
   "harness_version": "1.0.3",
   "runtime": {
-    "binary_build_output": "Build Tag:        v26.2.4\nBuild Time:       2026/07/14 16:50:57\nDistribution:     CCL\nPlatform:         linux amd64 (x86_64-pc-linux-gnu)\nGo Version:       go1.25.5\nBuild Commit ID:  80586181eb50e380e2cc982f61841eaf38af9982\nBuild Type:       release",
-    "client_build_tag": "v26.2.4",
+    "binary_build_output": "Build Tag:        v26.2.5\nBuild Time:       2026/07/28 18:56:00\nDistribution:     CCL\nPlatform:         linux amd64 (x86_64-pc-linux-gnu)\nGo Version:       go1.25.5\nBuild Commit ID:  c8455423826d0c4ba75a9ae78eb2dbd7e11648bb\nBuild Type:       release",
+    "client_build_tag": "v26.2.5",
     "cluster_version": "26.2",
     "run_namespace_pattern": "mp_step3_<utc>_<pid>_<uuid8>",
-    "server_version": "CockroachDB CCL v26.2.4 (x86_64-pc-linux-gnu, built 2026/07/14 16:50:57, go1.25.5)",
+    "server_version": "CockroachDB CCL v26.2.5 (x86_64-pc-linux-gnu, built 2026/07/28 18:56:00, go1.25.5)",
     "ttl_schedule_registered": true,
     "upgrade_finalized": true
   },

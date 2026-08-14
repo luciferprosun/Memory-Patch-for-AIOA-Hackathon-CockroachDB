@@ -47,5 +47,5 @@
       "update_policy": null
     }
   ],
-  "target_cockroachdb_version": "v26.2.4"
+  "target_cockroachdb_version": "v26.2.5"
 }

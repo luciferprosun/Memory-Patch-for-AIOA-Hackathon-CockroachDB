@@ -82,8 +82,8 @@ from aioa_memory_kernel.sources import (  # noqa: E402
 
 
 BASELINE_SHA = "e1895e533c5f97bd06ffa2348cbdc1ee6419e42f"
-EXPECTED_COCKROACH_SHA256 = "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf"
-DEFAULT_COCKROACH = Path("/media/l/LSC_DATA2/AIOA_DATA/Memory-Patch-for-AIOA/cache/xdg/cockroachdb/v26.2.4/linux-amd64/server/cockroach-v26.2.4.linux-amd64/cockroach")
+EXPECTED_COCKROACH_SHA256 = "5ad89c804abb3bf5afa9c073faecb3710a1c4f34a870f08cdef889c1c91d314b"
+DEFAULT_COCKROACH = Path("/media/l/LSC_DATA2/AIOA_DATA/Memory-Patch-for-AIOA/cache/xdg/cockroachdb/v26.2.5/linux-amd64/server/cockroach-v26.2.5.linux-amd64/cockroach")
 DEFAULT_STEP14 = Path("/media/l/LSC_DATA2/AIOA_DATA/Memory-Patch-for-AIOA/corpora/manifests/step14/step14-d4acb41c668fe1859cec9f6d1709474f")
 DEFAULT_STEP15 = Path("/media/l/LSC_DATA2/AIOA_DATA/Memory-Patch-for-AIOA/corpora/manifests/step15/step15-a2bf509e317ee6fa2ad5834396630e43")
 DEFAULT_STEP16 = Path("/media/l/LSC_DATA2/AIOA_DATA/Memory-Patch-for-AIOA/corpora/manifests/step16/step16-0f4d32b53427e229070f58f8511af709")

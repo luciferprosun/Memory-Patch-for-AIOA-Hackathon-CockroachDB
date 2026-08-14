@@ -85,7 +85,7 @@
       "user_owner_column": null
     }
   ],
-  "target_cockroachdb_version": "v26.2.4",
+  "target_cockroachdb_version": "v26.2.5",
   "transition_edges": [
     "DETECTED_TO_PROPOSED",
     "PROPOSED_TO_EVIDENCE_BOUND",

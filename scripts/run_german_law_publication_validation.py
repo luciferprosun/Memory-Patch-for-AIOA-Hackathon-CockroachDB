@@ -99,7 +99,7 @@ from aioa_memory_kernel.storage import (  # noqa: E402
 DEFAULT_CONFIG = ROOT / ".local" / "external-data.env"
 EXPECTED_BRANCH = "main"
 EXPECTED_REMOTE = "https://github.com/luciferprosun/Memory-Patch-for-AIOA-Hackathon-CockroachDB"
-EXPECTED_COCKROACH_SHA256 = "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf"
+EXPECTED_COCKROACH_SHA256 = "5ad89c804abb3bf5afa9c073faecb3710a1c4f34a870f08cdef889c1c91d314b"
 AWS_PROFILE = "aoia-admin"
 AWS_REGION = "eu-central-1"
 S3_BUCKET = "aioa-memory-patch-global-3f105fcd-eu-central-1"

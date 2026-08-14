@@ -1,64 +1,64 @@
 {
   "artifact": {
     "architecture": "amd64",
-    "binary_sha256": "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf",
+    "binary_sha256": "5ad89c804abb3bf5afa9c073faecb3710a1c4f34a870f08cdef889c1c91d314b",
     "immutable_container_digest": null,
     "kind": "binary",
-    "local_sha256": "3c7de055c07f9101eb0f71b3f5e6b489b0fcf449d3d5a55bfe61eff4f935ce8f",
+    "local_sha256": "067bd264ff1d39483049f5c75b26f704a10038d8d11fca53b5b8a48894c92d5d",
     "platform": "linux",
-    "source": "https://binaries.cockroachdb.com/cockroach-v26.2.4.linux-amd64.tgz",
+    "source": "https://binaries.cockroachdb.com/cockroach-v26.2.5.linux-amd64.tgz",
     "vendor_checksum_available": true,
-    "vendor_checksum_source": "https://binaries.cockroachdb.com/cockroach-v26.2.4.linux-amd64.tgz.sha256sum",
+    "vendor_checksum_source": "https://binaries.cockroachdb.com/cockroach-v26.2.5.linux-amd64.tgz.sha256sum",
     "vendor_checksum_verified": true
   },
-  "exact_version": "v26.2.4",
+  "exact_version": "v26.2.5",
   "official_sources": [
     {
       "category": "artifact_checksum",
-      "location": "https://binaries.cockroachdb.com/cockroach-v26.2.4.linux-amd64.tgz.sha256sum",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
-      "title": "CockroachDB v26.2.4 Linux amd64 SHA-256"
+      "location": "https://binaries.cockroachdb.com/cockroach-v26.2.5.linux-amd64.tgz.sha256sum",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
+      "title": "CockroachDB v26.2.5 Linux amd64 SHA-256"
     },
     {
       "category": "release_overview",
       "location": "https://www.cockroachlabs.com/docs/releases",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "CockroachDB Releases Overview"
     },
     {
       "category": "selected_patch_release_notes",
       "location": "https://www.cockroachlabs.com/docs/releases/v26.2",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "What's New in v26.2"
     },
     {
       "category": "security_advisories",
       "location": "https://www.cockroachlabs.com/docs/advisories",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "CockroachDB Security Advisories"
     },
     {
       "category": "support_policy",
       "location": "https://www.cockroachlabs.com/docs/releases/release-support-policy",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "Release Support Policy"
     }
   ],
   "product": "CockroachDB",
-  "rationale": "v26.2.4 is the newest supported v26.2 production patch with a public self-hosted Linux amd64 binary and independently published vendor checksum. v26.2.5 is numerically newer but, at verification time, is limited to select CockroachDB Cloud clusters and has no public self-hosted artifact.",
+  "rationale": "v26.2.5 is the exact patch reported by the approved managed CockroachDB demo cluster and has a public self-hosted Linux amd64 binary with an independently published vendor checksum. The official archive and extracted binary identities were verified before the pin changed.",
   "release_channel": "REGULAR",
-  "release_date": "2026-07-16",
+  "release_date": "2026-07-24",
   "release_status": "GA_PUBLIC_SELF_HOSTED",
   "runtime": {
     "cluster_version": "26.2",
     "deployment_mode": "DISPOSABLE_LOCAL_SINGLE_NODE",
-    "server_build_tag": "v26.2.4",
-    "server_version_output": "CockroachDB CCL v26.2.4 (x86_64-pc-linux-gnu, built 2026/07/14 16:50:57, go1.25.5)",
+    "server_build_tag": "v26.2.5",
+    "server_version_output": "CockroachDB CCL v26.2.5 (x86_64-pc-linux-gnu, built 2026/07/28 18:56:00, go1.25.5)",
     "upgrade_finalized": true
   },
   "schema_version": 1,
   "selection_decision": "PINNED_FOR_MEMORY_PATCH_STEP_4_PLUS",
   "support_status": "MAINTENANCE_SUPPORT",
   "target_series": "v26.2",
-  "verified_at_utc": "2026-07-26T09:49:06Z"
+  "verified_at_utc": "2026-08-14T08:09:52Z"
 }

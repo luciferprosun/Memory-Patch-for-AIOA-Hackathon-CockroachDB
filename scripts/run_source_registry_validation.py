@@ -67,7 +67,7 @@ from aioa_memory_kernel.sources import (  # noqa: E402
 )
 
 
-PINNED_VERSION = "v26.2.4"
+PINNED_VERSION = "v26.2.5"
 PINNED_CLUSTER_VERSION = "26.2"
 RUN_PREFIX = "mp_step9_"
 ROLE_PATTERN = re.compile(r"^[a-z][a-z0-9_]{2,62}$")

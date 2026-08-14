@@ -180,7 +180,7 @@ SOURCE_URLS = {
     "security_advisories": "https://www.cockroachlabs.com/docs/advisories",
     "artifact_checksum": (
         "https://binaries.cockroachdb.com/"
-        "cockroach-v26.2.4.linux-amd64.tgz.sha256sum"
+        "cockroach-v26.2.5.linux-amd64.tgz.sha256sum"
     ),
 }
 
@@ -1538,7 +1538,7 @@ def source_records(retrieved_at: str) -> list[dict[str, Any]]:
         ),
         "release": ("What's New in v26.2", ["CRDB-001", "CRDB-002"]),
         "release_patch": (
-            "CockroachDB v26.2.4 Release Notes",
+            "CockroachDB v26.2.5 Release Notes",
             ["CRDB-001", "CRDB-002"],
         ),
         "support": ("Release Support Policy", ["CRDB-001"]),
@@ -1609,7 +1609,7 @@ def source_records(retrieved_at: str) -> list[dict[str, Any]]:
             ["CRDB-001"],
         ),
         "artifact_checksum": (
-            "CockroachDB v26.2.4 Linux amd64 SHA-256",
+            "CockroachDB v26.2.5 Linux amd64 SHA-256",
             ["CRDB-001"],
         ),
     }

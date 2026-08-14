@@ -84,7 +84,7 @@ from aioa_memory_kernel.storage import (  # noqa: E402
 
 
 BASELINE_SHA = "71b85b42a25921f38e3d36b44f51a3be7ff1c710"
-EXPECTED_COCKROACH_SHA256 = "a5392f4de2c7a2bd838a52b0dcde0d61dcecf2fb060a88b0771367309b5cbdcf"
+EXPECTED_COCKROACH_SHA256 = "5ad89c804abb3bf5afa9c073faecb3710a1c4f34a870f08cdef889c1c91d314b"
 RUNTIME_RELATIVE = Path("cache/transformers/step19-embedding-venv-1a")
 MODEL_RELATIVE = Path(
     "cache/transformers/"
@@ -651,7 +651,7 @@ def validate(args: argparse.Namespace) -> Mapping[str, Any]:
 
     binary = args.cockroach_binary
     if binary is None:
-        binary = config.data_root / "cache/xdg/cockroachdb/v26.2.4/linux-amd64/server/cockroach-v26.2.4.linux-amd64/cockroach"
+        binary = config.data_root / "cache/xdg/cockroachdb/v26.2.5/linux-amd64/server/cockroach-v26.2.5.linux-amd64/cockroach"
     source_binary = binary.resolve(strict=True)
     binary_identity = migrations.verify_binary_identity(source_binary)
     if binary_identity["binary_sha256"] != EXPECTED_COCKROACH_SHA256:

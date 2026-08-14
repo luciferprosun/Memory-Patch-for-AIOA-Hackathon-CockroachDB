@@ -4,7 +4,7 @@
       "availability": "AVAILABLE",
       "capability_id": "CRDB-001",
       "cleanup_verified": true,
-      "decision_reason": "binary build tag and SELECT version() both report v26.2.4.",
+      "decision_reason": "binary build tag and SELECT version() both report v26.2.5.",
       "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
       "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/0",
       "expected_error": null,
@@ -13,10 +13,10 @@
       "maturity": "NOT_APPLICABLE",
       "mvp_decision": "USE",
       "name": "Exact v26.2.x client/server identity",
-      "observed_semantics": "binary build tag and SELECT version() both report v26.2.4.",
+      "observed_semantics": "binary build tag and SELECT version() both report v26.2.5.",
       "observed_sqlstate": null,
       "official_source_references": [
-        "https://binaries.cockroachdb.com/cockroach-v26.2.4.linux-amd64.tgz.sha256sum",
+        "https://binaries.cockroachdb.com/cockroach-v26.2.5.linux-amd64.tgz.sha256sum",
         "https://www.cockroachlabs.com/docs/releases/v26.2",
         "https://www.cockroachlabs.com/docs/releases",
         "https://www.cockroachlabs.com/docs/releases/v26.2#v26-2-4",
@@ -27,7 +27,7 @@
       "probe_id": "crdb_001",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -53,7 +53,7 @@
       "probe_id": "crdb_002",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -78,14 +78,14 @@
       "probe_id": "crdb_003",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
       "availability": "AVAILABLE",
       "capability_id": "CRDB-004",
       "cleanup_verified": true,
-      "decision_reason": "L2 nearest ordering was ['mp_step3_20260727t041950z_075525_f42fd6ea_v2', 'mp_step3_20260727t041950z_075525_f42fd6ea_v5', 'mp_step3_20260727t041950z_075525_f42fd6ea_v1', 'mp_step3_20260727t041950z_075525_f42fd6ea_v4', 'mp_step3_20260727t041950z_075525_f42fd6ea_v3']; deterministic expected ordering matched=true.",
+      "decision_reason": "L2 nearest ordering was ['mp_step3_20260814t081651z_133565_fadca0b9_v2', 'mp_step3_20260814t081651z_133565_fadca0b9_v5', 'mp_step3_20260814t081651z_133565_fadca0b9_v1', 'mp_step3_20260814t081651z_133565_fadca0b9_v4', 'mp_step3_20260814t081651z_133565_fadca0b9_v3']; deterministic expected ordering matched=true.",
       "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
       "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/3",
       "expected_error": null,
@@ -94,7 +94,7 @@
       "maturity": "UNKNOWN",
       "mvp_decision": "USE",
       "name": "Vector Euclidean semantics",
-      "observed_semantics": "L2 nearest ordering was ['mp_step3_20260727t041950z_075525_f42fd6ea_v2', 'mp_step3_20260727t041950z_075525_f42fd6ea_v5', 'mp_step3_20260727t041950z_075525_f42fd6ea_v1', 'mp_step3_20260727t041950z_075525_f42fd6ea_v4', 'mp_step3_20260727t041950z_075525_f42fd6ea_v3']; deterministic expected ordering matched=true.",
+      "observed_semantics": "L2 nearest ordering was ['mp_step3_20260814t081651z_133565_fadca0b9_v2', 'mp_step3_20260814t081651z_133565_fadca0b9_v5', 'mp_step3_20260814t081651z_133565_fadca0b9_v1', 'mp_step3_20260814t081651z_133565_fadca0b9_v4', 'mp_step3_20260814t081651z_133565_fadca0b9_v3']; deterministic expected ordering matched=true.",
       "observed_sqlstate": null,
       "official_source_references": [
         "https://www.cockroachlabs.com/docs/v26.2/vector"
@@ -103,14 +103,14 @@
       "probe_id": "crdb_004",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
       "availability": "AVAILABLE",
       "capability_id": "CRDB-005",
       "cleanup_verified": true,
-      "decision_reason": "Cosine nearest ordering was ['mp_step3_20260727t041950z_075525_f42fd6ea_v2', 'mp_step3_20260727t041950z_075525_f42fd6ea_v5', 'mp_step3_20260727t041950z_075525_f42fd6ea_v4', 'mp_step3_20260727t041950z_075525_f42fd6ea_v3']; deterministic expected ordering was verified.",
+      "decision_reason": "Cosine nearest ordering was ['mp_step3_20260814t081651z_133565_fadca0b9_v2', 'mp_step3_20260814t081651z_133565_fadca0b9_v5', 'mp_step3_20260814t081651z_133565_fadca0b9_v4', 'mp_step3_20260814t081651z_133565_fadca0b9_v3']; deterministic expected ordering was verified.",
       "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
       "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/4",
       "expected_error": null,
@@ -119,7 +119,7 @@
       "maturity": "UNKNOWN",
       "mvp_decision": "USE",
       "name": "Vector cosine semantics",
-      "observed_semantics": "Cosine nearest ordering was ['mp_step3_20260727t041950z_075525_f42fd6ea_v2', 'mp_step3_20260727t041950z_075525_f42fd6ea_v5', 'mp_step3_20260727t041950z_075525_f42fd6ea_v4', 'mp_step3_20260727t041950z_075525_f42fd6ea_v3']; deterministic expected ordering was verified.",
+      "observed_semantics": "Cosine nearest ordering was ['mp_step3_20260814t081651z_133565_fadca0b9_v2', 'mp_step3_20260814t081651z_133565_fadca0b9_v5', 'mp_step3_20260814t081651z_133565_fadca0b9_v4', 'mp_step3_20260814t081651z_133565_fadca0b9_v3']; deterministic expected ordering was verified.",
       "observed_sqlstate": null,
       "official_source_references": [
         "https://www.cockroachlabs.com/docs/v26.2/vector"
@@ -128,14 +128,14 @@
       "probe_id": "crdb_005",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
       "availability": "AVAILABLE",
       "capability_id": "CRDB-006",
       "cleanup_verified": true,
-      "decision_reason": "Negative inner-product ordering was ['mp_step3_20260727t041950z_075525_f42fd6ea_v2', 'mp_step3_20260727t041950z_075525_f42fd6ea_v4', 'mp_step3_20260727t041950z_075525_f42fd6ea_v5', 'mp_step3_20260727t041950z_075525_f42fd6ea_v3']; deterministic expected ordering was verified.",
+      "decision_reason": "Negative inner-product ordering was ['mp_step3_20260814t081651z_133565_fadca0b9_v2', 'mp_step3_20260814t081651z_133565_fadca0b9_v4', 'mp_step3_20260814t081651z_133565_fadca0b9_v5', 'mp_step3_20260814t081651z_133565_fadca0b9_v3']; deterministic expected ordering was verified.",
       "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
       "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/5",
       "expected_error": null,
@@ -144,7 +144,7 @@
       "maturity": "UNKNOWN",
       "mvp_decision": "USE",
       "name": "Vector inner-product semantics",
-      "observed_semantics": "Negative inner-product ordering was ['mp_step3_20260727t041950z_075525_f42fd6ea_v2', 'mp_step3_20260727t041950z_075525_f42fd6ea_v4', 'mp_step3_20260727t041950z_075525_f42fd6ea_v5', 'mp_step3_20260727t041950z_075525_f42fd6ea_v3']; deterministic expected ordering was verified.",
+      "observed_semantics": "Negative inner-product ordering was ['mp_step3_20260814t081651z_133565_fadca0b9_v2', 'mp_step3_20260814t081651z_133565_fadca0b9_v4', 'mp_step3_20260814t081651z_133565_fadca0b9_v5', 'mp_step3_20260814t081651z_133565_fadca0b9_v3']; deterministic expected ordering was verified.",
       "observed_sqlstate": null,
       "official_source_references": [
         "https://www.cockroachlabs.com/docs/v26.2/vector"
@@ -153,7 +153,7 @@
       "probe_id": "crdb_006",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -178,7 +178,7 @@
       "probe_id": "crdb_007",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -208,14 +208,14 @@
       "probe_id": "crdb_008",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
       "availability": "CONDITIONAL",
       "capability_id": "CRDB-009",
       "cleanup_verified": true,
-      "decision_reason": "Nearest-neighbor result was ['mp_step3_20260727t041950z_075525_f42fd6ea_vi1', 'mp_step3_20260727t041950z_075525_f42fd6ea_vi2']; optimizer selected the ANN index=true on the tiny fixture.",
+      "decision_reason": "Nearest-neighbor result was ['mp_step3_20260814t081651z_133565_fadca0b9_vi1', 'mp_step3_20260814t081651z_133565_fadca0b9_vi2']; optimizer selected the ANN index=true on the tiny fixture.",
       "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
       "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/8",
       "expected_error": null,
@@ -227,7 +227,7 @@
       "maturity": "GA",
       "mvp_decision": "USE_WITH_GUARD",
       "name": "Vector index query correctness",
-      "observed_semantics": "Nearest-neighbor result was ['mp_step3_20260727t041950z_075525_f42fd6ea_vi1', 'mp_step3_20260727t041950z_075525_f42fd6ea_vi2']; optimizer selected the ANN index=true on the tiny fixture.",
+      "observed_semantics": "Nearest-neighbor result was ['mp_step3_20260814t081651z_133565_fadca0b9_vi1', 'mp_step3_20260814t081651z_133565_fadca0b9_vi2']; optimizer selected the ANN index=true on the tiny fixture.",
       "observed_sqlstate": null,
       "official_source_references": [
         "https://www.cockroachlabs.com/docs/v26.2/vector-indexes"
@@ -238,14 +238,14 @@
       "probe_id": "crdb_009",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
       "availability": "CONDITIONAL",
       "capability_id": "CRDB-010",
       "cleanup_verified": true,
-      "decision_reason": "Exact tenant/HAT prefixes returned only IDs ['mp_step3_20260727t041950z_075525_f42fd6ea_vi1', 'mp_step3_20260727t041950z_075525_f42fd6ea_vi2'].",
+      "decision_reason": "Exact tenant/HAT prefixes returned only IDs ['mp_step3_20260814t081651z_133565_fadca0b9_vi1', 'mp_step3_20260814t081651z_133565_fadca0b9_vi2'].",
       "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
       "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/9",
       "expected_error": null,
@@ -254,7 +254,7 @@
       "maturity": "GA",
       "mvp_decision": "USE_WITH_GUARD",
       "name": "Vector prefix filtering",
-      "observed_semantics": "Exact tenant/HAT prefixes returned only IDs ['mp_step3_20260727t041950z_075525_f42fd6ea_vi1', 'mp_step3_20260727t041950z_075525_f42fd6ea_vi2'].",
+      "observed_semantics": "Exact tenant/HAT prefixes returned only IDs ['mp_step3_20260814t081651z_133565_fadca0b9_vi1', 'mp_step3_20260814t081651z_133565_fadca0b9_vi2'].",
       "observed_sqlstate": null,
       "official_source_references": [
         "https://www.cockroachlabs.com/docs/v26.2/vector-indexes"
@@ -265,14 +265,14 @@
       "probe_id": "crdb_010",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
       "availability": "AVAILABLE",
       "capability_id": "CRDB-011",
       "cleanup_verified": true,
-      "decision_reason": "English dictionary stemmed foxes/jumping to fox/jump and ranked IDs ['mp_step3_20260727t041950z_075525_f42fd6ea_fts1', 'mp_step3_20260727t041950z_075525_f42fd6ea_fts2'] with scores ['0.33673418', '0.098500855'].",
+      "decision_reason": "English dictionary stemmed foxes/jumping to fox/jump and ranked IDs ['mp_step3_20260814t081651z_133565_fadca0b9_fts1', 'mp_step3_20260814t081651z_133565_fadca0b9_fts2'] with scores ['0.33673418', '0.098500855'].",
       "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
       "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/10",
       "expected_error": null,
@@ -281,7 +281,7 @@
       "maturity": "UNKNOWN",
       "mvp_decision": "USE",
       "name": "Full-text English",
-      "observed_semantics": "English dictionary stemmed foxes/jumping to fox/jump and ranked IDs ['mp_step3_20260727t041950z_075525_f42fd6ea_fts1', 'mp_step3_20260727t041950z_075525_f42fd6ea_fts2'] with scores ['0.33673418', '0.098500855'].",
+      "observed_semantics": "English dictionary stemmed foxes/jumping to fox/jump and ranked IDs ['mp_step3_20260814t081651z_133565_fadca0b9_fts1', 'mp_step3_20260814t081651z_133565_fadca0b9_fts2'] with scores ['0.33673418', '0.098500855'].",
       "observed_sqlstate": null,
       "official_source_references": [
         "https://www.cockroachlabs.com/docs/v26.2/full-text-search"
@@ -290,14 +290,14 @@
       "probe_id": "crdb_011",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
       "availability": "AVAILABLE",
       "capability_id": "CRDB-012",
       "cleanup_verified": true,
-      "decision_reason": "German dictionary stemmed Häuser/laufen to haus/lauf and ranked IDs ['mp_step3_20260727t041950z_075525_f42fd6ea_fts3', 'mp_step3_20260727t041950z_075525_f42fd6ea_fts4'] with scores ['0.32871187', '0.09524299'].",
+      "decision_reason": "German dictionary stemmed Häuser/laufen to haus/lauf and ranked IDs ['mp_step3_20260814t081651z_133565_fadca0b9_fts3', 'mp_step3_20260814t081651z_133565_fadca0b9_fts4'] with scores ['0.32871187', '0.09524299'].",
       "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
       "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/11",
       "expected_error": null,
@@ -308,7 +308,7 @@
       "maturity": "UNKNOWN",
       "mvp_decision": "USE",
       "name": "Full-text German",
-      "observed_semantics": "German dictionary stemmed Häuser/laufen to haus/lauf and ranked IDs ['mp_step3_20260727t041950z_075525_f42fd6ea_fts3', 'mp_step3_20260727t041950z_075525_f42fd6ea_fts4'] with scores ['0.32871187', '0.09524299'].",
+      "observed_semantics": "German dictionary stemmed Häuser/laufen to haus/lauf and ranked IDs ['mp_step3_20260814t081651z_133565_fadca0b9_fts3', 'mp_step3_20260814t081651z_133565_fadca0b9_fts4'] with scores ['0.32871187', '0.09524299'].",
       "observed_sqlstate": null,
       "official_source_references": [
         "https://www.cockroachlabs.com/docs/v26.2/full-text-search"
@@ -317,7 +317,7 @@
       "probe_id": "crdb_012",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -344,14 +344,14 @@
       "probe_id": "crdb_013",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
       "availability": "AVAILABLE",
       "capability_id": "CRDB-014",
       "cleanup_verified": true,
-      "decision_reason": "Tenant A saw ['mp_step3_20260727t041950z_075525_f42fd6ea_rls_a']; Tenant B saw ['mp_step3_20260727t041950z_075525_f42fd6ea_rls_b']; pg_policies preserved roles/cmd/USING/WITH CHECK=true.",
+      "decision_reason": "Tenant A saw ['mp_step3_20260814t081651z_133565_fadca0b9_rls_a']; Tenant B saw ['mp_step3_20260814t081651z_133565_fadca0b9_rls_b']; pg_policies preserved roles/cmd/USING/WITH CHECK=true.",
       "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
       "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/13",
       "expected_error": null,
@@ -360,7 +360,7 @@
       "maturity": "GA",
       "mvp_decision": "USE",
       "name": "RLS SELECT isolation",
-      "observed_semantics": "Tenant A saw ['mp_step3_20260727t041950z_075525_f42fd6ea_rls_a']; Tenant B saw ['mp_step3_20260727t041950z_075525_f42fd6ea_rls_b']; pg_policies preserved roles/cmd/USING/WITH CHECK=true.",
+      "observed_semantics": "Tenant A saw ['mp_step3_20260814t081651z_133565_fadca0b9_rls_a']; Tenant B saw ['mp_step3_20260814t081651z_133565_fadca0b9_rls_b']; pg_policies preserved roles/cmd/USING/WITH CHECK=true.",
       "observed_sqlstate": null,
       "official_source_references": [
         "https://www.cockroachlabs.com/docs/v26.2/row-level-security",
@@ -373,7 +373,7 @@
       "probe_id": "crdb_014",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -401,7 +401,7 @@
       "probe_id": "crdb_015",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -429,7 +429,7 @@
       "probe_id": "crdb_016",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -457,7 +457,7 @@
       "probe_id": "crdb_017",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -486,7 +486,7 @@
       "probe_id": "crdb_018",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -517,7 +517,7 @@
       "probe_id": "crdb_019",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -546,7 +546,7 @@
       "probe_id": "crdb_020",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -573,23 +573,25 @@
       "probe_id": "crdb_021",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
       "availability": "CONDITIONAL",
       "capability_id": "CRDB-022",
       "cleanup_verified": true,
-      "decision_reason": "Within the bounded observation window, the prefixed expired row was deleted and the prefixed future-expiring row remained.",
+      "decision_reason": "TTL metadata was active, but physical rows remained ['mp_step3_20260814t081651z_133565_fadca0b9_ttl_expired', 'mp_step3_20260814t081651z_133565_fadca0b9_ttl_retained'] after 120 seconds.",
       "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
       "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/21",
       "expected_error": null,
       "expected_semantics": "Expired row is deleted while future row remains within 120 seconds.",
-      "known_limitations": [],
+      "known_limitations": [
+        "Asynchronous execution exceeded the bounded window."
+      ],
       "maturity": "UNKNOWN",
-      "mvp_decision": "USE_WITH_GUARD",
+      "mvp_decision": "DEFER",
       "name": "Row-Level TTL physical deletion",
-      "observed_semantics": "Within the bounded observation window, the prefixed expired row was deleted and the prefixed future-expiring row remained.",
+      "observed_semantics": "TTL metadata was active, but physical rows remained ['mp_step3_20260814t081651z_133565_fadca0b9_ttl_expired', 'mp_step3_20260814t081651z_133565_fadca0b9_ttl_retained'] after 120 seconds.",
       "observed_sqlstate": null,
       "official_source_references": [
         "https://www.cockroachlabs.com/docs/v26.2/row-level-ttl"
@@ -601,8 +603,8 @@
       "probe_id": "crdb_022",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": false,
-      "runtime_exact_version": "v26.2.4",
-      "status": "PASS"
+      "runtime_exact_version": "v26.2.5",
+      "status": "DEFER"
     },
     {
       "availability": "CONDITIONAL",
@@ -629,7 +631,7 @@
       "probe_id": "crdb_023",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": false,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -659,7 +661,7 @@
       "probe_id": "crdb_024",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": false,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -691,7 +693,7 @@
       "probe_id": "crdb_025",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -716,7 +718,7 @@
       "probe_id": "crdb_026",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -744,7 +746,7 @@
       "probe_id": "crdb_027",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -771,7 +773,7 @@
       "probe_id": "crdb_028",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": false,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -796,7 +798,7 @@
       "probe_id": "crdb_029",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -826,7 +828,7 @@
       "probe_id": "crdb_030",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "DEFER"
     },
     {
@@ -855,7 +857,7 @@
       "probe_id": "crdb_031",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -881,7 +883,7 @@
       "probe_id": "crdb_032",
       "probe_plane": "OFFLINE_REPOSITORY",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -909,7 +911,7 @@
       "probe_id": "crdb_033",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
@@ -937,14 +939,14 @@
       "probe_id": "crdb_034",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     },
     {
       "availability": "CONDITIONAL",
       "capability_id": "CRDB-035",
       "cleanup_verified": true,
-      "decision_reason": "Independent results were TTL=PASS, feed=PASS, events=PASS; the combined TTL-delete event stream was not forced in this bounded run.",
+      "decision_reason": "Independent results were TTL=DEFER, feed=PASS, events=PASS; the combined TTL-delete event stream was not forced in this bounded run.",
       "deployment_scope": "DISPOSABLE_LOCAL_SINGLE_NODE",
       "evidence_reference": "docs/evidence/cockroachdb-v26-2/capability-matrix.json#/capabilities/34",
       "expected_error": null,
@@ -955,7 +957,7 @@
       "maturity": "NOT_APPLICABLE",
       "mvp_decision": "DEFER",
       "name": "TTL/changefeed interaction",
-      "observed_semantics": "Independent results were TTL=PASS, feed=PASS, events=PASS; the combined TTL-delete event stream was not forced in this bounded run.",
+      "observed_semantics": "Independent results were TTL=DEFER, feed=PASS, events=PASS; the combined TTL-delete event stream was not forced in this bounded run.",
       "observed_sqlstate": null,
       "official_source_references": [
         "https://www.cockroachlabs.com/docs/v26.2/row-level-ttl",
@@ -967,7 +969,7 @@
       "probe_id": "crdb_035",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": false,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "DEFER"
     },
     {
@@ -992,7 +994,7 @@
       "probe_id": "crdb_036",
       "probe_plane": "LIVE_LOCAL",
       "required_for_mvp": true,
-      "runtime_exact_version": "v26.2.4",
+      "runtime_exact_version": "v26.2.5",
       "status": "PASS"
     }
   ],
@@ -1006,7 +1008,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/releases",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "CockroachDB Releases Overview"
     },
     {
@@ -1018,7 +1020,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/releases/v26.2",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "What's New in v26.2"
     },
     {
@@ -1030,8 +1032,8 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/releases/v26.2#v26-2-4",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
-      "title": "CockroachDB v26.2.4 Release Notes"
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
+      "title": "CockroachDB v26.2.5 Release Notes"
     },
     {
       "capability_ids": [
@@ -1041,7 +1043,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/releases/release-support-policy",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "Release Support Policy"
     },
     {
@@ -1056,7 +1058,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/v26.2/vector",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "VECTOR"
     },
     {
@@ -1070,7 +1072,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/v26.2/vector-indexes",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "Vector Indexes"
     },
     {
@@ -1083,7 +1085,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/v26.2/full-text-search",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "Full-Text Search"
     },
     {
@@ -1101,7 +1103,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/v26.2/row-level-security",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "Row-Level Security Overview"
     },
     {
@@ -1113,7 +1115,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/v26.2/row-level-security#force-row-level-security",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "FORCE ROW LEVEL SECURITY"
     },
     {
@@ -1125,7 +1127,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/v26.2/row-level-security#known-limitations",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "Row-Level Security Known Limitations"
     },
     {
@@ -1139,7 +1141,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/v26.2/create-policy",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "CREATE POLICY"
     },
     {
@@ -1153,7 +1155,7 @@
       "discrepancy": null,
       "live_behavior_matched": null,
       "location": "https://www.cockroachlabs.com/docs/v26.2/row-level-ttl",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "Row-Level TTL"
     },
     {
@@ -1166,7 +1168,7 @@
       "discrepancy": null,
       "live_behavior_matched": null,
       "location": "https://www.cockroachlabs.com/docs/v26.2/create-and-configure-changefeeds",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "Create and Configure Changefeeds"
     },
     {
@@ -1177,7 +1179,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/v26.2/cdc-queries",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "Change Data Capture Queries"
     },
     {
@@ -1189,7 +1191,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/v26.2/partial-indexes",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "Partial Indexes"
     },
     {
@@ -1201,7 +1203,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/v26.2/as-of-system-time",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "AS OF SYSTEM TIME"
     },
     {
@@ -1216,7 +1218,7 @@
       "discrepancy": null,
       "live_behavior_matched": null,
       "location": "https://www.cockroachlabs.com/docs/v26.2/transactions",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "Transactions"
     },
     {
@@ -1229,7 +1231,7 @@
       "discrepancy": null,
       "live_behavior_matched": null,
       "location": "https://www.cockroachlabs.com/docs/v26.2/transaction-retry-error-reference",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "Transaction Retry Error Reference"
     },
     {
@@ -1240,7 +1242,7 @@
       "discrepancy": null,
       "live_behavior_matched": true,
       "location": "https://www.cockroachlabs.com/docs/advisories",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
       "title": "CockroachDB Security Advisories"
     },
     {
@@ -1250,21 +1252,21 @@
       "category": "artifact_checksum",
       "discrepancy": null,
       "live_behavior_matched": true,
-      "location": "https://binaries.cockroachdb.com/cockroach-v26.2.4.linux-amd64.tgz.sha256sum",
-      "retrieved_at_utc": "2026-07-26T09:49:06Z",
-      "title": "CockroachDB v26.2.4 Linux amd64 SHA-256"
+      "location": "https://binaries.cockroachdb.com/cockroach-v26.2.5.linux-amd64.tgz.sha256sum",
+      "retrieved_at_utc": "2026-08-14T08:09:52Z",
+      "title": "CockroachDB v26.2.5 Linux amd64 SHA-256"
     }
   ],
   "schema_version": 1,
   "summary": {
-    "defer_count": 2,
+    "defer_count": 3,
     "fail_count": 0,
-    "generated_at_utc": "2026-07-27T04:26:52Z",
+    "generated_at_utc": "2026-08-14T08:24:09Z",
     "harness_version": "1.0.3",
-    "matrix_sha256": "b50f52d5985e9eccf44f9c63fb3edf9b2ee002907e20cf646262bdf9b6c485cf",
+    "matrix_sha256": "6804f1d10de4fc2477871cb89bb1e8eb5f9117c1ce75302277e8b7d4212be762",
     "overall_step3_decision": "PINNED_WITH_EXPLICIT_DEFERRED_ITEMS",
-    "pass_count": 34,
-    "runtime_exact_version": "v26.2.4",
+    "pass_count": 33,
+    "runtime_exact_version": "v26.2.5",
     "total_rows": 36
   }
 }

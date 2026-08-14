@@ -79,7 +79,7 @@
       "update_policy": null
     }
   ],
-  "target_cockroachdb_version": "v26.2.4",
+  "target_cockroachdb_version": "v26.2.5",
   "triggers": [
     {
       "function": "guard_ingestion_saga_update",

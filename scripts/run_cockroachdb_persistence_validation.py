@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Step 6 persistence semantics on pinned CockroachDB v26.2.4.
+"""Validate Step 6 persistence semantics on pinned CockroachDB v26.2.5.
 
 The live path uses the CockroachDB CLI as a bounded SQL conformance transport.
 It is not a production connection pool or DB-API driver.
@@ -36,7 +36,7 @@ from aioa_memory_kernel.persistence import (  # noqa: E402
 )
 
 
-PINNED_VERSION = "v26.2.4"
+PINNED_VERSION = "v26.2.5"
 PINNED_CLUSTER_VERSION = "26.2"
 RUN_PREFIX = "mp_step6_"
 ROLE_PATTERN = re.compile(r"^mp_step6_[a-z0-9_]{3,53}$")
@@ -1180,7 +1180,7 @@ def run_live_validation(binary: Path, json_output: Path) -> dict[str, Any]:
             "LIVE-RUNTIME-001",
             "runtime",
             PINNED_VERSION in server_version,
-            "server reports CockroachDB v26.2.4",
+            "server reports CockroachDB v26.2.5",
         )
         recorder.check(
             "LIVE-RUNTIME-002",
@@ -1434,7 +1434,7 @@ def write_json_output(path: Path, value: Mapping[str, Any]) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=(
-            "Validate Memory Patch Step 6 persistence on CockroachDB v26.2.4."
+            "Validate Memory Patch Step 6 persistence on CockroachDB v26.2.5."
         )
     )
     mode = parser.add_mutually_exclusive_group(required=True)

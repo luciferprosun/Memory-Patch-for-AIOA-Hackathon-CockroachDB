@@ -40,7 +40,7 @@ MODEL OUTPUT != CANONICAL EVIDENCE != PERSONAL MEMORY
 
 ## CockroachDB in the working system
 
-The validated CockroachDB v26.2.4 integration stores source/version/chunk
+The validated CockroachDB v26.2.5 integration stores source/version/chunk
 lineage, retrieval state, Personal Memory lifecycle state, idempotency and
 recovery records, review state, and the append-only audit chain. Tenant and
 owner isolation uses RLS and `FORCE ROW LEVEL SECURITY`; migrations, role

@@ -701,7 +701,7 @@ class CanonicalMigrationCoordinatorTests(unittest.TestCase):
 
 def _authority_summary() -> ApplicationDatabaseAuthoritySummary:
     return ApplicationDatabaseAuthoritySummary(
-        server_version="v26.2.4",
+        server_version="v26.2.5",
         table_count=EXPECTED_SCHEMA_TABLE_COUNT,
         rls_enabled_count=EXPECTED_RLS_FORCE_TABLE_COUNT,
         force_rls_count=EXPECTED_RLS_FORCE_TABLE_COUNT,
@@ -814,7 +814,7 @@ class RuntimeDatabaseFactoryTests(unittest.TestCase):
         backend.connection.rows = {
             "identity": {
                 "database_name": "memory_patch",
-                "server_version": "CockroachDB CCL v26.2.4 (synthetic test)",
+                "server_version": "CockroachDB CCL v26.2.5 (synthetic test)",
                 "app_member": True,
                 "context_member": True,
                 "bypass_rls": False,
@@ -839,7 +839,7 @@ class RuntimeDatabaseFactoryTests(unittest.TestCase):
     def test_application_authority_probe_rejects_bypassrls(self):
         with self.assertRaises(RuntimeAssemblyError):
             ApplicationDatabaseAuthoritySummary(
-                server_version="v26.2.4",
+                server_version="v26.2.5",
                 table_count=EXPECTED_SCHEMA_TABLE_COUNT,
                 rls_enabled_count=EXPECTED_RLS_FORCE_TABLE_COUNT,
                 force_rls_count=EXPECTED_RLS_FORCE_TABLE_COUNT,
