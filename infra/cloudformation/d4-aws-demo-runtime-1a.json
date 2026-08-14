@@ -1,0 +1,738 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Memory Patch D4 bounded AWS ECS Express jury demo runtime 1a",
+  "Parameters": {
+    "DeployApplication": {
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Default": "false",
+      "Description": "Create the ECS Express service only after the immutable image and runtime secret exist",
+      "Type": "String"
+    },
+    "ImageUri": {
+      "AllowedPattern": "^$|^787391403107\\.dkr\\.ecr\\.eu-central-1\\.amazonaws\\.com/memory-patch-aioa-demo-1a@sha256:[0-9a-f]{64}$",
+      "Default": "",
+      "Description": "Exact eu-central-1 private ECR image URI pinned by sha256 digest",
+      "MaxLength": 512,
+      "Type": "String"
+    },
+    "OidcClientId": {
+      "Default": "",
+      "Description": "Public OIDC client identifier; never a client secret",
+      "MaxLength": 255,
+      "Type": "String"
+    },
+    "OidcIssuer": {
+      "Default": "",
+      "Description": "Exact HTTPS OIDC issuer",
+      "MaxLength": 1024,
+      "Type": "String"
+    },
+    "ProviderBudgetEpoch": {
+      "AllowedPattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,126}[A-Za-z0-9]$",
+      "Default": "d4-hosted-demo-1a",
+      "Description": "Durable provider call-count budget epoch",
+      "MaxLength": 128,
+      "MinLength": 2,
+      "Type": "String"
+    },
+    "ServiceName": {
+      "AllowedValues": [
+        "memory-patch-aioa-demo-1a"
+      ],
+      "Default": "memory-patch-aioa-demo-1a",
+      "Description": "Stable ECS Express service and managed HTTPS hostname label",
+      "Type": "String"
+    },
+    "SourceSha": {
+      "AllowedPattern": "^[0-9a-f]{40}$",
+      "Description": "Exact source-controlled Git commit represented by the image",
+      "Type": "String"
+    }
+  },
+  "Conditions": {
+    "CreateApplication": {
+      "Fn::Equals": [
+        {
+          "Ref": "DeployApplication"
+        },
+        "true"
+      ]
+    }
+  },
+  "Rules": {
+    "ApplicationInputsRequired": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Or": [
+              {
+                "Fn::Equals": [
+                  {
+                    "Ref": "DeployApplication"
+                  },
+                  "false"
+                ]
+              },
+              {
+                "Fn::And": [
+                  {
+                    "Fn::Not": [
+                      {
+                        "Fn::Equals": [
+                          {
+                            "Ref": "ImageUri"
+                          },
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::Not": [
+                      {
+                        "Fn::Equals": [
+                          {
+                            "Ref": "OidcClientId"
+                          },
+                          ""
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::Not": [
+                      {
+                        "Fn::Equals": [
+                          {
+                            "Ref": "OidcIssuer"
+                          },
+                          ""
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "AssertDescription": "Image digest and OIDC configuration are required before service creation"
+        }
+      ]
+    }
+  },
+  "Resources": {
+    "DemoRuntimeSecretsKey": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "Description": "Dedicated encryption key for the Memory Patch D4 runtime secret",
+        "EnableKeyRotation": true,
+        "KeyPolicy": {
+          "Statement": [
+            {
+              "Action": "kms:*",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": {
+                  "Fn::Sub": "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
+                }
+              },
+              "Resource": "*",
+              "Sid": "EnableAccountIamPolicies"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PendingWindowInDays": 30,
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "MemoryPatchForAIOA"
+          },
+          {
+            "Key": "Environment",
+            "Value": "demo"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cloudformation"
+          }
+        ]
+      },
+      "Type": "AWS::KMS::Key",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "DemoRuntimeSecret": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "Description": "Memory Patch D4 runtime values populated out of band; never store values in CloudFormation",
+        "KmsKeyId": {
+          "Fn::GetAtt": [
+            "DemoRuntimeSecretsKey",
+            "Arn"
+          ]
+        },
+        "Name": "memory-patch-aioa-demo-1a/runtime",
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "MemoryPatchForAIOA"
+          },
+          {
+            "Key": "Environment",
+            "Value": "demo"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cloudformation"
+          }
+        ]
+      },
+      "Type": "AWS::SecretsManager::Secret",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "DemoImageRepository": {
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "EncryptionConfiguration": {
+          "EncryptionType": "AES256"
+        },
+        "ImageScanningConfiguration": {
+          "ScanOnPush": true
+        },
+        "ImageTagMutability": "IMMUTABLE",
+        "LifecyclePolicy": {
+          "LifecyclePolicyText": "{\"rules\":[{\"rulePriority\":1,\"description\":\"Retain the five newest demo images\",\"selection\":{\"tagStatus\":\"any\",\"countType\":\"imageCountMoreThan\",\"countNumber\":5},\"action\":{\"type\":\"expire\"}}]}"
+        },
+        "RepositoryName": "memory-patch-aioa-demo-1a",
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "MemoryPatchForAIOA"
+          },
+          {
+            "Key": "Environment",
+            "Value": "demo"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cloudformation"
+          },
+          {
+            "Key": "SourceSha",
+            "Value": {
+              "Ref": "SourceSha"
+            }
+          }
+        ]
+      },
+      "Type": "AWS::ECR::Repository",
+      "UpdateReplacePolicy": "Retain"
+    },
+    "DemoLogGroup": {
+      "Condition": "CreateApplication",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/ecs/${ServiceName}"
+        },
+        "RetentionInDays": 7,
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "MemoryPatchForAIOA"
+          },
+          {
+            "Key": "Environment",
+            "Value": "demo"
+          }
+        ]
+      },
+      "Type": "AWS::Logs::LogGroup"
+    },
+    "DemoTaskExecutionRole": {
+      "Condition": "CreateApplication",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com"
+              },
+              "Condition": {
+                "ArnLike": {
+                  "aws:SourceArn": {
+                    "Fn::Sub": "arn:${AWS::Partition}:ecs:${AWS::Region}:${AWS::AccountId}:*"
+                  }
+                },
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+        ],
+        "Policies": [
+          {
+            "PolicyDocument": {
+              "Statement": [
+                {
+                  "Action": [
+                    "secretsmanager:DescribeSecret",
+                    "secretsmanager:GetSecretValue"
+                  ],
+                  "Condition": {
+                    "Bool": {
+                      "aws:SecureTransport": "true"
+                    }
+                  },
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Ref": "DemoRuntimeSecret"
+                  },
+                  "Sid": "ReadExactRuntimeSecret"
+                },
+                {
+                  "Action": [
+                    "kms:Decrypt",
+                    "kms:DescribeKey"
+                  ],
+                  "Condition": {
+                    "Bool": {
+                      "aws:SecureTransport": "true"
+                    },
+                    "StringEquals": {
+                      "kms:ViaService": {
+                        "Fn::Sub": "secretsmanager.${AWS::Region}.${AWS::URLSuffix}"
+                      }
+                    }
+                  },
+                  "Effect": "Allow",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "DemoRuntimeSecretsKey",
+                      "Arn"
+                    ]
+                  },
+                  "Sid": "DecryptExactRuntimeSecretKeyThroughSecretsManager"
+                }
+              ],
+              "Version": "2012-10-17"
+            },
+            "PolicyName": "read-exact-memory-patch-runtime-secret"
+          }
+        ],
+        "RoleName": {
+          "Fn::Sub": "${ServiceName}-execution"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "MemoryPatchForAIOA"
+          },
+          {
+            "Key": "Environment",
+            "Value": "demo"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::Role"
+    },
+    "DemoInfrastructureRole": {
+      "Condition": "CreateApplication",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs.amazonaws.com"
+              },
+              "Sid": "AllowEcsExpressInfrastructure"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          "arn:aws:iam::aws:policy/service-role/AmazonECSInfrastructureRoleforExpressGatewayServices"
+        ],
+        "RoleName": {
+          "Fn::Sub": "${ServiceName}-infrastructure"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "MemoryPatchForAIOA"
+          },
+          {
+            "Key": "Environment",
+            "Value": "demo"
+          }
+        ]
+      },
+      "Type": "AWS::IAM::Role"
+    },
+    "DemoService": {
+      "Condition": "CreateApplication",
+      "Properties": {
+        "Cpu": "1024",
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "DemoTaskExecutionRole",
+            "Arn"
+          ]
+        },
+        "HealthCheckPath": "/health/ready",
+        "InfrastructureRoleArn": {
+          "Fn::GetAtt": [
+            "DemoInfrastructureRole",
+            "Arn"
+          ]
+        },
+        "Memory": "3072",
+        "PrimaryContainer": {
+          "AwsLogsConfiguration": {
+            "LogGroup": {
+              "Ref": "DemoLogGroup"
+            },
+            "LogStreamPrefix": "runtime"
+          },
+          "Command": [
+            "python",
+            "scripts/run_demo_runtime_1a.py",
+            "serve"
+          ],
+          "ContainerPort": 8000,
+          "Environment": [
+            {
+              "Name": "AIOA_RUNTIME_MODE",
+              "Value": "HOSTED_DEMO"
+            },
+            {
+              "Name": "AIOA_RUNTIME_BIND_HOST",
+              "Value": "0.0.0.0"
+            },
+            {
+              "Name": "AIOA_RUNTIME_PORT",
+              "Value": "8000"
+            },
+            {
+              "Name": "AIOA_RUNTIME_PUBLIC_ORIGIN",
+              "Value": {
+                "Fn::Sub": "https://${ServiceName}.ecs.${AWS::Region}.on.aws"
+              }
+            },
+            {
+              "Name": "AIOA_OIDC_ISSUER",
+              "Value": {
+                "Ref": "OidcIssuer"
+              }
+            },
+            {
+              "Name": "AIOA_OIDC_CLIENT_ID",
+              "Value": {
+                "Ref": "OidcClientId"
+              }
+            },
+            {
+              "Name": "AIOA_DEMO_LEGACY_MODE_ENABLED",
+              "Value": "1"
+            },
+            {
+              "Name": "AIOA_SESSION_TTL_SECONDS",
+              "Value": "28800"
+            },
+            {
+              "Name": "AIOA_OIDC_PENDING_TTL_SECONDS",
+              "Value": "600"
+            },
+            {
+              "Name": "AIOA_SESSION_MAXIMUM_TOTAL",
+              "Value": "64"
+            },
+            {
+              "Name": "AIOA_OIDC_MAXIMUM_PENDING_FLOWS",
+              "Value": "16"
+            },
+            {
+              "Name": "AIOA_SESSION_MAXIMUM_PER_OWNER",
+              "Value": "4"
+            },
+            {
+              "Name": "AIOA_SESSION_MAXIMUM_PAYLOAD_BYTES",
+              "Value": "2048"
+            },
+            {
+              "Name": "AIOA_DB_ALLOW_INSECURE_LOCAL",
+              "Value": "0"
+            },
+            {
+              "Name": "AIOA_DB_POOL_MIN",
+              "Value": "1"
+            },
+            {
+              "Name": "AIOA_DB_POOL_MAX",
+              "Value": "4"
+            },
+            {
+              "Name": "AIOA_DB_ACQUISITION_TIMEOUT_SECONDS",
+              "Value": "5"
+            },
+            {
+              "Name": "AIOA_DB_CONNECTION_TIMEOUT_SECONDS",
+              "Value": "5"
+            },
+            {
+              "Name": "AIOA_DB_STATEMENT_TIMEOUT_SECONDS",
+              "Value": "10"
+            },
+            {
+              "Name": "AIOA_DB_MIGRATION_TIMEOUT_SECONDS",
+              "Value": "300"
+            },
+            {
+              "Name": "AIOA_DEMO_PROVIDER_BUDGET_EPOCH",
+              "Value": {
+                "Ref": "ProviderBudgetEpoch"
+              }
+            },
+            {
+              "Name": "AIOA_DEMO_MAX_REQUESTS_TOTAL",
+              "Value": "24"
+            },
+            {
+              "Name": "AIOA_DEMO_MAX_REQUESTS_PER_OWNER",
+              "Value": "8"
+            },
+            {
+              "Name": "AIOA_DEMO_MAX_REQUESTS_PER_SESSION",
+              "Value": "6"
+            },
+            {
+              "Name": "AIOA_DEMO_REQUEST_WINDOW_SECONDS",
+              "Value": "60"
+            },
+            {
+              "Name": "AIOA_DEMO_MAX_REQUESTS_PER_WINDOW_GLOBAL",
+              "Value": "12"
+            },
+            {
+              "Name": "AIOA_DEMO_MAX_REQUESTS_PER_WINDOW_OWNER",
+              "Value": "4"
+            },
+            {
+              "Name": "AIOA_DEMO_MAX_REQUESTS_PER_WINDOW_SESSION",
+              "Value": "3"
+            },
+            {
+              "Name": "AIOA_DEMO_PROVIDER_MAX_CALLS_TOTAL",
+              "Value": "32"
+            },
+            {
+              "Name": "AIOA_DEMO_PROVIDER_MAX_CALLS_PER_OWNER",
+              "Value": "12"
+            },
+            {
+              "Name": "AIOA_DEMO_PROVIDER_MAX_CALLS_PER_SESSION",
+              "Value": "10"
+            },
+            {
+              "Name": "AIOA_DEMO_PROVIDER_MAX_CALLS_PER_REQUEST",
+              "Value": "8"
+            },
+            {
+              "Name": "AIOA_DEMO_PROVIDER_MAX_CONCURRENT_CALLS",
+              "Value": "1"
+            },
+            {
+              "Name": "AIOA_DEMO_PROVIDER_MAX_QUEUED_CALLS",
+              "Value": "2"
+            },
+            {
+              "Name": "AIOA_DEMO_PROVIDER_QUEUE_WAIT_SECONDS",
+              "Value": "2"
+            },
+            {
+              "Name": "AIOA_DEMO_PROVIDER_MAX_INPUT_BYTES",
+              "Value": "24576"
+            },
+            {
+              "Name": "AIOA_DEMO_PROVIDER_MAX_OUTPUT_TOKENS",
+              "Value": "1024"
+            },
+            {
+              "Name": "AIOA_DEMO_PROVIDER_TIMEOUT_SECONDS",
+              "Value": "45"
+            },
+            {
+              "Name": "OMP_NUM_THREADS",
+              "Value": "1"
+            },
+            {
+              "Name": "MKL_NUM_THREADS",
+              "Value": "1"
+            },
+            {
+              "Name": "TOKENIZERS_PARALLELISM",
+              "Value": "false"
+            }
+          ],
+          "Image": {
+            "Ref": "ImageUri"
+          },
+          "Secrets": [
+            {
+              "Name": "DATABASE_URL_APP",
+              "ValueFrom": {
+                "Fn::Sub": "${DemoRuntimeSecret}:DATABASE_URL_APP::"
+              }
+            },
+            {
+              "Name": "DATABASE_URL_MIGRATOR",
+              "ValueFrom": {
+                "Fn::Sub": "${DemoRuntimeSecret}:DATABASE_URL_MIGRATOR::"
+              }
+            },
+            {
+              "Name": "OPENROUTER_API_KEY",
+              "ValueFrom": {
+                "Fn::Sub": "${DemoRuntimeSecret}:OPENROUTER_API_KEY::"
+              }
+            },
+            {
+              "Name": "AIOA_JUDGE_ALLOWED_OIDC_SUBJECTS",
+              "ValueFrom": {
+                "Fn::Sub": "${DemoRuntimeSecret}:AIOA_JUDGE_ALLOWED_OIDC_SUBJECTS::"
+              }
+            },
+            {
+              "Name": "AIOA_DEMO_PROVIDER_TENANT_ID",
+              "ValueFrom": {
+                "Fn::Sub": "${DemoRuntimeSecret}:AIOA_DEMO_PROVIDER_TENANT_ID::"
+              }
+            }
+          ]
+        },
+        "ScalingTarget": {
+          "AutoScalingMetric": "AVERAGE_CPU",
+          "AutoScalingTargetValue": 60,
+          "MaxTaskCount": 1,
+          "MinTaskCount": 1
+        },
+        "ServiceName": {
+          "Ref": "ServiceName"
+        },
+        "Tags": [
+          {
+            "Key": "Project",
+            "Value": "MemoryPatchForAIOA"
+          },
+          {
+            "Key": "Hackathon",
+            "Value": "CockroachDBAWS2026"
+          },
+          {
+            "Key": "Environment",
+            "Value": "demo"
+          },
+          {
+            "Key": "ManagedBy",
+            "Value": "cloudformation"
+          },
+          {
+            "Key": "SourceSha",
+            "Value": {
+              "Ref": "SourceSha"
+            }
+          }
+        ]
+      },
+      "Type": "AWS::ECS::ExpressGatewayService"
+    }
+  },
+  "Outputs": {
+    "EcrRepositoryArn": {
+      "Description": "ARN of the immutable demo image repository",
+      "Value": {
+        "Fn::GetAtt": [
+          "DemoImageRepository",
+          "Arn"
+        ]
+      }
+    },
+    "EcrRepositoryUri": {
+      "Description": "URI used for the exact SHA image tag and digest",
+      "Value": {
+        "Fn::GetAtt": [
+          "DemoImageRepository",
+          "RepositoryUri"
+        ]
+      }
+    },
+    "RuntimeSecretsKeyArn": {
+      "Description": "ARN of the dedicated rotating KMS key for the runtime secret",
+      "Value": {
+        "Fn::GetAtt": [
+          "DemoRuntimeSecretsKey",
+          "Arn"
+        ]
+      }
+    },
+    "OidcCallbackUrl": {
+      "Condition": "CreateApplication",
+      "Description": "Exact callback that must be registered with the OIDC provider",
+      "Value": {
+        "Fn::Sub": "https://${ServiceName}.ecs.${AWS::Region}.on.aws/memory/oidc/callback"
+      }
+    },
+    "RuntimeSecretArn": {
+      "Description": "Versionless ARN of the retained runtime secret; no secret value",
+      "Value": {
+        "Ref": "DemoRuntimeSecret"
+      }
+    },
+    "PublicOrigin": {
+      "Condition": "CreateApplication",
+      "Description": "Managed HTTPS origin for the unified cockpit",
+      "Value": {
+        "Fn::Sub": "https://${ServiceName}.ecs.${AWS::Region}.on.aws"
+      }
+    },
+    "ServiceArn": {
+      "Condition": "CreateApplication",
+      "Description": "ECS Express service ARN",
+      "Value": {
+        "Fn::GetAtt": [
+          "DemoService",
+          "ServiceArn"
+        ]
+      }
+    },
+    "ServiceEndpoint": {
+      "Condition": "CreateApplication",
+      "Description": "AWS-reported ECS Express endpoint",
+      "Value": {
+        "Fn::GetAtt": [
+          "DemoService",
+          "Endpoint"
+        ]
+      }
+    },
+    "SourceSha": {
+      "Description": "Git commit expected in the image revision label",
+      "Value": {
+        "Ref": "SourceSha"
+      }
+    }
+  }
+}

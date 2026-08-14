@@ -1,0 +1,30 @@
+[
+  {
+    "ParameterKey": "SourceSha",
+    "ParameterValue": "REPLACE_WITH_EXACT_40_CHARACTER_GIT_SHA"
+  },
+  {
+    "ParameterKey": "DeployApplication",
+    "ParameterValue": "false"
+  },
+  {
+    "ParameterKey": "ImageUri",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "OidcIssuer",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "OidcClientId",
+    "ParameterValue": ""
+  },
+  {
+    "ParameterKey": "ProviderBudgetEpoch",
+    "ParameterValue": "d4-hosted-demo-1a"
+  },
+  {
+    "ParameterKey": "ServiceName",
+    "ParameterValue": "memory-patch-aioa-demo-1a"
+  }
+]

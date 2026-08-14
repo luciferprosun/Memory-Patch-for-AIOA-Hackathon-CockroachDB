@@ -1,0 +1,45 @@
+let runtime_keys = Resources.*[ Type == 'AWS::KMS::Key' ]
+let runtime_secrets = Resources.*[ Type == 'AWS::SecretsManager::Secret' ]
+let image_repositories = Resources.*[ Type == 'AWS::ECR::Repository' ]
+let log_groups = Resources.*[ Type == 'AWS::Logs::LogGroup' ]
+let demo_services = Resources.*[ Type == 'AWS::ECS::ExpressGatewayService' ]
+
+rule runtime_key_is_rotated_and_retained when %runtime_keys !empty {
+  %runtime_keys.Properties.EnableKeyRotation == true
+  %runtime_keys.Properties.PendingWindowInDays == 30
+  %runtime_keys.DeletionPolicy == 'Retain'
+  %runtime_keys.UpdateReplacePolicy == 'Retain'
+}
+
+rule runtime_secret_uses_the_dedicated_key_and_is_retained when %runtime_secrets !empty {
+  %runtime_secrets.Properties.KmsKeyId exists
+  %runtime_secrets.DeletionPolicy == 'Retain'
+  %runtime_secrets.UpdateReplacePolicy == 'Retain'
+}
+
+rule image_repository_is_scanned_immutable_and_retained when %image_repositories !empty {
+  %image_repositories.Properties.ImageScanningConfiguration.ScanOnPush == true
+  %image_repositories.Properties.ImageTagMutability == 'IMMUTABLE'
+  %image_repositories.DeletionPolicy == 'Retain'
+  %image_repositories.UpdateReplacePolicy == 'Retain'
+}
+
+rule runtime_logs_are_bounded when %log_groups !empty {
+  %log_groups.Properties.RetentionInDays == 7
+}
+
+rule demo_service_is_single_task_and_readiness_gated when %demo_services !empty {
+  %demo_services.Properties.Cpu == '1024'
+  %demo_services.Properties.Memory == '3072'
+  %demo_services.Properties.HealthCheckPath == '/health/ready'
+  %demo_services.Properties.ScalingTarget.MinTaskCount == 1
+  %demo_services.Properties.ScalingTarget.MaxTaskCount == 1
+  %demo_services.Properties.PrimaryContainer.ContainerPort == 8000
+  %demo_services.Properties.PrimaryContainer.Command == ['python', 'scripts/run_demo_runtime_1a.py', 'serve']
+  %demo_services.Properties.PrimaryContainer.Image == { 'Ref': 'ImageUri' }
+  %demo_services.Properties.PrimaryContainer.Secrets[0].Name == 'DATABASE_URL_APP'
+  %demo_services.Properties.PrimaryContainer.Secrets[1].Name == 'DATABASE_URL_MIGRATOR'
+  %demo_services.Properties.PrimaryContainer.Secrets[2].Name == 'OPENROUTER_API_KEY'
+  %demo_services.Properties.PrimaryContainer.Secrets[3].Name == 'AIOA_JUDGE_ALLOWED_OIDC_SUBJECTS'
+  %demo_services.Properties.PrimaryContainer.Secrets[4].Name == 'AIOA_DEMO_PROVIDER_TENANT_ID'
+}
