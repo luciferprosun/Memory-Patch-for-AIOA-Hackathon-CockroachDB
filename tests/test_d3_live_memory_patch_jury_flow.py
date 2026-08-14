@@ -395,6 +395,9 @@ class D3LiveJuryFlowTests(unittest.TestCase):
         self.assertIn("Critical Prompt Loop — Legacy", response.text)
         self.assertIn("Primary: entry into force", response.text)
         self.assertIn('action="/memory/jury-runs"', response.text)
+        self.assertIn(
+            'action="/memory/jury-runs" hx-boost="false"', response.text
+        )
         self.assertIn("AWAITING APPROVAL", response.text)
         self.assertIn("Approval alone does not commit or activate", response.text)
         self.assertEqual(self.executor.calls, [])

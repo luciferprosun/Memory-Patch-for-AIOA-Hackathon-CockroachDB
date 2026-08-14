@@ -31,7 +31,7 @@
           and switching modes make zero provider calls.
         </p>
       </div>
-      <form method="post" action="/memory/jury-runs">
+      <form method="post" action="/memory/jury-runs" hx-boost="false">
         <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
         <input type="hidden" name="idempotency_key" value="{{ action_token('d3-jury-run') }}">
         <label for="guided-case">Guided case</label>
