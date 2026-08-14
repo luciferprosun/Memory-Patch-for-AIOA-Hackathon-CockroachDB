@@ -842,31 +842,7 @@
         },
         "ServiceName": {
           "Ref": "ServiceName"
-        },
-        "Tags": [
-          {
-            "Key": "Project",
-            "Value": "MemoryPatchForAIOA"
-          },
-          {
-            "Key": "Hackathon",
-            "Value": "CockroachDBAWS2026"
-          },
-          {
-            "Key": "Environment",
-            "Value": "demo"
-          },
-          {
-            "Key": "ManagedBy",
-            "Value": "cloudformation"
-          },
-          {
-            "Key": "SourceSha",
-            "Value": {
-              "Ref": "SourceSha"
-            }
-          }
-        ]
+        }
       },
       "Type": "AWS::ECS::ExpressGatewayService"
     }

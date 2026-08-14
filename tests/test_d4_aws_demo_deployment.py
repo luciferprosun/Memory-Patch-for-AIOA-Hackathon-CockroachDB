@@ -92,6 +92,7 @@ class D4AwsDemoDeploymentTests(unittest.TestCase):
         self.assertEqual(properties["Cpu"], "1024")
         self.assertEqual(properties["Memory"], "3072")
         self.assertEqual(properties["HealthCheckPath"], "/health/ready")
+        self.assertNotIn("Tags", properties)
         self.assertEqual(
             properties["ScalingTarget"],
             {
