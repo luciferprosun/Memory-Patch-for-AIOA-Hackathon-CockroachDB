@@ -196,6 +196,7 @@ class PersonalMemoryUiSecurityTest(unittest.TestCase):
         page = client.get("/memory")
         self.assertIn("max-age=31536000", page.headers["strict-transport-security"])
         self.assertIn("camera=()", page.headers["permissions-policy"])
+        self.assertEqual(page.headers["referrer-policy"], "same-origin")
         token = page.text.split('name="csrf_token" value="', 1)[1].split('"', 1)[0]
         response = client.post(
             "/memory/logout",

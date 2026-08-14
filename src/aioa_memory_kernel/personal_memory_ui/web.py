@@ -58,7 +58,9 @@ _SAFE_HEADERS = {
     ),
     "Cross-Origin-Opener-Policy": "same-origin",
     "Permissions-Policy": "camera=(), geolocation=(), microphone=(), payment=(), usb=()",
-    "Referrer-Policy": "no-referrer",
+    # Native POST forms must retain a serialized same-origin Origin header so
+    # the CSRF boundary can compare it with the configured public origin.
+    "Referrer-Policy": "same-origin",
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
