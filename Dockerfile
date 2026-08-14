@@ -28,13 +28,17 @@ COPY sql/cockroachdb/migrations/ ./sql/cockroachdb/migrations/
 COPY scripts/run_demo_runtime_1a.py scripts/run_cockroachdb_migrations.py ./scripts/
 COPY tests/fixtures/step38_german_law_cases.json ./tests/fixtures/step38_german_law_cases.json
 
+# Perl is inherited from Debian but is not a runtime dependency. Remove it
+# after all build actions so its interpreter and known CVEs are not shipped.
 RUN groupadd --gid 10001 aioa \
     && useradd --uid 10001 --gid 10001 --no-create-home --home-dir /nonexistent \
         --shell /usr/sbin/nologin aioa \
     && chown -R root:root /app \
     && chmod -R a-w /app \
     && python -m compileall -q /app/src /app/scripts \
-    && find /app -type d -name __pycache__ -prune -exec rm -r {} +
+    && find /app -type d -name __pycache__ -prune -exec rm -r {} + \
+    && apt-get purge -y --allow-remove-essential perl-base \
+    && rm -rf /var/lib/apt/lists/*
 
 USER 10001:10001
 
