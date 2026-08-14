@@ -28,13 +28,22 @@
       ]
     },
     {
+      "Sid": "ReadOwnIdentityCenterRoleForReprovision",
+      "Effect": "Allow",
+      "Action": "iam:GetRole",
+      "Resource": "arn:aws:iam::787391403107:role/aws-reserved/sso.amazonaws.com/eu-central-1/AWSReservedSSO_LuciferSOL_a1478610e896e005"
+    },
+    {
       "Sid": "PassD4ExecutionRoleOnlyToEcsTasks",
       "Effect": "Allow",
       "Action": "iam:PassRole",
       "Resource": "arn:aws:iam::787391403107:role/memory-patch-aioa-demo-1a-execution",
       "Condition": {
         "StringEquals": {
-          "iam:PassedToService": "ecs-tasks.amazonaws.com"
+          "iam:PassedToService": [
+            "ecs-tasks.amazonaws.com",
+            "ecs.amazonaws.com"
+          ]
         }
       }
     },

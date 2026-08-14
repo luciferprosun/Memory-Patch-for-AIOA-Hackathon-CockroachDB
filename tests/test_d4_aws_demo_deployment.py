@@ -239,36 +239,43 @@ class D4AwsDemoDeploymentTests(unittest.TestCase):
             "memory-patch-aioa-demo-1a-oidc-claims",
         }
         statements = policy["Statement"]
-        self.assertEqual(len(statements), 4)
+        self.assertEqual(len(statements), 5)
         self.assertEqual(set(statements[0]["Resource"]), expected_roles)
-        self.assertEqual(statements[1]["Action"], "iam:PassRole")
+        self.assertEqual(statements[1]["Action"], "iam:GetRole")
         self.assertEqual(
             statements[1]["Resource"],
-            "arn:aws:iam::787391403107:role/"
-            "memory-patch-aioa-demo-1a-execution",
-        )
-        self.assertEqual(
-            statements[1]["Condition"]["StringEquals"]["iam:PassedToService"],
-            "ecs-tasks.amazonaws.com",
+            "arn:aws:iam::787391403107:role/aws-reserved/"
+            "sso.amazonaws.com/eu-central-1/"
+            "AWSReservedSSO_LuciferSOL_a1478610e896e005",
         )
         self.assertEqual(statements[2]["Action"], "iam:PassRole")
         self.assertEqual(
             statements[2]["Resource"],
             "arn:aws:iam::787391403107:role/"
-            "memory-patch-aioa-demo-1a-infrastructure",
+            "memory-patch-aioa-demo-1a-execution",
         )
         self.assertEqual(
             statements[2]["Condition"]["StringEquals"]["iam:PassedToService"],
-            "ecs.amazonaws.com",
+            ["ecs-tasks.amazonaws.com", "ecs.amazonaws.com"],
         )
         self.assertEqual(statements[3]["Action"], "iam:PassRole")
         self.assertEqual(
             statements[3]["Resource"],
             "arn:aws:iam::787391403107:role/"
-            "memory-patch-aioa-demo-1a-oidc-claims",
+            "memory-patch-aioa-demo-1a-infrastructure",
         )
         self.assertEqual(
             statements[3]["Condition"]["StringEquals"]["iam:PassedToService"],
+            "ecs.amazonaws.com",
+        )
+        self.assertEqual(statements[4]["Action"], "iam:PassRole")
+        self.assertEqual(
+            statements[4]["Resource"],
+            "arn:aws:iam::787391403107:role/"
+            "memory-patch-aioa-demo-1a-oidc-claims",
+        )
+        self.assertEqual(
+            statements[4]["Condition"]["StringEquals"]["iam:PassedToService"],
             "lambda.amazonaws.com",
         )
 
