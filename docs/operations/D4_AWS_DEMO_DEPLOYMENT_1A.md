@@ -208,16 +208,17 @@ binds them directly into the service. Do not invent or pass an OIDC client
 secret because the application has no such input. Self-registration is off;
 create only the approved judge user through the Cognito admin API.
 
-## 5. Prepare and execute the service change set
+## 5. Prepare and execute the service change sets
 
 Use a protected, untracked parameter file or direct parameter overrides. It
 may contain only the image digest URI, budget epoch and source SHA. It must
 contain no secret value.
 
-The update must set:
+The support-resource update must set:
 
 ```text
 DeployApplication=true
+DeployService=false
 ImageUri=<repository-uri>@sha256:<digest>
 ProviderBudgetEpoch=<deliberately-armed-epoch>
 SourceSha=<exact-committed-sha>
@@ -225,8 +226,12 @@ SourceSha=<exact-committed-sha>
 
 Create an `UPDATE` change set with `CAPABILITY_NAMED_IAM`, inspect every
 resource and IAM change, and request explicit approval. Only then execute it.
-Expected service-phase resources are one runtime log group, one task execution
-role, one ECS infrastructure role and one ECS Express service. The Cognito
+Expected support-phase resources are one runtime log group, one task execution
+role and one ECS infrastructure role. Wait for the stack update to complete
+and verify both roles before setting `DeployService=true` in a second reviewed
+change set. This separation prevents a newly created IAM role from being used
+before regional propagation completes. The second phase adds one ECS Express
+service. The Cognito
 pool, client, domain and claims trigger already belong to the base phase. ECS
 Express manages the one Fargate service, ALB, certificate, target group,
 security groups and scaling policy. No NAT Gateway, database, Redis,

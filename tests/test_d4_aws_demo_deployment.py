@@ -88,6 +88,12 @@ class D4AwsDemoDeploymentTests(unittest.TestCase):
         template = _template()
         service = template["Resources"]["DemoService"]
         properties = service["Properties"]
+        self.assertEqual(service["Condition"], "CreateService")
+        self.assertEqual(
+            template["Parameters"]["DeployService"]["AllowedValues"],
+            ["false", "true"],
+        )
+        self.assertEqual(template["Parameters"]["DeployService"]["Default"], "false")
         self.assertEqual(service["Type"], "AWS::ECS::ExpressGatewayService")
         self.assertEqual(properties["Cpu"], "1024")
         self.assertEqual(properties["Memory"], "3072")

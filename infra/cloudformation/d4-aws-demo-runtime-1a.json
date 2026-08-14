@@ -8,7 +8,16 @@
         "true"
       ],
       "Default": "false",
-      "Description": "Create the ECS Express service only after the immutable image and runtime secret exist",
+      "Description": "Create ECS Express roles and logging before the service propagation gate",
+      "Type": "String"
+    },
+    "DeployService": {
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Default": "false",
+      "Description": "Create the ECS Express service only after its IAM roles have propagated",
       "Type": "String"
     },
     "ImageUri": {
@@ -48,6 +57,26 @@
         },
         "true"
       ]
+    },
+    "CreateService": {
+      "Fn::And": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "DeployApplication"
+            },
+            "true"
+          ]
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "DeployService"
+            },
+            "true"
+          ]
+        }
+      ]
     }
   },
   "Rules": {
@@ -59,7 +88,7 @@
               {
                 "Fn::Equals": [
                   {
-                    "Ref": "DeployApplication"
+                    "Ref": "DeployService"
                   },
                   "false"
                 ]
@@ -79,6 +108,33 @@
             ]
           },
           "AssertDescription": "An immutable image digest is required before service creation"
+        }
+      ]
+    },
+    "ServiceRequiresApplication": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Or": [
+              {
+                "Fn::Equals": [
+                  {
+                    "Ref": "DeployService"
+                  },
+                  "false"
+                ]
+              },
+              {
+                "Fn::Equals": [
+                  {
+                    "Ref": "DeployApplication"
+                  },
+                  "true"
+                ]
+              }
+            ]
+          },
+          "AssertDescription": "The service requires its application support resources"
         }
       ]
     }
@@ -591,7 +647,7 @@
       "Type": "AWS::IAM::Role"
     },
     "DemoService": {
-      "Condition": "CreateApplication",
+      "Condition": "CreateService",
       "Properties": {
         "Cpu": "1024",
         "ExecutionRoleArn": {
@@ -915,14 +971,14 @@
       }
     },
     "PublicOrigin": {
-      "Condition": "CreateApplication",
+      "Condition": "CreateService",
       "Description": "Managed HTTPS origin for the unified cockpit",
       "Value": {
         "Fn::Sub": "https://${ServiceName}.ecs.${AWS::Region}.on.aws"
       }
     },
     "ServiceArn": {
-      "Condition": "CreateApplication",
+      "Condition": "CreateService",
       "Description": "ECS Express service ARN",
       "Value": {
         "Fn::GetAtt": [
@@ -932,7 +988,7 @@
       }
     },
     "ServiceEndpoint": {
-      "Condition": "CreateApplication",
+      "Condition": "CreateService",
       "Description": "AWS-reported ECS Express endpoint",
       "Value": {
         "Fn::GetAtt": [

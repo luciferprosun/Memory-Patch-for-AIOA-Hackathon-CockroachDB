@@ -8,6 +8,10 @@
     "ParameterValue": "false"
   },
   {
+    "ParameterKey": "DeployService",
+    "ParameterValue": "false"
+  },
+  {
     "ParameterKey": "ImageUri",
     "ParameterValue": ""
   },
