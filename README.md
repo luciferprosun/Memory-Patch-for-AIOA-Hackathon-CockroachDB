@@ -48,6 +48,25 @@ separation, native backup, isolated restore, and post-restore integrity were
 tested in disposable single-node environments. This is a constrained demo
 topology, not a claim of production HA.
 
+## Hackathon sponsor components
+
+The project meaningfully uses both required CockroachDB tools. Distributed
+Vector Indexing stores lineage-bound `VECTOR(384)` embeddings and performs
+HAT-scoped L2 retrieval before deterministic hybrid and temporal resolution.
+The AI-assisted release workflow uses the `ccloud` CLI as an authenticated,
+fail-closed control-plane gate for the exact hosted jury cluster; its JSON
+metadata must match the approved provider, region, plan, state, version, and
+endpoint identity before later release operations are allowed.
+
+The public workload runs on Amazon ECS Express Mode with Fargate from an
+immutable ECR digest. Amazon S3 Versioning and Object Lock preserve exact
+evidence snapshots, while Cognito, Lambda, Secrets Manager, KMS, CloudWatch
+Logs, CloudFormation, and IAM provide bounded identity, secrets, observability,
+and deployment controls. See the
+[Devpost component integration](docs/submission/DEVPOST_COMPONENT_INTEGRATION_1A.md)
+and the sanitized
+[ccloud live receipt](docs/evidence/cockroachdb-cloud/ccloud-control-plane-gate-1a.json).
+
 ## Run the judge demo
 
 Deterministic replay is the safe default. It checks the frozen Step 42 RC,

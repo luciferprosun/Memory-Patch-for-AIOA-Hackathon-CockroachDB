@@ -9,6 +9,7 @@
 5. [Copy-ready submission package](submission/HACKATHON_SUBMISSION_PACKAGE_1A.md)
 6. [System architecture](architecture/MEMORY_PATCH_SYSTEM_OVERVIEW_1A.md)
 7. [Canonical roadmap](roadmap/PRODUCTION_ROADMAP.md)
+8. [Devpost component integration](submission/DEVPOST_COMPONENT_INTEGRATION_1A.md)
 
 ## Product architecture
 
@@ -32,6 +33,7 @@
 - [Step 42 RC manifest](evidence/release/step42-rc-manifest-1a.json)
 - [Step 42 recovery validation](evidence/release/step42-rc-backup-restore-validation.json)
 - [Step 43 demo/submission validation](evidence/demo/step43-documentation-demo-submission-validation.json)
+- [Read-only ccloud control-plane gate](evidence/cockroachdb-cloud/ccloud-control-plane-gate-1a.json)
 
 ## Security and authority
 
@@ -51,6 +53,7 @@
 - [Step 41 security runbook](operations/STEP_41_FULL_SECURITY_REGRESSION_VALIDATION_1A.md)
 - [Step 42 backup/restore runbook](operations/STEP_42_RC_BACKUP_RESTORE_1A.md)
 - [Step 43 demo runbook](operations/STEP_43_DEMO_AND_SUBMISSION_RUNBOOK_1A.md)
+- [ccloud release gate runbook](operations/CCLOUD_CONTROL_PLANE_RELEASE_GATE_1A.md)
 
 All linked evidence is bounded and sanitized. Replay is explicitly distinct
 from fresh live provider execution. This index does not grant any model,

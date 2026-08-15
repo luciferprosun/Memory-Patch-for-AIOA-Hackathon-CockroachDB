@@ -1,0 +1,63 @@
+{
+  "agent_operation": {
+    "aws_mutations": 0,
+    "commands": [
+      "ccloud cluster list --output json --quiet",
+      "ccloud cluster info fluid-lemur --output json --quiet"
+    ],
+    "control_plane_mutations": 0,
+    "control_plane_reads": 2,
+    "database_reads": 0,
+    "database_writes": 0,
+    "provider_calls": 0,
+    "purpose": "FAIL_CLOSED_RELEASE_CLUSTER_READINESS_GATE"
+  },
+  "checks": {
+    "authenticated_ccloud_session": true,
+    "binary_pin_match": true,
+    "list_info_identity_match": true,
+    "plan_match": true,
+    "provider_match": true,
+    "region_match": true,
+    "sql_dns_identity_match": true,
+    "state_ready": true,
+    "unique_cluster_name": true,
+    "version_match": true
+  },
+  "cluster": {
+    "cockroach_version": "v26.2.5",
+    "identity_sha256": "8965dccb7ab06ff9c03a69ed94053fea1766a68f34809c5fc7eb8035e269861e",
+    "name": "fluid-lemur",
+    "plan": "SERVERLESS",
+    "provider": "GCP",
+    "regions": [
+      "europe-west3"
+    ],
+    "sql_dns_sha256": "697f3b8221a81df8c3e29d92d519fee97158574e46e3e5a29965c0dade967ae8",
+    "state": "CREATED"
+  },
+  "frozen_application": {
+    "cockroachdb_records_modified": 0,
+    "ecs_service_modified": false,
+    "runtime_image_rebuilt": false,
+    "source_modified": false
+  },
+  "observed_at": "2026-08-15T22:37:24+00:00",
+  "receipt_sha256": "fa16407b5602a2fd4270e2a377ce4b623bb6ba790cee128a68553cf94101cdf8",
+  "schema_version": "ccloud-control-plane-release-gate-1a",
+  "security": {
+    "account_or_creator_identity_emitted": false,
+    "connection_string_emitted": false,
+    "password_emitted": false,
+    "raw_cluster_id_emitted": false,
+    "secret_value_emitted": false,
+    "token_emitted": false
+  },
+  "tool": {
+    "binary_sha256": "944c7a35f9fe6b166dea991040399ac4e1cf0c754d0514fd57d7c4333c5d4cb2",
+    "name": "ccloud",
+    "script_sha256": "cfcc33cd5edf8d7f265b70451004fab8d3d499506241ba8d195c7d62d16d5fbd",
+    "version": "0.6.12"
+  },
+  "verdict": "PASS_READ_ONLY_CCLOUD_CONTROL_PLANE_GATE"
+}
