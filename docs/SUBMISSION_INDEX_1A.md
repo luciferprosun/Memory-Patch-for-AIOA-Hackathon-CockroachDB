@@ -3,13 +3,34 @@
 ## Judge quick path
 
 1. [Top-level project overview](../README.md)
-2. [Judge-facing Golden Path](demo/MEMORY_PATCH_DEMO_GOLDEN_PATH_1A.md)
-3. [5–8 minute video script](demo/YOUTUBE_DEMO_SCRIPT_1A.md)
-4. [Operator runbook](operations/STEP_43_DEMO_AND_SUBMISSION_RUNBOOK_1A.md)
-5. [Copy-ready submission package](submission/HACKATHON_SUBMISSION_PACKAGE_1A.md)
-6. [System architecture](architecture/MEMORY_PATCH_SYSTEM_OVERVIEW_1A.md)
-7. [Canonical roadmap](roadmap/PRODUCTION_ROADMAP.md)
-8. [Devpost component integration](submission/DEVPOST_COMPONENT_INTEGRATION_1A.md)
+2. [Final hackathon release manifest](submission/FINAL_HACKATHON_RELEASE_MANIFEST.md)
+3. [Public AWS jury application](https://me-50f4749c79c34254a788d95160d08a6c.ecs.eu-central-1.on.aws/memory)
+4. [Jury preparation and known limitations](submission/JURY_PREPARATION_AND_KNOWN_LIMITATIONS.md)
+5. [AWS and CockroachDB architecture diagram](architecture/Memory_Patch_AWS_CockroachDB_Architecture.png)
+6. [Exact deployed AOIA-Core commit](https://github.com/luciferprosun/AOIA-Core/commit/360e900b66396a19fc09cccf69641cc015691ad8)
+7. [Frozen AOIA-Core jury release](https://github.com/luciferprosun/AOIA-Core/releases/tag/hackathon-jury-final-2026-08-15)
+8. [Historical Step43 submission package](submission/HACKATHON_SUBMISSION_PACKAGE_1A.md)
+9. [Devpost component integration](submission/DEVPOST_COMPONENT_INTEGRATION_1A.md)
+10. [MIT License](../LICENSE)
+
+The Memory Patch repository is the public hackathon component and evidence
+repository. The linked AOIA-Core commit and release tag identify the exact
+integrated runtime used for the recorded and deployed jury demo; that commit is
+not part of this repository's Git history.
+
+## Final jury release and post-Step43 continuation
+
+- [Public live health](https://me-50f4749c79c34254a788d95160d08a6c.ecs.eu-central-1.on.aws/health/live)
+- [Public ready health](https://me-50f4749c79c34254a788d95160d08a6c.ecs.eu-central-1.on.aws/health/ready)
+- [Unified AWS runtime architecture](architecture/AWS_UNIFIED_AIOA_DEMO_RUNTIME_1A.md)
+- [D4 AWS deployment runbook](operations/D4_AWS_DEMO_DEPLOYMENT_1A.md)
+- [Live jury flow architecture](architecture/LIVE_MEMORY_PATCH_JURY_FLOW_1A.md)
+- [Cognito-backed judge access evidence](audits/POST_ROADMAP_R6_HEALTH_GOLDEN_PATH_RUNTIME_PROOF_1A.md)
+- [Read-only ccloud release gate runbook](operations/CCLOUD_CONTROL_PLANE_RELEASE_GATE_1A.md)
+- [Historical Step43 archive](<../Raporty Hackathon CockroachDB/README.md>)
+
+Step43 is preserved as a historical snapshot. The final manifest separately
+accounts for the later hackathon work, public deployment, and jury closure.
 
 ## Product architecture
 
@@ -22,6 +43,7 @@
 - [Optional Critic architecture](architecture/AOIA_CRITIC_PROMPT_LOOP_PRODUCTION_BRIDGE_1A.md)
 - [4 GB runtime architecture](architecture/RESOURCE_DEPLOYMENT_OPTIMIZATION_4GB_1A.md)
 - [RC backup/restore architecture](architecture/RC_FREEZE_BACKUP_RESTORE_1A.md)
+- [Final AWS and CockroachDB diagram](architecture/Memory_Patch_AWS_CockroachDB_Architecture.png)
 
 ## Strongest validation evidence
 
@@ -34,6 +56,8 @@
 - [Step 42 recovery validation](evidence/release/step42-rc-backup-restore-validation.json)
 - [Step 43 demo/submission validation](evidence/demo/step43-documentation-demo-submission-validation.json)
 - [Read-only ccloud control-plane gate](evidence/cockroachdb-cloud/ccloud-control-plane-gate-1a.json)
+- [Post-roadmap runtime closure evidence](evidence/demo/post-roadmap-runtime-closure-1a.json)
+- [Post-roadmap Golden Path runtime proof](evidence/demo/post-roadmap-r6-golden-path-runtime-proof-1a.json)
 
 ## Security and authority
 
@@ -54,6 +78,7 @@
 - [Step 42 backup/restore runbook](operations/STEP_42_RC_BACKUP_RESTORE_1A.md)
 - [Step 43 demo runbook](operations/STEP_43_DEMO_AND_SUBMISSION_RUNBOOK_1A.md)
 - [ccloud release gate runbook](operations/CCLOUD_CONTROL_PLANE_RELEASE_GATE_1A.md)
+- [D4 AWS deployment runbook](operations/D4_AWS_DEMO_DEPLOYMENT_1A.md)
 
 All linked evidence is bounded and sanitized. Replay is explicitly distinct
 from fresh live provider execution. This index does not grant any model,

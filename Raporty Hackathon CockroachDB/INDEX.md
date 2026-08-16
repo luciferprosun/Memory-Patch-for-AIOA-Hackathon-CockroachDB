@@ -1,18 +1,29 @@
 # CockroachDB Hackathon Jury Index
 
+This index preserves the historical Step43 archive. The 302-path artifact
+manifest and 257 Git-backed hashes describe that snapshot, while the current
+repository includes additional hackathon work. Use the final release manifest
+for the post-Step43 continuation; do not interpret current-file drift from a
+historical pinned blob as an integrity failure.
+
 ## Start here
 
 | Topic | Best starting point |
 | --- | --- |
 | Final project overview | [Root README](../README.md) |
+| Final post-Step43 addendum | [Final release manifest](../docs/submission/FINAL_HACKATHON_RELEASE_MANIFEST.md) |
+| Jury access and limitations | [Jury preparation guide](../docs/submission/JURY_PREPARATION_AND_KNOWN_LIMITATIONS.md) |
+| Final architecture image | [AWS and CockroachDB diagram](../docs/architecture/Memory_Patch_AWS_CockroachDB_Architecture.png) |
 | Complete 0A–43 roadmap | [Canonical roadmap](../docs/roadmap/PRODUCTION_ROADMAP.md) |
 | Full architecture | [Memory Patch system overview](../docs/architecture/MEMORY_PATCH_SYSTEM_OVERVIEW_1A.md) |
 | Judge demo | [German Law Golden Path](../docs/demo/MEMORY_PATCH_DEMO_GOLDEN_PATH_1A.md) |
 | Submission text | [Hackathon submission package](../docs/submission/HACKATHON_SUBMISSION_PACKAGE_1A.md) |
-| Complete artifact catalog | [Deterministic manifest](manifest/artifact-manifest.json) |
+| Step43 artifact catalog | [Historical deterministic manifest](manifest/artifact-manifest.json) |
+| License | [MIT License](../LICENSE) |
 
 ## 1. Final project and roadmap closure
 
+- [Final post-Step43 release manifest](../docs/submission/FINAL_HACKATHON_RELEASE_MANIFEST.md)
 - [Step43 final closure](../docs/audits/STEP_43_DOCUMENTATION_DEMO_SUBMISSION_CLOSURE_1A.md)
 - [Step43 validation evidence](../docs/evidence/demo/step43-documentation-demo-submission-validation.json)
 - [Final documentation index](../docs/SUBMISSION_INDEX_1A.md)
@@ -77,6 +88,8 @@
 
 ## 9. Demo and submission
 
+- [Jury preparation and known limitations](../docs/submission/JURY_PREPARATION_AND_KNOWN_LIMITATIONS.md)
+- [Final AWS and CockroachDB diagram](../docs/architecture/Memory_Patch_AWS_CockroachDB_Architecture.png)
 - [Demo runner and operator material](05_DEMO_AND_SUBMISSION/README.md)
 - [Video script](../docs/demo/YOUTUBE_DEMO_SCRIPT_1A.md)
 - [Step43 runbook](../docs/operations/STEP_43_DEMO_AND_SUBMISSION_RUNBOOK_1A.md)
@@ -89,8 +102,8 @@
 ## 11. Complete validation and evidence catalog
 
 - [Validation/evidence guide](03_VALIDATION_AND_EVIDENCE/README.md)
-- [All 302 curated source artifacts](manifest/artifact-manifest.json)
-- [Manifest SHA-256](manifest/artifact-manifest.sha256)
+- [All 302 Step43 curated source artifacts](manifest/artifact-manifest.json)
+- [Historical manifest SHA-256](manifest/artifact-manifest.sha256)
 
 ## 12. AOIA-Core provenance
 

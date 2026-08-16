@@ -4,6 +4,20 @@ This directory is the judge-facing map of the completed Memory Patch for AIOA
 CockroachDB hackathon repository. Start with the [master index](INDEX.md), then
 use the [timeline](TIMELINE.md) to follow the engineering progression.
 
+## Historical Step43 snapshot
+
+This archive and its artifact manifest are an immutable historical snapshot at
+the Step43 cutoff, not an inventory of the later final submission tree. Work
+continued during the hackathon after Step43, including the bounded jury
+runtime, Cognito access, AWS public deployment, CockroachDB v26.2.5 final
+environment, ccloud release gate, and documentation closure. That continuation
+is recorded separately in the
+[final hackathon release manifest](../docs/submission/FINAL_HACKATHON_RELEASE_MANIFEST.md).
+
+The historical snapshot and current final submission are intentionally
+different states. Historical Git blobs remain available and verifiable; later
+changes to current files do not invalidate the pinned Step43 evidence.
+
 Memory Patch separates a model's answer from evidence and authority. It routes
 a question to a bounded knowledge domain, retrieves independently governed
 evidence, resolves temporal and source constraints, builds a deterministic
@@ -21,7 +35,7 @@ after explicit owner approval; that memory never becomes canonical evidence.
   `2026-07-15T03:59:22+02:00` (`2026-07-15T01:59:22Z`).
 - First commit in this CockroachDB repository: `04709a84f8cb8407a6fdf060210403f8e323133f`
   at `2026-07-24T08:59:40+02:00`.
-- Last substantive project activity at the frozen post-roadmap baseline:
+- Step43 cutoff used by this historical archive:
   `b9dda5eba15aea41edeb8498c4fe524037bd0a07` at
   `2026-08-13T00:16:17+02:00` (`2026-08-12T22:16:17Z`).
 
@@ -45,14 +59,15 @@ material as work created in this repository.
 ## Where to look
 
 1. [Final project README](../README.md)
-2. [Roadmap 0A–43](../docs/roadmap/PRODUCTION_ROADMAP.md)
-3. [System overview](../docs/architecture/MEMORY_PATCH_SYSTEM_OVERVIEW_1A.md)
-4. [German Law Golden Path](../docs/demo/MEMORY_PATCH_DEMO_GOLDEN_PATH_1A.md)
-5. [Step38 full E2E evidence](../docs/evidence/e2e/step38-german-law-full-e2e-validation.json)
-6. [Step41 security evidence](../docs/evidence/security/step41-full-security-regression-validation.json)
-7. [Step42 RC restore evidence](../docs/evidence/release/step42-rc-backup-restore-validation.json)
-8. [Step43 submission package](../docs/submission/HACKATHON_SUBMISSION_PACKAGE_1A.md)
-9. [Complete deterministic artifact manifest](manifest/artifact-manifest.json)
+2. [Post-Step43 final release manifest](../docs/submission/FINAL_HACKATHON_RELEASE_MANIFEST.md)
+3. [Roadmap 0A–43](../docs/roadmap/PRODUCTION_ROADMAP.md)
+4. [System overview](../docs/architecture/MEMORY_PATCH_SYSTEM_OVERVIEW_1A.md)
+5. [German Law Golden Path](../docs/demo/MEMORY_PATCH_DEMO_GOLDEN_PATH_1A.md)
+6. [Step38 full E2E evidence](../docs/evidence/e2e/step38-german-law-full-e2e-validation.json)
+7. [Step41 security evidence](../docs/evidence/security/step41-full-security-regression-validation.json)
+8. [Step42 RC restore evidence](../docs/evidence/release/step42-rc-backup-restore-validation.json)
+9. [Step43 submission package](../docs/submission/HACKATHON_SUBMISSION_PACKAGE_1A.md)
+10. [Historical deterministic artifact manifest](manifest/artifact-manifest.json)
 
 ## AOIA-Core separation
 
@@ -69,8 +84,10 @@ Canonical in-repository material is linked rather than duplicated. Three
 bounded external prompt/reference files are copied exact-byte after secret
 screening. Every curated source artifact has a SHA-256, size, provenance basis,
 classification, source path, and source commit where available in the
-[artifact manifest](manifest/artifact-manifest.json). The exact manifest bytes
-are bound by [artifact-manifest.sha256](manifest/artifact-manifest.sha256).
+historical [artifact manifest](manifest/artifact-manifest.json). Its 302 paths
+and 257 Git-backed hashes retain their Step43 meaning. The exact manifest bytes
+are bound by [artifact-manifest.sha256](manifest/artifact-manifest.sha256);
+neither file is regenerated for the final repository state.
 
 This is repository engineering evidence, not an external security, legal, HA,
 or disaster-recovery certification.

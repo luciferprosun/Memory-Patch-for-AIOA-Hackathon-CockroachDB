@@ -1,5 +1,11 @@
 # AWS Unified AIOA Demo Runtime 1A
 
+This document records the repository's D4 runtime design. The later integrated
+AOIA-Core runtime used for the recorded and deployed jury demo is identified in
+the [final release manifest](../submission/FINAL_HACKATHON_RELEASE_MANIFEST.md).
+The public-origin values below have been updated from the pre-deployment
+prediction to the endpoint actually assigned by AWS.
+
 ## Decision
 
 D4 uses one Amazon ECS Express Mode service in `eu-central-1`. AWS App Runner
@@ -80,17 +86,17 @@ plus image digest, never a mutable `latest` reference.
 
 ## Configuration and secret boundary
 
-Non-secret configuration enters the task as typed environment variables. The
-exact public origin is predictable from the stable service name:
+Non-secret configuration enters the task as typed environment variables. AWS
+assigned this final public origin to the frozen jury service:
 
 ```text
-https://memory-patch-aioa-demo-1a.ecs.eu-central-1.on.aws
+https://me-50f4749c79c34254a788d95160d08a6c.ecs.eu-central-1.on.aws
 ```
 
 The exact callback is:
 
 ```text
-https://memory-patch-aioa-demo-1a.ecs.eu-central-1.on.aws/memory/oidc/callback
+https://me-50f4749c79c34254a788d95160d08a6c.ecs.eu-central-1.on.aws/memory/oidc/callback
 ```
 
 One retained Secrets Manager JSON object is created empty by CloudFormation,

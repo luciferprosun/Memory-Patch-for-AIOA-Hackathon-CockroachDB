@@ -67,7 +67,32 @@ and deployment controls. See the
 and the sanitized
 [ccloud live receipt](docs/evidence/cockroachdb-cloud/ccloud-control-plane-gate-1a.json).
 
-## Run the judge demo
+## Final jury deployment
+
+The frozen public application is available at
+[the AWS jury origin](https://me-50f4749c79c34254a788d95160d08a6c.ecs.eu-central-1.on.aws/memory).
+Its non-provider health probes are
+[`/health/live`](https://me-50f4749c79c34254a788d95160d08a6c.ecs.eu-central-1.on.aws/health/live)
+and
+[`/health/ready`](https://me-50f4749c79c34254a788d95160d08a6c.ecs.eu-central-1.on.aws/health/ready).
+Judge credentials are supplied separately through the private submission
+field; no password is stored in this repository.
+
+This repository contains the Memory Patch hackathon component, CockroachDB
+work, and evidence. The exact integrated AOIA-Core source used for the recorded
+and deployed demo is the separate public commit
+[`360e900b66396a19fc09cccf69641cc015691ad8`](https://github.com/luciferprosun/AOIA-Core/commit/360e900b66396a19fc09cccf69641cc015691ad8),
+frozen under the
+[`hackathon-jury-final-2026-08-15`](https://github.com/luciferprosun/AOIA-Core/releases/tag/hackathon-jury-final-2026-08-15)
+release tag. That commit is not claimed to exist in this repository. See the
+[final release manifest](docs/submission/FINAL_HACKATHON_RELEASE_MANIFEST.md)
+for the complete provenance boundary and the
+[jury preparation guide](docs/submission/JURY_PREPARATION_AND_KNOWN_LIMITATIONS.md)
+for the click path.
+
+![Memory Patch AWS and CockroachDB architecture](docs/architecture/Memory_Patch_AWS_CockroachDB_Architecture.png)
+
+## Reproduce the historical Step43 demo
 
 Deterministic replay is the safe default. It checks the frozen Step 42 RC,
 every referenced digest, the full 12-stage trace, security counters, docs,
@@ -96,12 +121,16 @@ preflight, case selection, 4 GB profile, and cleanup instructions are in the
 
 ## Start here
 
-- [Judge-facing Golden Path](docs/demo/MEMORY_PATCH_DEMO_GOLDEN_PATH_1A.md)
+- [Final jury release manifest](docs/submission/FINAL_HACKATHON_RELEASE_MANIFEST.md)
+- [Jury preparation and known limitations](docs/submission/JURY_PREPARATION_AND_KNOWN_LIMITATIONS.md)
+- [Architecture diagram](docs/architecture/Memory_Patch_AWS_CockroachDB_Architecture.png)
+- [Judge-facing historical Golden Path](docs/demo/MEMORY_PATCH_DEMO_GOLDEN_PATH_1A.md)
 - [5–8 minute video script](docs/demo/YOUTUBE_DEMO_SCRIPT_1A.md)
-- [Submission package](docs/submission/HACKATHON_SUBMISSION_PACKAGE_1A.md)
+- [Historical Step43 submission package](docs/submission/HACKATHON_SUBMISSION_PACKAGE_1A.md)
 - [System architecture](docs/architecture/MEMORY_PATCH_SYSTEM_OVERVIEW_1A.md)
 - [Evidence and documentation index](docs/SUBMISSION_INDEX_1A.md)
 - [Canonical production roadmap](docs/roadmap/PRODUCTION_ROADMAP.md)
+- [MIT License](LICENSE)
 
 ## Security and operating profile
 
@@ -126,6 +155,9 @@ Memory, audit, security boundaries, and the German Law path.
   evidence without a separate authorized process.
 - The repository demonstrates an optional candidate-only Critic bridge, not an
   autonomous reviewer or execution agent.
+- The repository does not contain most exact prompt transcripts from historical
+  implementation sessions. The available exact-byte prompts are indexed; no
+  missing prompt history has been reconstructed or fabricated.
 
 Source and import provenance are indexed in [the documentation
 catalog](docs/README.md). The final package describes only behavior supported
